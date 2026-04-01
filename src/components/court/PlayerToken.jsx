@@ -1,7 +1,7 @@
 import { POSITIONS } from '../../data/positions';
 import { isFrontRow } from '../../utils/rotations';
 
-export default function PlayerToken({ placement, onPointerDown, isDragging }) {
+export default function PlayerToken({ placement, onPointerDown, isDragging, isSelected }) {
   const { player, rotationalPosition, x, y, isLiberoIn } = placement;
   if (!player) return null;
 
@@ -16,6 +16,19 @@ export default function PlayerToken({ placement, onPointerDown, isDragging }) {
       style={{ cursor: 'grab' }}
       onPointerDown={onPointerDown}
     >
+      {/* Selection glow ring */}
+      {isSelected && (
+        <circle
+          r={radius + 1.5}
+          fill="none"
+          stroke="#fbbf24"
+          strokeWidth="1"
+          opacity="0.8"
+        >
+          <animate attributeName="opacity" values="0.8;0.4;0.8" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+      )}
+
       {/* Shadow */}
       <circle r={radius + 0.3} fill="rgba(0,0,0,0.3)" cx="0.3" cy="0.3" />
 

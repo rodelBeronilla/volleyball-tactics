@@ -2,6 +2,8 @@ import { useRef, useState, useCallback } from 'react';
 import CourtMarkings from './CourtMarkings';
 import PlayerToken from './PlayerToken';
 import OverlapIndicator from './OverlapIndicator';
+import ArrowDefs from './ArrowDefs';
+import MovementArrows from './MovementArrows';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 function screenToSVG(svgEl, clientX, clientY) {
@@ -13,11 +15,19 @@ function screenToSVG(svgEl, clientX, clientY) {
   return pt.matrixTransform(ctm.inverse());
 }
 
-export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight, responsibilities }) {
+const TAP_DISTANCE = 4;
+const TAP_TIME = 250;
+
+export default function Court({
+  placements, dispatch, onSwipeLeft, onSwipeRight,
+  responsibilities, selectedSlot, showRoutes, rotation,
+}) {
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
   const [dragging, setDragging] = useState(null);
   const [dragPos, setDragPos] = useState(null);
+  // Tap detection buffer
+  const pointerStart = useRef(null);
 
   useSwipeGesture(svgRef, onSwipeLeft, onSwipeRight, draggingRef);
 
@@ -27,36 +37,95 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight,
     svgRef.current?.setPointerCapture(e.pointerId);
     const svg = svgRef.current;
     if (!svg) return;
-    draggingRef.current = true;
-    setDragging({ slot, pointerId: e.pointerId });
+
     const pt = screenToSVG(svg, e.clientX, e.clientY);
-    setDragPos({ x: pt.x, y: pt.y });
+    // Buffer start — don't promote to drag yet
+    pointerStart.current = {
+      slot,
+      pointerId: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      svgX: pt.x,
+      svgY: pt.y,
+      time: Date.now(),
+      promoted: false,
+    };
+  }, []);
+
+  const promoteToDrag = useCallback((start) => {
+    if (start.promoted) return;
+    start.promoted = true;
+    draggingRef.current = true;
+    setDragging({ slot: start.slot, pointerId: start.pointerId });
+    setDragPos({ x: start.svgX, y: start.svgY });
   }, []);
 
   const handlePointerMove = useCallback((e) => {
-    if (!dragging || e.pointerId !== dragging.pointerId) return;
-    const svg = svgRef.current;
-    if (!svg) return;
-    const pt = screenToSVG(svg, e.clientX, e.clientY);
-    const x = Math.max(5, Math.min(85, pt.x));
-    const y = Math.max(5, Math.min(85, pt.y));
-    setDragPos({ x, y });
-  }, [dragging]);
+    const start = pointerStart.current;
+    if (!start || e.pointerId !== start.pointerId) return;
 
-  const handlePointerUp = useCallback(() => {
-    if (!dragging) return;
-    if (dragPos) {
-      dispatch({
-        type: 'MOVE_PLAYER_ON_COURT',
-        slot: dragging.slot,
-        x: Math.round(dragPos.x),
-        y: Math.round(dragPos.y),
-      });
+    // Check if movement exceeds tap threshold
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (!start.promoted && dist > TAP_DISTANCE) {
+      promoteToDrag(start);
     }
+
+    if (start.promoted) {
+      const svg = svgRef.current;
+      if (!svg) return;
+      const pt = screenToSVG(svg, e.clientX, e.clientY);
+      const x = Math.max(5, Math.min(85, pt.x));
+      const y = Math.max(5, Math.min(85, pt.y));
+      setDragPos({ x, y });
+    }
+  }, [promoteToDrag]);
+
+  const handlePointerUp = useCallback((e) => {
+    const start = pointerStart.current;
+    if (!start) return;
+
+    if (start.promoted) {
+      // Was a drag — commit position
+      if (dragPos) {
+        dispatch({
+          type: 'MOVE_PLAYER_ON_COURT',
+          slot: start.slot,
+          x: Math.round(dragPos.x),
+          y: Math.round(dragPos.y),
+        });
+      }
+    } else {
+      // Was a tap — check time and distance
+      const dt = Date.now() - start.time;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < TAP_DISTANCE && dt < TAP_TIME) {
+        // Tap detected — toggle strategy card
+        if (selectedSlot === start.slot) {
+          dispatch({ type: 'DESELECT_PLAYER' });
+        } else {
+          dispatch({ type: 'SELECT_PLAYER', slot: start.slot });
+        }
+      }
+    }
+
+    pointerStart.current = null;
     draggingRef.current = false;
     setDragging(null);
     setDragPos(null);
-  }, [dragging, dragPos, dispatch]);
+  }, [dragPos, dispatch, selectedSlot]);
+
+  // Tap on empty court = deselect
+  const handleCourtTap = useCallback((e) => {
+    if (e.target === svgRef.current && selectedSlot != null) {
+      dispatch({ type: 'DESELECT_PLAYER' });
+    }
+  }, [dispatch, selectedSlot]);
 
   const renderPlacements = placements.map(p => {
     if (dragging && p.rotationalPosition === dragging.slot && dragPos) {
@@ -74,9 +143,20 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight,
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onClick={handleCourtTap}
     >
+      <ArrowDefs />
       <CourtMarkings />
       <OverlapIndicator placements={renderPlacements} />
+
+      {/* Movement arrows layer — behind players, above court */}
+      {showRoutes && !dragging && (
+        <MovementArrows
+          rotation={rotation}
+          placements={renderPlacements}
+          selectedSlot={selectedSlot}
+        />
+      )}
 
       {/* Responsibility labels under each player */}
       {responsibilities && renderPlacements.map(p => {
@@ -105,6 +185,7 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight,
           key={p.rotationalPosition}
           placement={p}
           isDragging={dragging?.slot === p.rotationalPosition}
+          isSelected={selectedSlot === p.rotationalPosition}
           onPointerDown={(e) => handlePointerDown(e, p.rotationalPosition)}
         />
       ))}

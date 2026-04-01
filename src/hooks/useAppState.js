@@ -14,21 +14,14 @@ const initialState = {
   activeTab: 'court',
   editingPlayer: null,
   editingLineup: null,
+  selectedSlot: null,
+  showRoutes: false,
 };
 
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_TAB':
       return { ...state, activeTab: action.tab };
-
-    case 'SET_ROTATION':
-      return { ...state, currentRotation: action.rotation };
-
-    case 'NEXT_ROTATION':
-      return { ...state, currentRotation: state.currentRotation === 6 ? 1 : state.currentRotation + 1 };
-
-    case 'PREV_ROTATION':
-      return { ...state, currentRotation: state.currentRotation === 1 ? 6 : state.currentRotation - 1 };
 
     case 'SET_FORMATION':
       return { ...state, activeFormationId: action.id };
@@ -116,6 +109,26 @@ function reducer(state, action) {
     }
     case 'SET_EDITING_LINEUP':
       return { ...state, editingLineup: action.lineup };
+
+    // Strategy card: player selection
+    case 'SELECT_PLAYER':
+      return { ...state, selectedSlot: action.slot };
+
+    case 'DESELECT_PLAYER':
+      return { ...state, selectedSlot: null };
+
+    case 'TOGGLE_ROUTES':
+      return { ...state, showRoutes: !state.showRoutes };
+
+    // Clear selection on rotation change
+    case 'SET_ROTATION':
+      return { ...state, currentRotation: action.rotation, selectedSlot: null };
+
+    case 'NEXT_ROTATION':
+      return { ...state, currentRotation: state.currentRotation === 6 ? 1 : state.currentRotation + 1, selectedSlot: null };
+
+    case 'PREV_ROTATION':
+      return { ...state, currentRotation: state.currentRotation === 1 ? 6 : state.currentRotation - 1, selectedSlot: null };
 
     // Drag: update formation override position
     case 'MOVE_PLAYER_ON_COURT': {

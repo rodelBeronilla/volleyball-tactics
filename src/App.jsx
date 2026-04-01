@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useAppState } from './hooks/useAppState';
 import Court from './components/court/Court';
+import PlayerStrategyCard from './components/court/PlayerStrategyCard';
+import RotationSummary from './components/court/RotationSummary';
 import RotationControls from './components/controls/RotationControls';
 import FormationSelector from './components/controls/FormationSelector';
 import ResponsibilitySelector from './components/controls/ResponsibilitySelector';
@@ -11,15 +13,16 @@ import CompositionPanel from './components/lineup/CompositionPanel';
 import { getResponsibilities } from './data/responsibilities';
 
 export default function App() {
-  const { state, dispatch, activeLineup, currentSlots, placements, getPlayer } = useAppState();
+  const { state, dispatch, activeLineup, placements } = useAppState();
 
   const onSwipeLeft = useCallback(() => dispatch({ type: 'NEXT_ROTATION' }), [dispatch]);
   const onSwipeRight = useCallback(() => dispatch({ type: 'PREV_ROTATION' }), [dispatch]);
 
-  // Get responsibilities for the current rotation if a responsibility set is active
   const responsibilities = state.activeResponsibilityId
     ? getResponsibilities(state.activeResponsibilityId, state.currentRotation)
     : null;
+
+  const handleCloseCard = useCallback(() => dispatch({ type: 'DESELECT_PLAYER' }), [dispatch]);
 
   return (
     <div className="flex flex-col h-full">
@@ -33,6 +36,21 @@ export default function App() {
             activeResponsibilityId={state.activeResponsibilityId}
             dispatch={dispatch}
           />
+
+          {/* Show Routes toggle */}
+          <div className="flex items-center justify-between px-3 py-1 bg-[var(--color-surface)]">
+            <button
+              onClick={() => dispatch({ type: 'TOGGLE_ROUTES' })}
+              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                state.showRoutes
+                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+                  : 'bg-white/5 border-white/10 text-gray-400'
+              }`}
+            >
+              {state.showRoutes ? 'Routes ON' : 'Show Routes'}
+            </button>
+          </div>
+
           <div className="flex-1 flex items-center justify-center p-2 min-h-0 bg-[var(--color-surface)]">
             {activeLineup ? (
               <Court
@@ -41,6 +59,9 @@ export default function App() {
                 onSwipeLeft={onSwipeLeft}
                 onSwipeRight={onSwipeRight}
                 responsibilities={responsibilities}
+                selectedSlot={state.selectedSlot}
+                showRoutes={state.showRoutes}
+                rotation={state.currentRotation}
               />
             ) : (
               <div className="text-gray-500 text-center px-4">
@@ -49,10 +70,29 @@ export default function App() {
               </div>
             )}
           </div>
+
+          {/* Rotation Summary — between court and controls */}
+          {activeLineup && (
+            <RotationSummary
+              rotation={state.currentRotation}
+              placements={placements}
+            />
+          )}
+
           <RotationControls
             currentRotation={state.currentRotation}
             dispatch={dispatch}
           />
+
+          {/* Strategy Card overlay */}
+          {state.selectedSlot != null && (
+            <PlayerStrategyCard
+              selectedSlot={state.selectedSlot}
+              rotation={state.currentRotation}
+              placements={placements}
+              onClose={handleCloseCard}
+            />
+          )}
         </>
       )}
 
