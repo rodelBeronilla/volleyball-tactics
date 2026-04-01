@@ -1,6 +1,4 @@
-import { isFrontRow } from '../../utils/rotations';
-
-export default function RotationControls({ currentRotation, dispatch, currentSlots, getPlayer }) {
+export default function RotationControls({ currentRotation, dispatch }) {
   const dots = [1, 2, 3, 4, 5, 6];
 
   return (

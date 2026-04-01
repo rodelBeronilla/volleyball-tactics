@@ -10,6 +10,7 @@ const initialState = {
   activeLineupId: load('activeLineupId', 'lineup-1'),
   currentRotation: load('currentRotation', 1),
   activeFormationId: load('activeFormationId', 'sr-5-1'),
+  activeResponsibilityId: load('activeResponsibilityId', null),
   activeTab: 'court',
   editingPlayer: null,
   editingLineup: null,
@@ -31,6 +32,9 @@ function reducer(state, action) {
 
     case 'SET_FORMATION':
       return { ...state, activeFormationId: action.id };
+
+    case 'SET_RESPONSIBILITY':
+      return { ...state, activeResponsibilityId: action.id };
 
     case 'SET_ACTIVE_LINEUP':
       return { ...state, activeLineupId: action.id, currentRotation: 1 };
@@ -140,6 +144,7 @@ export function useAppState() {
   useEffect(() => { save('activeLineupId', state.activeLineupId); }, [state.activeLineupId]);
   useEffect(() => { save('currentRotation', state.currentRotation); }, [state.currentRotation]);
   useEffect(() => { save('activeFormationId', state.activeFormationId); }, [state.activeFormationId]);
+  useEffect(() => { save('activeResponsibilityId', state.activeResponsibilityId); }, [state.activeResponsibilityId]);
 
   // Derived: active lineup
   const activeLineup = state.lineups.find(l => l.id === state.activeLineupId) || null;

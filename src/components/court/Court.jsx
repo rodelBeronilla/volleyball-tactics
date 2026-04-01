@@ -5,25 +5,29 @@ import OverlapIndicator from './OverlapIndicator';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 function screenToSVG(svgEl, clientX, clientY) {
+  const ctm = svgEl.getScreenCTM();
+  if (!ctm) return { x: 0, y: 0 };
   const pt = svgEl.createSVGPoint();
   pt.x = clientX;
   pt.y = clientY;
-  return pt.matrixTransform(svgEl.getScreenCTM().inverse());
+  return pt.matrixTransform(ctm.inverse());
 }
 
-export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight }) {
+export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight, responsibilities }) {
   const svgRef = useRef(null);
-  const [dragging, setDragging] = useState(null); // { slot, pointerId }
+  const draggingRef = useRef(false);
+  const [dragging, setDragging] = useState(null);
   const [dragPos, setDragPos] = useState(null);
 
-  useSwipeGesture(svgRef, onSwipeLeft, onSwipeRight);
+  useSwipeGesture(svgRef, onSwipeLeft, onSwipeRight, draggingRef);
 
   const handlePointerDown = useCallback((e, slot) => {
     e.preventDefault();
     e.stopPropagation();
-    e.target.closest('g').setPointerCapture?.(e.pointerId);
+    svgRef.current?.setPointerCapture(e.pointerId);
     const svg = svgRef.current;
     if (!svg) return;
+    draggingRef.current = true;
     setDragging({ slot, pointerId: e.pointerId });
     const pt = screenToSVG(svg, e.clientX, e.clientY);
     setDragPos({ x: pt.x, y: pt.y });
@@ -34,13 +38,12 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight 
     const svg = svgRef.current;
     if (!svg) return;
     const pt = screenToSVG(svg, e.clientX, e.clientY);
-    // Clamp to court
     const x = Math.max(5, Math.min(85, pt.x));
     const y = Math.max(5, Math.min(85, pt.y));
     setDragPos({ x, y });
   }, [dragging]);
 
-  const handlePointerUp = useCallback((e) => {
+  const handlePointerUp = useCallback(() => {
     if (!dragging) return;
     if (dragPos) {
       dispatch({
@@ -50,11 +53,11 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight 
         y: Math.round(dragPos.y),
       });
     }
+    draggingRef.current = false;
     setDragging(null);
     setDragPos(null);
   }, [dragging, dragPos, dispatch]);
 
-  // Merge drag position into placements for rendering
   const renderPlacements = placements.map(p => {
     if (dragging && p.rotationalPosition === dragging.slot && dragPos) {
       return { ...p, x: dragPos.x, y: dragPos.y };
@@ -74,6 +77,29 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight 
     >
       <CourtMarkings />
       <OverlapIndicator placements={renderPlacements} />
+
+      {/* Responsibility labels under each player */}
+      {responsibilities && renderPlacements.map(p => {
+        if (!p.player) return null;
+        const resp = responsibilities[p.rotationalPosition];
+        if (!resp) return null;
+        return (
+          <g key={`resp-${p.rotationalPosition}`} style={{ transform: `translate(${p.x}, ${p.y})` }}>
+            <text
+              y={10}
+              textAnchor="middle"
+              fill="#ffd700"
+              fontSize="1.8"
+              fontWeight="600"
+              opacity="0.9"
+              style={{ pointerEvents: 'none' }}
+            >
+              {resp}
+            </text>
+          </g>
+        );
+      })}
+
       {renderPlacements.map(p => (
         <PlayerToken
           key={p.rotationalPosition}

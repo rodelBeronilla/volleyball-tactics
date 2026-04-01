@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export function useSwipeGesture(elementRef, onSwipeLeft, onSwipeRight) {
+export function useSwipeGesture(elementRef, onSwipeLeft, onSwipeRight, suppressRef) {
   const touchStart = useRef(null);
 
   useEffect(() => {
@@ -15,6 +15,11 @@ export function useSwipeGesture(elementRef, onSwipeLeft, onSwipeRight) {
 
     const handleTouchEnd = (e) => {
       if (!touchStart.current) return;
+      // Don't trigger swipe if a drag is active
+      if (suppressRef?.current) {
+        touchStart.current = null;
+        return;
+      }
       const dx = e.changedTouches[0].clientX - touchStart.current.x;
       const dy = e.changedTouches[0].clientY - touchStart.current.y;
       const dt = Date.now() - touchStart.current.time;
@@ -32,5 +37,5 @@ export function useSwipeGesture(elementRef, onSwipeLeft, onSwipeRight) {
       el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [elementRef, onSwipeLeft, onSwipeRight]);
+  }, [elementRef, onSwipeLeft, onSwipeRight, suppressRef]);
 }

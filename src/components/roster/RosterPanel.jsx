@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { POSITIONS } from '../../data/positions';
+import { ARCHETYPES } from '../../data/archetypes';
 import PlayerForm from './PlayerForm';
 
 export default function RosterPanel({ players, dispatch, activeLineup }) {
@@ -62,7 +63,11 @@ export default function RosterPanel({ players, dispatch, activeLineup }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-white font-medium truncate">{p.name}</div>
-                <div className="text-xs text-gray-400">{pos.label} {inLineup ? '• In lineup' : ''}</div>
+                <div className="text-xs text-gray-400">
+                  {pos.label}
+                  {p.archetype && ARCHETYPES[p.archetype] ? ` • ${ARCHETYPES[p.archetype].label}` : ''}
+                  {inLineup ? ' • In lineup' : ''}
+                </div>
               </div>
               <div className="flex gap-1">
                 <button

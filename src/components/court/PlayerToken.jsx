@@ -14,7 +14,7 @@ export default function PlayerToken({ placement, onPointerDown, isDragging }) {
     <g
       style={{
         transition: isDragging ? 'none' : 'transform 0.4s ease-in-out',
-        transform: `translate(${x}px, ${y}px)`,
+        transform: `translate(${x}, ${y})`,
         cursor: 'grab',
       }}
       onPointerDown={onPointerDown}
