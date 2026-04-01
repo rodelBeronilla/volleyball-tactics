@@ -12,11 +12,8 @@ export default function PlayerToken({ placement, onPointerDown, isDragging }) {
 
   return (
     <g
-      style={{
-        transition: isDragging ? 'none' : 'transform 0.4s ease-in-out',
-        transform: `translate(${x}, ${y})`,
-        cursor: 'grab',
-      }}
+      transform={`translate(${x}, ${y})`}
+      style={{ cursor: 'grab' }}
       onPointerDown={onPointerDown}
     >
       {/* Shadow */}

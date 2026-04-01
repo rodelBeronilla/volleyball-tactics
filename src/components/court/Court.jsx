@@ -84,7 +84,7 @@ export default function Court({ placements, dispatch, onSwipeLeft, onSwipeRight,
         const resp = responsibilities[p.rotationalPosition];
         if (!resp) return null;
         return (
-          <g key={`resp-${p.rotationalPosition}`} style={{ transform: `translate(${p.x}, ${p.y})` }}>
+          <g key={`resp-${p.rotationalPosition}`} transform={`translate(${p.x}, ${p.y})`}>
             <text
               y={10}
               textAnchor="middle"
