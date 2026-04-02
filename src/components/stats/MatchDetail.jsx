@@ -71,7 +71,7 @@ export default function MatchDetail({ match, statEntries, players, onBack }) {
                     if (!val) return null;
                     const stat = STATS[statKey];
                     return (
-                      <span key={statKey} className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                      <span key={statKey} className={`px-2 py-0.5 rounded text-xs font-medium ${
                         stat.positive
                           ? 'bg-green-900/20 text-green-400'
                           : 'bg-red-900/20 text-red-400'
@@ -82,12 +82,12 @@ export default function MatchDetail({ match, statEntries, players, onBack }) {
                   })
                 )}
                 {statLine.hitPct !== null && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-300">
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-gray-300">
                     Hit%: {(statLine.hitPct * 100).toFixed(0)}%
                   </span>
                 )}
                 {statLine.passAvg !== null && (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-300">
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-gray-300">
                     Pass: {statLine.passAvg.toFixed(1)}
                   </span>
                 )}

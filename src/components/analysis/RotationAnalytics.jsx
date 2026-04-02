@@ -27,16 +27,16 @@ export default function RotationAnalytics({ statEntries }) {
       {best && worst && best[0] !== worst[0] && (
         <div className="grid grid-cols-2 gap-2">
           <div className="p-3 rounded-xl bg-green-900/15 border border-green-800/20">
-            <div className="text-[10px] uppercase text-green-400/70 font-semibold">Strongest</div>
+            <div className="text-xs uppercase text-green-400/70 font-semibold">Strongest</div>
             <div className="text-white font-bold">R{best[0]}</div>
             <div className="text-xs text-green-400">{best[1].winRate !== null ? `${(best[1].winRate * 100).toFixed(0)}% win rate` : ''}</div>
-            <div className="text-[10px] text-gray-400">{best[1].points} points, {best[1].totalRallies} rallies</div>
+            <div className="text-xs text-gray-400">{best[1].points} points, {best[1].totalRallies} rallies</div>
           </div>
           <div className="p-3 rounded-xl bg-red-900/15 border border-red-800/20">
-            <div className="text-[10px] uppercase text-red-400/70 font-semibold">Needs Work</div>
+            <div className="text-xs uppercase text-red-400/70 font-semibold">Needs Work</div>
             <div className="text-white font-bold">R{worst[0]}</div>
             <div className="text-xs text-red-400">{worst[1].winRate !== null ? `${(worst[1].winRate * 100).toFixed(0)}% win rate` : ''}</div>
-            <div className="text-[10px] text-gray-400">{worst[1].points} points, {worst[1].totalRallies} rallies</div>
+            <div className="text-xs text-gray-400">{worst[1].points} points, {worst[1].totalRallies} rallies</div>
           </div>
         </div>
       )}
@@ -61,26 +61,26 @@ export default function RotationAnalytics({ statEntries }) {
                 <div className="text-white font-bold text-sm">Rotation {r}</div>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {rs.sideOutRate !== null && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-white/5 text-gray-300">
+                    <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-300">
                       SO: {(rs.sideOutRate * 100).toFixed(0)}%
                     </span>
                   )}
                   {rs.breakPointRate !== null && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-white/5 text-gray-300">
+                    <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-gray-300">
                       BP: {(rs.breakPointRate * 100).toFixed(0)}%
                     </span>
                   )}
-                  <span className="px-2 py-0.5 rounded text-[10px] bg-green-900/20 text-green-400">
+                  <span className="px-2 py-0.5 rounded text-xs bg-green-900/20 text-green-400">
                     {rs.kills}K {rs.blocks}B {rs.aces}A
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] bg-red-900/20 text-red-400">
+                  <span className="px-2 py-0.5 rounded text-xs bg-red-900/20 text-red-400">
                     {rs.errors} err
                   </span>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-400">{rs.ralliesWon}W-{rs.ralliesLost}L</div>
-                <div className="text-[10px] text-gray-500">{rs.totalRallies} rallies</div>
+                <div className="text-xs text-gray-500">{rs.totalRallies} rallies</div>
               </div>
             </div>
           );

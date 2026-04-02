@@ -8,11 +8,11 @@ function ProfileBar({ label, value, max = 10 }) {
   const color = value >= 7 ? '#22c55e' : value >= 4.5 ? '#eab308' : '#ef4444';
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] text-gray-400 w-12 shrink-0">{label}</span>
+      <span className="text-xs text-gray-400 w-12 shrink-0">{label}</span>
       <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <span className="text-[11px] text-gray-300 w-6 text-right tabular-nums font-medium">{value}</span>
+      <span className="text-xs text-gray-300 w-6 text-right tabular-nums font-medium">{value}</span>
     </div>
   );
 }
@@ -163,7 +163,7 @@ export default function CompositionPanel({ players, activeLineup, statEntries = 
               <div className="flex items-center gap-1.5 mb-1">
                 <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: arch.color }} />
                 <span className="text-white text-xs font-medium">{arch.label}</span>
-                <span className="text-gray-500 text-[10px] ml-1">{arch.description}</span>
+                <span className="text-gray-500 text-xs ml-1">{arch.description}</span>
               </div>
               <div className="flex gap-1 flex-wrap">
                 {ATTRIBUTES.map(attr => {
@@ -173,7 +173,7 @@ export default function CompositionPanel({ players, activeLineup, statEntries = 
                                 val >= 5 ? 'text-gray-300 bg-white/5' :
                                 'text-red-400 bg-red-900/30';
                   return (
-                    <span key={attr} className={`px-1.5 py-0.5 rounded text-[10px] ${color}`}>
+                    <span key={attr} className={`px-1.5 py-0.5 rounded text-xs ${color}`}>
                       {ATTRIBUTE_LABELS[attr].slice(0, 3)} {val}
                     </span>
                   );

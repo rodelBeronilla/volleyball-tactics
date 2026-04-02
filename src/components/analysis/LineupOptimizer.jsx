@@ -40,13 +40,13 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
       {/* Optimizer result */}
       {optimization && optimization.bestSlots && (
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Optimized Lineup</div>
+          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Optimized Lineup</div>
           <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-green-800/20">
             <div className="flex items-center gap-3 mb-2">
               <ImpactRing score={Math.round(optimization.bestScore * 10)} size={44} />
               <div>
                 <div className="text-white font-bold text-sm">Best arrangement found</div>
-                <div className="text-[10px] text-gray-400">Score: {optimization.bestScore.toFixed(2)} (from {optimization.allCandidates.length} candidates)</div>
+                <div className="text-xs text-gray-400">Score: {optimization.bestScore.toFixed(2)} (from {optimization.allCandidates.length} candidates)</div>
               </div>
             </div>
             <div className="space-y-1">
@@ -57,14 +57,14 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
                 const rotScore = optimization.rotationScores[slot];
                 return (
                   <div key={slot} className="flex items-center gap-2 py-1">
-                    <span className="text-[10px] text-gray-500 w-12">{SLOT_LABELS[slot]}</span>
+                    <span className="text-xs text-gray-500 w-12">{SLOT_LABELS[slot]}</span>
                     {player ? (
                       <>
                         <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold" style={{ background: pos?.color }}>
                           {player.number}
                         </div>
                         <span className="text-white text-xs flex-1">{player.name}</span>
-                        {rotScore && <span className="text-[10px] text-gray-400 tabular-nums">{rotScore.toFixed(1)}</span>}
+                        {rotScore && <span className="text-xs text-gray-400 tabular-nums">{rotScore.toFixed(1)}</span>}
                       </>
                     ) : (
                       <span className="text-gray-500 text-xs">Empty</span>
@@ -86,7 +86,7 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
       {/* Current lineup with swap controls */}
       {activeLineup && (
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">
+          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">
             Current Lineup — Tap two slots to compare swap
           </div>
           <div className="space-y-1">
@@ -105,7 +105,7 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
                     isSwapSelected ? 'ring-1 ring-amber-500/50 bg-amber-900/10' : 'bg-[var(--color-surface-2)]'
                   } border border-white/5`}
                 >
-                  <span className="text-[10px] text-gray-500 w-12">{SLOT_LABELS[slot]}</span>
+                  <span className="text-xs text-gray-500 w-12">{SLOT_LABELS[slot]}</span>
                   {player ? (
                     <>
                       <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold" style={{ background: pos?.color }}>
@@ -113,7 +113,7 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
                       </div>
                       <span className="text-white text-xs flex-1">{player.name}</span>
                       {profile?.impactScore > 0 && (
-                        <span className={`text-[10px] tabular-nums ${
+                        <span className={`text-xs tabular-nums ${
                           profile.impactScore >= 70 ? 'text-green-400' : profile.impactScore >= 40 ? 'text-yellow-400' : 'text-red-400'
                         }`}>
                           {profile.impactScore}
@@ -133,19 +133,19 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
       {/* Top alternative arrangements */}
       {optimization?.allCandidates?.length > 1 && (
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Alternative Arrangements</div>
+          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Alternative Arrangements</div>
           <div className="space-y-1.5">
             {optimization.allCandidates.slice(1, 5).map((candidate, i) => (
               <div key={i} className="p-2 rounded-lg bg-[var(--color-surface-2)] border border-white/5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-300">Option {i + 2}</span>
-                  <span className="text-[10px] text-gray-400 tabular-nums">Score: {candidate.score.toFixed(2)}</span>
+                  <span className="text-xs text-gray-400 tabular-nums">Score: {candidate.score.toFixed(2)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {[1, 2, 3, 4, 5, 6].map(slot => {
                     const p = players.find(pl => pl.id === candidate.slots[slot]);
                     return (
-                      <span key={slot} className="text-[10px] text-gray-400">
+                      <span key={slot} className="text-xs text-gray-400">
                         {slot}:{p?.name?.slice(0, 4) || '?'}
                       </span>
                     );

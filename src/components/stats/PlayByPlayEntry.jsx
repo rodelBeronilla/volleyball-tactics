@@ -131,7 +131,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
         <div className="flex items-center gap-3">
           <div className="text-center">
             <div className="text-white font-bold text-lg tabular-nums">{currentScore.our} - {currentScore.their}</div>
-            <div className="text-[10px] text-gray-400">Set {match.sets[match.sets.length - 1]?.number || 1}</div>
+            <div className="text-xs text-gray-400">Set {match.sets[match.sets.length - 1]?.number || 1}</div>
           </div>
           <div className="text-xs text-gray-400">
             <div>R{effectiveRotation.rotation}</div>
@@ -143,13 +143,13 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
         <div className="flex gap-1">
           <button
             onClick={() => setMode(mode === 'full' ? 'quick' : 'full')}
-            className={`px-2 py-1 rounded text-[10px] font-bold ${
+            className={`px-2 py-1 rounded text-xs font-bold ${
               mode === 'quick' ? 'bg-amber-500/20 text-amber-400' : 'bg-[var(--color-surface-3)] text-gray-400'
             }`}
           >
             {mode === 'quick' ? 'Quick' : 'Full'}
           </button>
-          <button onClick={handleUndo} className="px-2 py-1 rounded bg-[var(--color-surface-3)] text-gray-400 text-[10px] font-bold">
+          <button onClick={handleUndo} className="px-2 py-1 rounded bg-[var(--color-surface-3)] text-gray-400 text-xs font-bold">
             Undo
           </button>
         </div>
@@ -175,7 +175,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
               >
                 {p.number}
               </div>
-              <span className="text-[10px] text-gray-300 mt-0.5 truncate max-w-[3rem]">{p.name}</span>
+              <span className="text-xs text-gray-300 mt-0.5 truncate w-12 text-center">{p.name}</span>
             </button>
           );
         })}
@@ -184,7 +184,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
       {/* Current rally actions */}
       {actions.length > 0 && (
         <div className="px-3 py-1.5 bg-[var(--color-surface)] border-b border-white/5">
-          <div className="text-[10px] text-gray-500 mb-1">Rally actions:</div>
+          <div className="text-xs text-gray-500 mb-1">Rally actions:</div>
           <div className="flex flex-wrap gap-1">
             {actions.map((a, i) => {
               const player = players.find(p => p.id === a.playerId);
@@ -193,7 +193,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
                 <button
                   key={i}
                   onClick={() => handleRemoveAction(i)}
-                  className={`px-2 py-0.5 rounded text-[10px] ${
+                  className={`px-2 py-0.5 rounded text-xs ${
                     stat?.positive ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'
                   }`}
                 >
@@ -210,7 +210,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
         {selectedPlayer ? (
           mode === 'quick' ? (
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 px-1">Quick Stats</div>
+              <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1 px-1">Quick Stats</div>
               <div className="grid grid-cols-3 gap-1.5">
                 {quickStatKeys.map(statKey => {
                   const stat = STATS[statKey];
@@ -234,7 +234,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
           ) : (
             PLAYER_STAT_GROUPS.map(group => (
               <div key={group.id}>
-                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 px-1">{group.label}</div>
+                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1 px-1">{group.label}</div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {group.stats.map(statKey => {
                     const stat = STATS[statKey];
@@ -282,12 +282,12 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
       {/* Rally timeline */}
       {currentSetRallies.length > 0 && (
         <div className="max-h-24 overflow-y-auto px-3 py-1.5 bg-[var(--color-surface)] border-t border-white/5">
-          <div className="text-[10px] text-gray-500 mb-0.5">Rally log ({currentSetRallies.length})</div>
+          <div className="text-xs text-gray-500 mb-0.5">Rally log ({currentSetRallies.length})</div>
           <div className="flex flex-wrap gap-1">
             {currentSetRallies.map((r, i) => (
               <span
                 key={r.id}
-                className={`px-1.5 py-0.5 rounded text-[10px] tabular-nums ${
+                className={`px-1.5 py-0.5 rounded text-xs tabular-nums ${
                   r.outcome === 'won' ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'
                 }`}
               >

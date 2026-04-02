@@ -26,7 +26,7 @@ export default function BottomNav({ activeTab, dispatch }) {
           }`}
         >
           <span className="text-base leading-none">{t.icon}</span>
-          <span className="text-[10px] leading-none font-medium truncate w-full text-center">{t.label}</span>
+          <span className="text-xs leading-none font-medium truncate w-full text-center">{t.label}</span>
         </button>
       ))}
     </nav>

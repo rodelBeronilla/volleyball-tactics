@@ -65,10 +65,10 @@ export default function SettingsPanel({ state, dispatch }) {
               }}
             />
           </div>
-          <div className="text-[10px] text-gray-400">
+          <div className="text-xs text-gray-400">
             {(usage.used / 1024).toFixed(0)} KB / {(usage.limit / 1024 / 1024).toFixed(0)} MB ({usage.percent}%)
           </div>
-          <div className="text-[10px] text-gray-500 mt-1">
+          <div className="text-xs text-gray-500 mt-1">
             {state.statEntries.length} stat entries, {state.rallies.length} rallies, {state.matches.length} matches
           </div>
         </div>

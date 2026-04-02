@@ -10,7 +10,7 @@ function RatingBar({ value, max = 10 }) {
       <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
       </div>
-      <span className="text-[10px] text-gray-400 w-4 text-right tabular-nums">{value}</span>
+      <span className="text-xs text-gray-400 w-4 text-right tabular-nums">{value}</span>
     </div>
   );
 }
@@ -20,7 +20,7 @@ function AttributeProfile({ ratings }) {
     <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5">
       {ATTRIBUTES.map(attr => (
         <div key={attr} className="flex items-center gap-1.5">
-          <span className="text-[10px] text-gray-500 w-8 shrink-0">{ATTRIBUTE_LABELS[attr].slice(0, 3)}</span>
+          <span className="text-xs text-gray-500 w-8 shrink-0">{ATTRIBUTE_LABELS[attr].slice(0, 3)}</span>
           <RatingBar value={ratings[attr]} />
         </div>
       ))}

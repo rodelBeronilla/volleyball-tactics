@@ -29,14 +29,14 @@ export default function MatchLog({ matches, statEntries, onSelect, onDelete }) {
               </div>
               <div className="flex items-center gap-1">
                 {m.completed && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                     matchWon ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
                   }`}>
                     {matchWon ? 'W' : 'L'} {setsWon}-{setsLost}
                   </span>
                 )}
                 {!m.completed && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-900/30 text-yellow-400">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-yellow-900/30 text-yellow-400">
                     Live
                   </span>
                 )}
@@ -46,7 +46,7 @@ export default function MatchLog({ matches, statEntries, onSelect, onDelete }) {
             {/* Set scores */}
             <div className="flex gap-1.5 mb-2">
               {m.sets.map(s => (
-                <span key={s.number} className={`px-2 py-0.5 rounded text-[10px] ${
+                <span key={s.number} className={`px-2 py-0.5 rounded text-xs ${
                   s.won === true ? 'bg-green-900/20 text-green-400' :
                   s.won === false ? 'bg-red-900/20 text-red-400' :
                   'bg-white/5 text-gray-400'
@@ -57,7 +57,7 @@ export default function MatchLog({ matches, statEntries, onSelect, onDelete }) {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500">{entryCount} stat entries</span>
+              <span className="text-xs text-gray-500">{entryCount} stat entries</span>
               <div className="flex gap-1">
                 <button
                   onClick={() => onSelect(m.id)}

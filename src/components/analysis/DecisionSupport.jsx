@@ -29,7 +29,7 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
       {/* Lineup Recommendations */}
       {suggestions.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Recommendations</div>
+          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Recommendations</div>
           <div className="space-y-1.5">
             {suggestions.map((s, i) => (
               <div key={i} className={`p-3 rounded-xl border ${
@@ -38,8 +38,8 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
                 'bg-blue-900/10 border-blue-800/20'
               }`}>
                 <div className="text-xs text-white font-medium">{s.description}</div>
-                <div className="text-[10px] text-gray-400 mt-0.5">{s.evidence}</div>
-                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                <div className="text-xs text-gray-400 mt-0.5">{s.evidence}</div>
+                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-bold ${
                   s.impact === 'high' ? 'bg-red-900/30 text-red-400' :
                   s.impact === 'medium' ? 'bg-yellow-900/30 text-yellow-400' :
                   'bg-blue-900/30 text-blue-400'
@@ -55,20 +55,20 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
       {/* Development Areas */}
       {devAreas.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Development Tracker</div>
+          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Development Tracker</div>
           <div className="space-y-1.5">
             {devAreas.slice(0, 8).map((d, i) => (
               <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-[var(--color-surface-2)] border border-white/5">
                 <div className="flex-1">
                   <div className="text-xs text-white font-medium">{d.playerName}</div>
-                  <div className="text-[10px] text-gray-400">{d.suggestion}</div>
+                  <div className="text-xs text-gray-400">{d.suggestion}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[10px] text-gray-400">{d.area}</div>
+                  <div className="text-xs text-gray-400">{d.area}</div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-red-400 tabular-nums">{d.current}</span>
+                    <span className="text-xs text-red-400 tabular-nums">{d.current}</span>
                     <span className="text-[8px] text-gray-500">/ {d.baseline}</span>
-                    <span className={`text-[10px] ${
+                    <span className={`text-xs ${
                       d.trend === 'improving' ? 'text-green-400' :
                       d.trend === 'declining' ? 'text-red-400' : 'text-gray-500'
                     }`}>
@@ -84,7 +84,7 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
 
       {/* Experiment Log */}
       <div>
-        <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Experiment Log</div>
+        <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Experiment Log</div>
         <div className="flex gap-2 mb-2">
           <input
             type="text"
@@ -104,7 +104,7 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
             Log
           </button>
         </div>
-        <div className="text-[10px] text-gray-500">
+        <div className="text-xs text-gray-500">
           Track lineup changes and their impact over time. Notes are timestamped and correlated with stat trends.
         </div>
       </div>

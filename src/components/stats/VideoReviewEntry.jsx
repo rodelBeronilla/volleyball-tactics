@@ -162,7 +162,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
             <button
               key={s.number}
               onClick={() => dispatch({ type: 'SET_ACTIVE_SET', setNumber: s.number })}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${
+              className={`px-2 py-1 rounded text-xs font-bold ${
                 s.number === activeSetNumber
                   ? 'bg-[var(--color-accent)] text-white'
                   : 'bg-[var(--color-surface-3)] text-gray-400'
@@ -173,7 +173,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
           ))}
           <button
             onClick={() => dispatch({ type: 'ADD_SET', matchId: match.id })}
-            className="px-2 py-1 rounded text-[10px] font-bold bg-[var(--color-surface-3)] text-gray-400"
+            className="px-2 py-1 rounded text-xs font-bold bg-[var(--color-surface-3)] text-gray-400"
           >
             +
           </button>
@@ -183,7 +183,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
           <button
             key={r}
             onClick={() => dispatch({ type: 'SET_ROTATION', rotation: r })}
-            className={`flex-1 py-1 rounded text-[10px] font-bold ${
+            className={`flex-1 py-1 rounded text-xs font-bold ${
               r === currentRotation
                 ? 'bg-[var(--color-accent)] text-white'
                 : 'bg-[var(--color-surface-3)] text-gray-400'
@@ -214,7 +214,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
               >
                 {p.number}
               </div>
-              <span className="text-[10px] text-gray-300 mt-0.5 truncate max-w-[3rem]">{p.name}</span>
+              <span className="text-xs text-gray-300 mt-0.5 truncate w-12 text-center">{p.name}</span>
             </button>
           );
         })}
@@ -224,15 +224,15 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
       {rallyActions.length > 0 && (
         <div className="px-3 py-1.5 bg-[var(--color-surface)] border-b border-white/5">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-gray-500">Rally actions:</span>
-            <button onClick={handleUndoAction} className="text-[10px] text-gray-500 hover:text-red-400">Undo last</button>
+            <span className="text-xs text-gray-500">Rally actions:</span>
+            <button onClick={handleUndoAction} className="text-xs text-gray-500 hover:text-red-400">Undo last</button>
           </div>
           <div className="flex flex-wrap gap-1">
             {rallyActions.map((a, i) => {
               const player = players.find(p => p.id === a.playerId);
               const stat = STATS[a.stat];
               return (
-                <span key={i} className={`px-2 py-0.5 rounded text-[10px] ${
+                <span key={i} className={`px-2 py-0.5 rounded text-xs ${
                   stat?.positive ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'
                 }`}>
                   {formatTime(a.videoTimestamp)} {player?.name?.slice(0, 6)} {stat?.label}
@@ -248,7 +248,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
         {selectedPlayer ? (
           PLAYER_STAT_GROUPS.map(group => (
             <div key={group.id}>
-              <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1 px-1">{group.label}</div>
+              <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1 px-1">{group.label}</div>
               <div className="grid grid-cols-3 gap-1.5">
                 {group.stats.map(statKey => {
                   const stat = STATS[statKey];

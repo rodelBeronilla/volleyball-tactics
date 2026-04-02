@@ -24,7 +24,7 @@ export default function AnalysisPanel({ state, dispatch, activeLineup, playerPro
           <button
             key={v.id}
             onClick={() => setView(v.id)}
-            className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
               v.id === view
                 ? 'bg-[var(--color-accent)] text-white'
                 : 'bg-[var(--color-surface-3)] text-gray-400'
