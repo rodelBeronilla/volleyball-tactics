@@ -1,20 +1,18 @@
 import { useMemo, useState } from 'react';
 import { POSITIONS } from '../../data/positions';
-import { optimizeSlotAssignment } from '../../utils/lineupOptimizer';
+import { optimizeSlotAssignment, computeSwapDelta } from '../../utils/lineupOptimizer';
 import ImpactRing from '../stats/ImpactRing';
 
 const SLOT_LABELS = { 1: '1 (RB)', 2: '2 (RF)', 3: '3 (CF)', 4: '4 (LF)', 5: '5 (LB)', 6: '6 (CB)' };
 
 export default function LineupOptimizer({ players, playerProfiles, activeLineup }) {
   const [swapA, setSwapA] = useState(null);
+  const [swapResult, setSwapResult] = useState(null);
 
   const optimization = useMemo(() => {
     if (Object.keys(playerProfiles).length === 0) return null;
     return optimizeSlotAssignment(players, playerProfiles);
   }, [players, playerProfiles]);
-
-  // Swap delta is computed on-the-fly when user taps two slots
-  // No need for pre-computation
 
   if (!activeLineup) {
     return <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Select a lineup first</div>;
@@ -27,10 +25,14 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
   const handleSlotTap = (slot) => {
     if (swapA === null) {
       setSwapA(slot);
+      setSwapResult(null);
     } else if (swapA === slot) {
       setSwapA(null);
+      setSwapResult(null);
     } else {
-      // Show swap result
+      // Compute swap delta
+      const delta = computeSwapDelta(activeLineup.slots, playerProfiles, swapA, slot);
+      setSwapResult(delta);
       setSwapA(null);
     }
   };
@@ -126,6 +128,29 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Swap comparison result */}
+      {swapResult && (
+        <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5">
+          <div className="text-xs font-bold text-gray-300 mb-2">Swap Result</div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-xs text-gray-400">Score: {swapResult.before.toFixed(2)}</span>
+            <span className="text-xs text-gray-400">→</span>
+            <span className={`text-xs font-bold ${swapResult.delta > 0 ? 'text-green-400' : swapResult.delta < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+              {swapResult.after.toFixed(2)} ({swapResult.delta > 0 ? '+' : ''}{swapResult.delta.toFixed(2)})
+            </span>
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {Object.entries(swapResult.rotationDeltas).map(([r, d]) => (
+              <span key={r} className={`px-2 py-0.5 rounded text-xs ${
+                d > 0 ? 'bg-green-900/20 text-green-400' : d < 0 ? 'bg-red-900/20 text-red-400' : 'bg-white/5 text-gray-400'
+              }`}>
+                R{r}: {d > 0 ? '+' : ''}{d.toFixed(2)}
+              </span>
+            ))}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { suggestLineupChanges, identifyDevelopmentAreas } from '../../utils/decisionEngine';
 
-export default function DecisionSupport({ players, playerProfiles, activeLineup, statEntries, dispatch }) {
+export default function DecisionSupport({ players, playerProfiles, activeLineup, statEntries, experimentNotes = [], dispatch }) {
   const [noteText, setNoteText] = useState('');
 
   const suggestions = useMemo(() => {
@@ -104,9 +104,29 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
             Log
           </button>
         </div>
-        <div className="text-xs text-gray-500">
-          Track lineup changes and their impact over time. Notes are timestamped and correlated with stat trends.
-        </div>
+        {/* Saved notes */}
+        {experimentNotes.length > 0 ? (
+          <div className="space-y-1 mt-2">
+            {[...experimentNotes].reverse().map(n => (
+              <div key={n.id} className="flex items-start justify-between gap-2 p-2 rounded-lg bg-[var(--color-surface-2)] border border-white/5">
+                <div>
+                  <div className="text-xs text-white">{n.text}</div>
+                  <div className="text-xs text-gray-500">{n.date}</div>
+                </div>
+                <button
+                  onClick={() => dispatch({ type: 'DELETE_EXPERIMENT_NOTE', noteId: n.id })}
+                  className="text-gray-600 text-xs px-1 shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-gray-500 mt-1">
+            No experiments logged yet. Track what changes you make and correlate with stat trends.
+          </div>
+        )}
       </div>
 
       {/* No recommendations state */}

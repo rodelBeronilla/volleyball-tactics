@@ -67,6 +67,7 @@ export default function AnalysisPanel({ state, dispatch, activeLineup, playerPro
             playerProfiles={playerProfiles}
             activeLineup={activeLineup}
             statEntries={state.statEntries}
+            experimentNotes={state.experimentNotes}
             dispatch={dispatch}
           />
         )}

@@ -85,6 +85,7 @@ export function exportAllData(state) {
     matches: state.matches,
     statEntries: state.statEntries,
     rallies: state.rallies || [],
+    experimentNotes: state.experimentNotes || [],
     activeLineupId: state.activeLineupId,
     activeFormationId: state.activeFormationId,
   };
@@ -108,6 +109,7 @@ export function parseImportData(json) {
       matches: data.matches || [],
       statEntries: data.statEntries || [],
       rallies: data.rallies || [],
+      experimentNotes: data.experimentNotes || [],
       activeLineupId: data.activeLineupId || (data.lineups[0]?.id || null),
       activeFormationId: data.activeFormationId || 'sr-5-1',
     };

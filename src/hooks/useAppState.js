@@ -236,6 +236,7 @@ function reducer(state, action) {
         rotation: action.rotation,
         stat: action.stat,
         timestamp: Date.now(),
+        ...(action.videoTimestamp != null ? { videoTimestamp: action.videoTimestamp } : {}),
       };
       return { ...state, statEntries: [...state.statEntries, entry] };
     }
@@ -251,6 +252,7 @@ function reducer(state, action) {
         matches: action.data.matches,
         statEntries: action.data.statEntries,
         rallies: action.data.rallies || [],
+        experimentNotes: action.data.experimentNotes || [],
         activeLineupId: action.data.activeLineupId || state.activeLineupId,
         activeFormationId: action.data.activeFormationId || state.activeFormationId,
         activeMatchId: null,
