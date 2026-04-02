@@ -6,6 +6,7 @@ import ArrowDefs from './ArrowDefs';
 import MovementArrows from './MovementArrows';
 import ZoneHeatmap from './ZoneHeatmap';
 import CoverageOverlay from './CoverageOverlay';
+import RallyBall from './RallyBall';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 function screenToSVG(svgEl, clientX, clientY) {
@@ -23,7 +24,7 @@ const TAP_TIME = 250;
 export default function Court({
   placements, dispatch, onSwipeLeft, onSwipeRight,
   responsibilities, selectedSlot, showRoutes, rotation,
-  heatmapData, heatmapMode, playerProfiles, showCoverage,
+  heatmapData, heatmapMode, playerProfiles, showCoverage, courtPhase,
 }) {
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
@@ -202,6 +203,9 @@ export default function Court({
           onPointerDown={(e) => handlePointerDown(e, p.rotationalPosition)}
         />
       ))}
+
+      {/* Rally ball — shows game action per phase */}
+      {courtPhase && <RallyBall phase={courtPhase} />}
     </svg>
   );
 }

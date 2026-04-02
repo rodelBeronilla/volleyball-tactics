@@ -130,6 +130,7 @@ export default function App() {
                   heatmapData={state.showHeatmap ? heatmapData : null}
                   heatmapMode="quality" playerProfiles={playerProfiles}
                   showCoverage={state.showCoverage && (state.courtPhase === 'defense')}
+                  courtPhase={state.courtPhase}
                 />
               ) : (
                 <div className="text-gray-500 text-center px-6">
