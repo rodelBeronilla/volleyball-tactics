@@ -5,34 +5,23 @@
  * Positions: 1=RB, 2=RF, 3=CF, 4=LF, 5=LB, 6=CB
  * Front row: 2, 3, 4. Back row: 1, 5, 6.
  *
- * KEY CONCEPT: The setter's position changes every rotation.
- * All post-receive formations must place the setter at the setting target,
- * regardless of which rotational position they occupy.
+ * Each rally movement has two steps:
+ *   1. PLAN step — show arrows/routes where players will go (players still at previous position)
+ *   2. MOVE step — players animate to new positions
  */
 
-// Which rotational position has the setter in each rotation
-// (derived from base lineup: slot 1 = setter)
-// deriveRotation formula: position P in rotation R ← base slot ((P+R-2)%6)+1
-// Setter (base slot 1) ends up at position: solve for P where ((P+R-2)%6)+1 = 1
-// → P = (7-R)%6+1... let's just compute it:
 function findSetterPos(rot) {
-  // Setter is in base slot 1. After rotation, they're in position where source=1.
-  // sourceSlot = ((pos + rot - 2) % 6) + 1 = 1 → pos = (8 - rot) % 6; if 0 → 6
   const p = (8 - rot) % 6;
   return p === 0 ? 6 : p;
 }
 
 const SETTER_POSITION = {};
 for (let r = 1; r <= 6; r++) SETTER_POSITION[r] = findSetterPos(r);
-// R1: pos 1, R2: pos 6, R3: pos 5, R4: pos 4, R5: pos 3, R6: pos 2
 
-const SETTER_TARGET = { x: 68, y: 8 }; // Right-front setting position (zone 2.5)
-
+const SETTER_TARGET = { x: 68, y: 8 };
 function isFront(pos) { return pos === 2 || pos === 3 || pos === 4; }
 
-// ═══════════════════════════════════════════
-// PHASE: SERVE — Legal pre-serve positions
-// ═══════════════════════════════════════════
+// ── SERVE: Legal pre-serve positions ──
 function buildServe() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
@@ -44,60 +33,48 @@ function buildServe() {
   return r;
 }
 
-// ═══════════════════════════════════════════
-// PHASE: SERVE RECEIVE — W formation
-// ═══════════════════════════════════════════
-// Rotation-specific. Setter cheats toward target when back row.
+// ── SERVE RECEIVE: W formation ──
 const SR_5_1 = {
-  1: { // S=pos1(RB) — cheats right for penetration
+  1: {
     1: { x: 82, y: 48 }, 2: { x: 60, y: 8 }, 3: { x: 35, y: 8 },
     4: { x: 12, y: 8 }, 5: { x: 25, y: 65 }, 6: { x: 55, y: 72 },
   },
-  2: { // S=pos6(CB) — cheats right
+  2: {
     1: { x: 70, y: 65 }, 2: { x: 62, y: 8 }, 3: { x: 38, y: 8 },
     4: { x: 12, y: 8 }, 5: { x: 22, y: 55 }, 6: { x: 58, y: 48 },
   },
-  3: { // S=pos5(LB) — cheats right
+  3: {
     1: { x: 70, y: 65 }, 2: { x: 65, y: 8 }, 3: { x: 40, y: 8 },
     4: { x: 12, y: 8 }, 5: { x: 25, y: 48 }, 6: { x: 50, y: 72 },
   },
-  4: { // S=pos4(LF) FRONT ROW — at net left, slides right
+  4: {
     1: { x: 70, y: 65 }, 2: { x: 72, y: 8 }, 3: { x: 48, y: 8 },
     4: { x: 22, y: 8 }, 5: { x: 25, y: 65 }, 6: { x: 50, y: 72 },
   },
-  5: { // S=pos3(CF) FRONT ROW — at net center, slides right
+  5: {
     1: { x: 70, y: 65 }, 2: { x: 72, y: 8 }, 3: { x: 48, y: 8 },
     4: { x: 15, y: 8 }, 5: { x: 25, y: 65 }, 6: { x: 50, y: 72 },
   },
-  6: { // S=pos2(RF) FRONT ROW — at natural setting position
+  6: {
     1: { x: 70, y: 65 }, 2: { x: 72, y: 8 }, 3: { x: 45, y: 8 },
     4: { x: 15, y: 8 }, 5: { x: 25, y: 65 }, 6: { x: 50, y: 72 },
   },
 };
 
-// ═══════════════════════════════════════════
-// PHASE: PASS — Setter has penetrated to target. Hitters loading.
-// ═══════════════════════════════════════════
-// The setter is NOW at the setting target regardless of where they started.
-// Front-row hitters are loading their approach (pulling off net slightly).
-// Back-row non-setters are in coverage positions.
+// ── PASS: Setter at target, hitters loading ──
 function buildPass() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
     const sPos = SETTER_POSITION[rot];
     r[rot] = {};
-
     for (let pos = 1; pos <= 6; pos++) {
       if (pos === sPos) {
-        // Setter at target — always right-front area
         r[rot][pos] = { ...SETTER_TARGET };
       } else if (isFront(pos)) {
-        // Front-row hitter — loading approach, slightly off net
-        if (pos === 4) r[rot][pos] = { x: 10, y: 18 };  // LF loading left
-        else if (pos === 3) r[rot][pos] = { x: 40, y: 15 }; // CF loading center
-        else r[rot][pos] = { x: 78, y: 18 }; // RF loading right
+        if (pos === 4) r[rot][pos] = { x: 10, y: 18 };
+        else if (pos === 3) r[rot][pos] = { x: 40, y: 15 };
+        else r[rot][pos] = { x: 78, y: 18 };
       } else {
-        // Back-row non-setter — ready for coverage/back-row attack
         if (pos === 1) r[rot][pos] = { x: 72, y: 45 };
         else if (pos === 5) r[rot][pos] = { x: 18, y: 45 };
         else r[rot][pos] = { x: 45, y: 50 };
@@ -107,27 +84,20 @@ function buildPass() {
   return r;
 }
 
-// ═══════════════════════════════════════════
-// PHASE: OFFENSE — Hitters at attack zones, setter at target
-// ═══════════════════════════════════════════
-// Setter at setting target. Front-row hitters at pins/middle.
-// Back-row in 3-2 cup coverage.
+// ── OFFENSE: Attack zones + coverage ──
 function buildOffense() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
     const sPos = SETTER_POSITION[rot];
     r[rot] = {};
-
     for (let pos = 1; pos <= 6; pos++) {
       if (pos === sPos) {
-        r[rot][pos] = { ...SETTER_TARGET }; // Setter at target
+        r[rot][pos] = { ...SETTER_TARGET };
       } else if (isFront(pos)) {
-        // Hitter at attack zone
-        if (pos === 4) r[rot][pos] = { x: 8, y: 4 };   // Left pin
-        else if (pos === 3) r[rot][pos] = { x: 38, y: 4 }; // Quick/slide
-        else r[rot][pos] = { x: 78, y: 4 }; // Right pin
+        if (pos === 4) r[rot][pos] = { x: 8, y: 4 };
+        else if (pos === 3) r[rot][pos] = { x: 38, y: 4 };
+        else r[rot][pos] = { x: 78, y: 4 };
       } else {
-        // Back-row coverage (3-2 cup)
         if (pos === 1) r[rot][pos] = { x: 68, y: 35 };
         else if (pos === 5) r[rot][pos] = { x: 18, y: 35 };
         else r[rot][pos] = { x: 42, y: 40 };
@@ -137,9 +107,7 @@ function buildOffense() {
   return r;
 }
 
-// ═══════════════════════════════════════════
-// PHASE: DEFENSE — Perimeter (2-0-4)
-// ═══════════════════════════════════════════
+// ── DEFENSE: Perimeter (2-0-4) ──
 function buildDefense() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
@@ -151,25 +119,20 @@ function buildDefense() {
   return r;
 }
 
-// ═══════════════════════════════════════════
-// PHASE: TRANSITION — Setter releases to target, hitters pull off
-// ═══════════════════════════════════════════
+// ── TRANSITION: Setter to target, hitters pull off ──
 function buildTransition() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
     const sPos = SETTER_POSITION[rot];
     r[rot] = {};
-
     for (let pos = 1; pos <= 6; pos++) {
       if (pos === sPos) {
-        r[rot][pos] = { ...SETTER_TARGET }; // Setter releases to target
+        r[rot][pos] = { ...SETTER_TARGET };
       } else if (isFront(pos)) {
-        // Hitters pull off net for approach
         if (pos === 4) r[rot][pos] = { x: 10, y: 22 };
         else if (pos === 3) r[rot][pos] = { x: 38, y: 20 };
         else r[rot][pos] = { x: 78, y: 22 };
       } else {
-        // Back-row ready
         if (pos === 1) r[rot][pos] = { x: 72, y: 48 };
         else if (pos === 5) r[rot][pos] = { x: 18, y: 48 };
         else r[rot][pos] = { x: 45, y: 52 };
@@ -179,9 +142,6 @@ function buildTransition() {
   return r;
 }
 
-// ═══════════════════════════════════════════
-// Exports
-// ═══════════════════════════════════════════
 export const FORMATIONS = [
   { id: 'serve', name: 'Serve', placements: buildServe() },
   { id: 'sr-5-1', name: 'Receive', placements: SR_5_1 },
@@ -195,28 +155,72 @@ export function getFormation(id) {
   return FORMATIONS.find(f => f.id === id) || FORMATIONS[0];
 }
 
+/**
+ * Rally phases — each movement has PLAN (show arrows) then MOVE (animate players).
+ *
+ * PLAN steps: players stay at PREVIOUS formation, arrows show where they'll go.
+ *   formationId = previous formation (players haven't moved yet)
+ *   showRoutes = true (arrows preview the movement)
+ *
+ * MOVE steps: players animate to new formation.
+ *   formationId = target formation
+ *   showRoutes = false (movement complete)
+ */
 export const RALLY_PHASES = [
+  // 1. Pre-serve
   { id: 'serve', formationId: 'serve', label: 'Serve',
-    description: 'Pre-serve. Position 1 serves. All in legal overlap positions.',
-    showRoutes: false, showCoverage: false },
+    description: 'Pre-serve legal positions. Position 1 serves.',
+    showRoutes: false, showCoverage: false, showOverlap: true },
+
+  // 2. Ball served → plan receive positions
+  { id: 'receive-plan', formationId: 'serve', label: '→ Receive',
+    description: 'Serve contact! Players move to receive formation.',
+    showRoutes: true, showCoverage: false, showOverlap: false },
+
+  // 3. In receive formation
   { id: 'receive', formationId: 'sr-5-1', label: 'Receive',
-    description: 'Serve incoming. Passers in W. Setter cheating toward target.',
-    showRoutes: false, showCoverage: false },
-  { id: 'pass', formationId: 'pass', label: 'Pass',
-    description: 'Ball passed to setter. Setter AT TARGET. Hitters loading approach.',
-    showRoutes: true, showCoverage: false },
-  { id: 'offense', formationId: 'offense', label: 'Attack',
-    description: 'Setter sets. All attack options: 4-ball, quick, slide, 2-ball, pipe, D-ball.',
-    showRoutes: true, showCoverage: false },
-  { id: 'coverage', formationId: 'offense', label: 'Cover',
-    description: '3-2 coverage cup behind hitter. 3 closest cover, 2 deep.',
-    showRoutes: false, showCoverage: true },
+    description: 'Passers in W formation. Setter cheating toward target.',
+    showRoutes: false, showCoverage: false, showOverlap: false },
+
+  // 4. Pass made → plan setter penetration + hitter loading
+  { id: 'pass-plan', formationId: 'sr-5-1', label: '→ Pass',
+    description: 'Pass to setter! Setter penetrates, hitters load approach.',
+    showRoutes: true, showCoverage: false, showOverlap: false },
+
+  // 5. Setter at target, hitters loaded
+  { id: 'pass', formationId: 'pass', label: 'Set Up',
+    description: 'Setter at target. Reading block. Choosing attack option.',
+    showRoutes: false, showCoverage: false, showOverlap: false },
+
+  // 6. Setter distributes → show all attack options
+  { id: 'attack-plan', formationId: 'pass', label: '→ Attack',
+    description: 'All attack options: 4-ball, quick, slide, right-side, pipe, D-ball.',
+    showRoutes: true, showCoverage: false, showOverlap: false },
+
+  // 7. Attack — hitters at zones, coverage cup forms
+  { id: 'attack', formationId: 'offense', label: 'Attack',
+    description: 'Hitter attacks. 3-2 coverage cup behind hitter.',
+    showRoutes: false, showCoverage: true, showOverlap: false },
+
+  // 8. Ball crosses net → plan defensive transition
+  { id: 'defense-plan', formationId: 'offense', label: '→ Defense',
+    description: 'Rally continues. Transition to defensive positions.',
+    showRoutes: true, showCoverage: false, showOverlap: false },
+
+  // 9. Defense formed
   { id: 'defense', formationId: 'def-perimeter', label: 'Defense',
-    description: 'Opponent attacks. 2 blockers, 4 diggers on perimeter.',
-    showRoutes: false, showCoverage: true },
+    description: 'Perimeter defense (2-0-4). 2 blockers, 4 diggers.',
+    showRoutes: false, showCoverage: true, showOverlap: false },
+
+  // 10. Dig made → plan transition to counter-attack
+  { id: 'transition-plan', formationId: 'def-perimeter', label: '→ Transition',
+    description: 'Dig! Setter releases to target. Hitters approach for counter.',
+    showRoutes: true, showCoverage: false, showOverlap: false },
+
+  // 11. Transition — ready for counter-attack
   { id: 'transition', formationId: 'transition', label: 'Transition',
-    description: 'Dig → setter releases to target. Hitters pull off net for approach.',
-    showRoutes: true, showCoverage: false },
+    description: 'Setter at target. Hitters pulled off net. Back-row ready.',
+    showRoutes: false, showCoverage: false, showOverlap: false },
 ];
 
 export { SETTER_POSITION };

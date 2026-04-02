@@ -86,30 +86,30 @@ export default function App() {
             <div className="flex items-center px-2 py-1.5 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
               {/* Prev phase */}
               <button onClick={handlePrevPhase}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface-3)] text-white text-sm font-bold active:scale-90 shrink-0"
-                aria-label="Previous phase">‹</button>
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-surface-3)] text-white text-lg font-bold active:scale-90 shrink-0"
+                aria-label="Previous step">‹</button>
 
-              {/* Phase indicators */}
-              <div className="flex-1 flex items-center justify-center gap-1 mx-2 overflow-x-auto">
-                {RALLY_PHASES.map((p, i) => (
-                  <button key={p.id}
-                    onClick={() => dispatch({ type: 'SET_COURT_PHASE', phase: p.id })}
-                    className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                      p.id === state.courtPhase
-                        ? 'bg-[var(--color-accent)] text-white scale-105'
-                        : i < currentPhaseIdx
-                          ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
-                          : 'bg-[var(--color-surface-3)] text-gray-500'
-                    }`}>
-                    {p.label}
-                  </button>
+              {/* Current phase label + progress */}
+              <div className="flex-1 flex flex-col items-center mx-3 min-w-0">
+                <div className="text-sm font-bold text-white">{currentPhase.label}</div>
+                {/* Progress dots */}
+                <div className="flex gap-0.5 mt-0.5">
+                  {RALLY_PHASES.map((p, i) => (
+                    <button key={p.id}
+                      onClick={() => dispatch({ type: 'SET_COURT_PHASE', phase: p.id })}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        p.id === state.courtPhase ? 'bg-[var(--color-accent)] scale-125'
+                          : i < currentPhaseIdx ? 'bg-[var(--color-accent)]/40'
+                          : 'bg-white/15'
+                      }`} />
                 ))}
+                </div>
               </div>
 
               {/* Next phase */}
               <button onClick={handleNextPhase}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--color-surface-3)] text-white text-sm font-bold active:scale-90 shrink-0"
-                aria-label="Next phase">›</button>
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-surface-3)] text-white text-lg font-bold active:scale-90 shrink-0"
+                aria-label="Next step">›</button>
             </div>
 
             {/* Phase description + overlay toggles */}

@@ -401,10 +401,19 @@ export function useAppState() {
     : {};
 
   // Derived: formation based on court phase
+  // Map phase ID → formation ID. PLAN steps use the PREVIOUS formation.
   const PHASE_FORMATION = {
-    serve: 'serve', receive: 'sr-5-1', pass: 'pass',
-    offense: 'offense', coverage: 'offense',
-    defense: 'def-perimeter', transition: 'transition',
+    'serve': 'serve',
+    'receive-plan': 'serve',       // arrows preview, players still at serve positions
+    'receive': 'sr-5-1',           // players move to receive
+    'pass-plan': 'sr-5-1',         // arrows preview, players still at receive
+    'pass': 'pass',                // setter at target, hitters loaded
+    'attack-plan': 'pass',         // arrows preview attack options
+    'attack': 'offense',           // hitters at attack zones
+    'defense-plan': 'offense',     // arrows preview defensive transition
+    'defense': 'def-perimeter',    // defense formed
+    'transition-plan': 'def-perimeter', // arrows preview counter-attack transition
+    'transition': 'transition',    // setter released, hitters approaching
   };
   const formationId = PHASE_FORMATION[state.courtPhase] || state.activeFormationId;
   const formation = getFormation(formationId);

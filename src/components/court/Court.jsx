@@ -160,7 +160,10 @@ export default function Court({
       {/* Heatmap layer */}
       {heatmapData && <ZoneHeatmap data={heatmapData} mode={heatmapMode} />}
 
-      <OverlapIndicator placements={renderPlacements} />
+      {/* Overlap violations — only valid pre-serve */}
+      {courtPhase === 'serve' && (
+        <OverlapIndicator placements={renderPlacements} />
+      )}
 
       {/* Movement arrows layer — behind players, above court */}
       {showRoutes && !dragging && (
