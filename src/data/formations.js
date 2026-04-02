@@ -1,209 +1,200 @@
 /**
- * Formation placement data — volleyball theory-correct positions.
+ * Formation placement data — 5 rally phases, volleyball theory-correct.
  *
  * Court: net at y=0, end line at y=90. Left x=0, right x=90.
  * Positions: 1=RB, 2=RF, 3=CF, 4=LF, 5=LB, 6=CB
+ * Front row: 2, 3, 4. Back row: 1, 5, 6.
  *
- * Standard 5-1 lineup (Rotation 1):
- *   Slot 1: Setter (RB) — opposite to OPP
- *   Slot 2: Opposite (RF)
- *   Slot 3: Middle 1 (CF)
- *   Slot 4: Outside 1 (LF)
- *   Slot 5: Middle 2 (LB) — libero replaces in back row
- *   Slot 6: Outside 2 (CB)
- *
- * Key rotation rules:
- * - R1-R3: Setter is back row → 3 front-row attackers, setter penetrates to ~zone 2.5
- * - R4-R6: Setter is front row → 2 front-row attackers, setter already at net
- * - Front row = positions 2, 3, 4 (always)
- * - Back row = positions 1, 5, 6 (always)
- * - Overlap: front must be closer to net than corresponding back; left must be left of center
+ * Rally flow: Serve → Receive → Offense → Defense → Transition → (repeat)
  */
 
 // ═══════════════════════════════════════════
-// SERVE RECEIVE — W formation, 5-1 system
+// PHASE 1: SERVE — Legal pre-serve positions
 // ═══════════════════════════════════════════
-// When receiving, non-passing front-row players push to net, passers form W shape
-// Setter cheats toward target area (right-front) when in back row
+// All players must respect overlap rules. Position 1 is the server.
+// Everyone stays in their legal zones, ready to transition after the serve.
+
+function buildServe() {
+  const r = {};
+  for (let rot = 1; rot <= 6; rot++) {
+    r[rot] = {
+      // Front row at net in legal positions
+      4: { x: 15, y: 15 }, // LF
+      3: { x: 45, y: 15 }, // CF
+      2: { x: 75, y: 15 }, // RF
+      // Back row behind their front-row counterparts
+      5: { x: 15, y: 60 }, // LB
+      6: { x: 45, y: 60 }, // CB
+      1: { x: 75, y: 80 }, // RB — SERVER (behind endline)
+    };
+  }
+  return r;
+}
+
+// ═══════════════════════════════════════════
+// PHASE 2: SERVE RECEIVE — W formation, 5-1
+// ═══════════════════════════════════════════
+// Passers form W, setter cheats toward target (right-front area).
+// R1-R3: Setter back row, penetrates. R4-R6: Setter front row.
 
 const SR_5_1 = {
   // R1: S=1(RB), OPP=2(RF), MB1=3(CF), OH1=4(LF), MB2=5(LB), OH2=6(CB)
-  // 3 attackers front row. Setter penetrates from RB. MB2/Libero passes.
+  // Front row squeezes LEFT to open right-side passing lane for setter penetration
   1: {
-    1: { x: 78, y: 48 }, // Setter — cheats forward-right for penetration
-    2: { x: 72, y: 10 }, // OPP — at net right front
-    3: { x: 45, y: 8 },  // MB1 — at net center
-    4: { x: 18, y: 10 }, // OH1 — at net left front
-    5: { x: 22, y: 68 }, // MB2/Libero — deep left passer
-    6: { x: 50, y: 72 }, // OH2 — deep center passer
+    1: { x: 82, y: 48 }, // Setter cheats forward-right for quick penetration
+    2: { x: 60, y: 8 },  // OPP squeezed left at net (opens right lane)
+    3: { x: 35, y: 8 },  // MB1 squeezed left at net
+    4: { x: 12, y: 8 },  // OH1 far left at net
+    5: { x: 25, y: 65 }, // MB2/Libero — left-back passer (W)
+    6: { x: 55, y: 72 }, // OH2 — center-right passer (W)
   },
-
-  // R2: OH2=1(RB), S=2→6(CB→penetrate), OPP=2(RF), MB1→OH2=3(CF), OH1→MB=4(LF), MB2=5(LB)
-  // Actually: S=6(CB), OH2=1(RB), OPP=2(RF), OH1=3(CF), MB1=4(LF), MB2/L=5(LB)
-  2: {
-    1: { x: 68, y: 68 }, // OH2 — deep right passer
-    2: { x: 72, y: 10 }, // OPP — at net right front
-    3: { x: 45, y: 8 },  // OH1 — at net center front
-    4: { x: 18, y: 10 }, // MB1 — at net left front
-    5: { x: 18, y: 55 }, // MB2/Libero — left back passer
-    6: { x: 55, y: 48 }, // Setter — cheats right from CB for penetration
-  },
-
-  // R3: MB2/L=1(RB), OH2=2(RF), S=5→penetrate, OPP=3(CF), OH1→MB=4(LF)→actually OH2=4
-  // S=5(LB), MB2/L=1(RB), OH2=2(RF), OPP=3(CF), OH1=4(LF), MB1=6(CB)
-  3: {
-    1: { x: 68, y: 68 }, // MB2/Libero — deep right passer
-    2: { x: 72, y: 10 }, // OH2 — at net right front
-    3: { x: 45, y: 8 },  // OPP — at net center front
-    4: { x: 18, y: 10 }, // OH1 — at net left front
-    5: { x: 22, y: 48 }, // Setter — cheats right from LB for penetration
-    6: { x: 50, y: 72 }, // MB1/Libero — deep center passer
-  },
-
-  // R4: S=4(LF) FRONT ROW — 2 attackers. Setter at net left, slides to right to set.
-  // MB1=1(RB), MB2/L=6→already back, OH2=5→back
-  // S=4(LF), MB1=5→nope... Let me recalculate.
-  // After 3 rotations from R1: S moves 1→6→5→4. So S=4(LF) in R4.
-  // OPP moves 2→1→6→5... wait, rotation is clockwise.
-  // R1: S=1, OPP=2, MB1=3, OH1=4, MB2=5, OH2=6
-  // R2: S=6, OPP=1, MB1=2... no. Rotation: each position gets the player from the NEXT position.
-  // Actually: deriveRotation shifts. R2 means everyone moved one spot clockwise.
-  // So R2: pos1 gets whoever was in pos2 (OPP), pos2 gets pos3 (MB1), etc.
-  // R1: {1:S, 2:OPP, 3:MB1, 4:OH1, 5:MB2, 6:OH2}
-  // R2: {1:OH2, 2:S, 3:OPP, 4:MB1, 5:OH1, 6:MB2}  -- wait this doesn't match the code.
-  // Let me check deriveRotation logic...
-  // deriveRotation: sourcePos = ((pos + shift - 1) % 6) + 1, shift = rot - 1
-  // R2 (shift=1): pos1 source = ((1+1-1)%6)+1 = 2. So pos1 gets slot2's player = OPP. Correct.
   // R2: {1:OPP, 2:MB1, 3:OH1, 4:MB2, 5:OH2, 6:S}
-  // R3: {1:MB1, 2:OH1, 3:MB2, 4:OH2, 5:S, 6:OPP}... wait that seems wrong too.
-  // Actually let me just trace it properly.
-  // Base (R1): 1=S, 2=OPP, 3=MB1, 4=OH1, 5=MB2, 6=OH2
-  // After winning rally while receiving, team rotates clockwise:
-  // Position 1 player goes to position 6, 6→5, 5→4, 4→3, 3→2, 2→1
-  // So R2: 1=OPP(was 2), 2=MB1(was 3), 3=OH1(was 4), 4=MB2(was 5), 5=OH2(was 6), 6=S(was 1)
-  // R3: 1=MB1, 2=OH1, 3=MB2, 4=OH2, 5=S, 6=OPP
-  // R4: 1=OH1, 2=MB2, 3=OH2, 4=S, 5=OPP, 6=MB1
-  // R5: 1=MB2, 2=OH2, 3=S, 4=OPP, 5=MB1, 6=OH1
-  // R6: 1=OH2, 2=S, 3=OPP, 4=MB1, 5=OH1, 6=MB2
-
-  // R4: S=4(LF), OPP=5(LB), MB1=6(CB), OH1=1(RB), MB2=2(RF), OH2=3(CF)
-  // Front row: pos 2=MB2, pos 3=OH2, pos 4=S — Setter front row! 2 attackers (MB2 + OH2)
+  // Front row squeezes LEFT, setter from CB cheats right
+  2: {
+    1: { x: 70, y: 65 }, // OPP — right-back passer (W)
+    2: { x: 62, y: 8 },  // MB1 at net (squeezed left)
+    3: { x: 38, y: 8 },  // OH1 at net
+    4: { x: 12, y: 8 },  // MB2/Libero at net LF
+    5: { x: 22, y: 55 }, // OH2 — left-back passer (W)
+    6: { x: 58, y: 48 }, // Setter cheats right from CB
+  },
+  // R3: {1:MB1, 2:OH1, 3:MB2, 4:OH2, 5:S, 6:OPP}
+  // Setter from LB cheats right. Front row squeezes to open lane.
+  3: {
+    1: { x: 70, y: 65 }, // MB1/Libero — right-back passer (W)
+    2: { x: 65, y: 8 },  // OH1 at net (squeezed left)
+    3: { x: 40, y: 8 },  // MB2 at net CF
+    4: { x: 12, y: 8 },  // OH2 at net LF
+    5: { x: 25, y: 48 }, // Setter cheats right from LB
+    6: { x: 50, y: 72 }, // OPP — center-back passer (W)
+  },
+  // R4: {1:OH1, 2:MB2, 3:OH2, 4:S, 5:OPP, 6:MB1}
+  // Setter FRONT ROW (pos 4). Setter at left-front, slides right to set.
+  // 2 attackers: MB2(pos2) + OH2(pos3). Stack left for setter.
   4: {
-    1: { x: 68, y: 68 }, // OH1 — deep right passer
-    2: { x: 72, y: 10 }, // MB2 — at net right front
-    3: { x: 45, y: 8 },  // OH2 — at net center front
-    4: { x: 18, y: 12 }, // Setter — at net left front (will slide right to set)
-    5: { x: 22, y: 68 }, // OPP — deep left passer
-    6: { x: 50, y: 72 }, // MB1/Libero — deep center passer
+    1: { x: 70, y: 65 }, // OH1 — right-back passer (W)
+    2: { x: 72, y: 8 },  // MB2 at net RF
+    3: { x: 48, y: 8 },  // OH2 at net CF
+    4: { x: 22, y: 8 },  // Setter at net LF (will slide right after contact)
+    5: { x: 25, y: 65 }, // OPP — left-back passer (W)
+    6: { x: 50, y: 72 }, // MB1/Libero — center passer
   },
-
-  // R5: S=3(CF), OPP=4→actually... R5: 1=MB2, 2=OH2, 3=S, 4=OPP, 5=MB1, 6=OH1
-  // Front row: pos 2=OH2, pos 3=S, pos 4=OPP — S front row center. 2 attackers (OH2 + OPP)
+  // R5: {1:MB2, 2:OH2, 3:S, 4:OPP, 5:MB1, 6:OH1}
+  // Setter FRONT ROW (pos 3, center). Slides right. 2 attackers: OH2(pos2) + OPP(pos4)
   5: {
-    1: { x: 68, y: 68 }, // MB2/Libero — deep right passer
-    2: { x: 72, y: 10 }, // OH2 — at net right front
-    3: { x: 45, y: 8 },  // Setter — at net center (slides right to set)
-    4: { x: 18, y: 10 }, // OPP — at net left front (unusual but correct overlap position)
-    5: { x: 22, y: 68 }, // MB1/Libero — deep left passer
-    6: { x: 50, y: 72 }, // OH1 — deep center passer
+    1: { x: 70, y: 65 }, // MB2/Libero — right-back passer
+    2: { x: 72, y: 8 },  // OH2 at net RF
+    3: { x: 48, y: 8 },  // Setter at net CF (slides right)
+    4: { x: 15, y: 8 },  // OPP at net LF
+    5: { x: 25, y: 65 }, // MB1/Libero — left-back passer
+    6: { x: 50, y: 72 }, // OH1 — center passer
   },
-
-  // R6: 1=OH2, 2=S, 3=OPP, 4=MB1, 5=OH1, 6=MB2
-  // Front row: pos 2=S, pos 3=OPP, pos 4=MB1 — S front row right. 2 attackers (OPP + MB1)
+  // R6: {1:OH2, 2:S, 3:OPP, 4:MB1, 5:OH1, 6:MB2}
+  // Setter FRONT ROW (pos 2, RF) — natural setting position! 2 attackers: OPP(pos3) + MB1(pos4)
   6: {
-    1: { x: 68, y: 68 }, // OH2 — deep right passer
-    2: { x: 72, y: 10 }, // Setter — at net right front (natural setting position)
-    3: { x: 45, y: 8 },  // OPP — at net center front
-    4: { x: 18, y: 10 }, // MB1 — at net left front
-    5: { x: 22, y: 68 }, // OH1 — deep left passer
-    6: { x: 50, y: 72 }, // MB2/Libero — deep center passer
+    1: { x: 70, y: 65 }, // OH2 — right-back passer
+    2: { x: 72, y: 8 },  // Setter at net RF (ideal setting spot)
+    3: { x: 45, y: 8 },  // OPP at net CF
+    4: { x: 15, y: 8 },  // MB1 at net LF
+    5: { x: 25, y: 65 }, // OH1 — left-back passer
+    6: { x: 50, y: 72 }, // MB2/Libero — center passer
   },
 };
 
 // ═══════════════════════════════════════════
-// OFFENSE / TRANSITION — after pass, players move to attack/set positions
+// PHASE 3: OFFENSE — Attack positions + 3-2 coverage cup
 // ═══════════════════════════════════════════
-// Setter goes to target area (~right-center at net)
-// Front-row hitters spread along net for approach
-// Back-row players pull up for coverage (3-2 cup)
+// Front row: spread to attack zones (pins + middle)
+// Setter: at right-front target area (penetrates if from back row)
+// Back row: 3-2 cup behind the attacking hitter
 
 function buildOffense() {
-  const result = {};
-  for (let r = 1; r <= 6; r++) {
-    result[r] = {};
-    for (let pos = 1; pos <= 6; pos++) {
-      const isFront = pos === 2 || pos === 3 || pos === 4;
-
-      if (isFront) {
-        // Front-row players approach net, spread across zones
-        if (pos === 4) result[r][pos] = { x: 12, y: 6 };  // left pin (zone 4 attack)
-        if (pos === 3) result[r][pos] = { x: 42, y: 6 };  // middle (quick attack)
-        if (pos === 2) result[r][pos] = { x: 75, y: 6 };  // right pin (zone 2 attack)
-      } else {
-        // Back-row: setter penetrates, others provide coverage
-        if (pos === 1) result[r][pos] = { x: 70, y: 45 }; // RB coverage
-        if (pos === 5) result[r][pos] = { x: 20, y: 45 }; // LB coverage
-        if (pos === 6) result[r][pos] = { x: 45, y: 50 }; // CB coverage
-      }
-    }
-  }
-  return result;
-}
-
-// ═══════════════════════════════════════════
-// DEFENSE — Perimeter system (2-0-4)
-// ═══════════════════════════════════════════
-// 2 blockers at net (front-row non-setter players block)
-// 4 diggers on perimeter (back row + off-blocker)
-// Middle back on endline, wing diggers on sidelines
-
-function buildDefense() {
-  const result = {};
-  for (let r = 1; r <= 6; r++) {
-    result[r] = {};
-
-    // Front row: 2 blockers at net, 1 off-blocker pulls back for tip coverage
-    // In perimeter defense, front-row players who aren't blocking pull to 3m line
-    for (let pos = 1; pos <= 6; pos++) {
-      const isFront = pos === 2 || pos === 3 || pos === 4;
-
-      if (isFront) {
-        // Front-row: at net for blocking, slightly spread
-        if (pos === 4) result[r][pos] = { x: 12, y: 8 };  // LF blocker
-        if (pos === 3) result[r][pos] = { x: 45, y: 8 };  // CF blocker/middle
-        if (pos === 2) result[r][pos] = { x: 78, y: 8 };  // RF blocker
-      } else {
-        // Back-row: perimeter positions
-        if (pos === 5) result[r][pos] = { x: 8, y: 78 };   // LB — deep left sideline
-        if (pos === 6) result[r][pos] = { x: 45, y: 82 };  // CB — deep center endline
-        if (pos === 1) result[r][pos] = { x: 82, y: 78 };  // RB — deep right sideline
-      }
-    }
-  }
-  return result;
-}
-
-// ═══════════════════════════════════════════
-// BASE — standard zone center positions (neutral)
-// ═══════════════════════════════════════════
-function buildBase() {
-  const base = {};
-  for (let r = 1; r <= 6; r++) {
-    base[r] = {
-      1: { x: 75, y: 60 }, 2: { x: 75, y: 15 }, 3: { x: 45, y: 15 },
-      4: { x: 15, y: 15 }, 5: { x: 15, y: 60 }, 6: { x: 45, y: 60 },
+  const r = {};
+  for (let rot = 1; rot <= 6; rot++) {
+    r[rot] = {
+      4: { x: 12, y: 6 },   // LF — left pin attack zone
+      3: { x: 42, y: 6 },   // CF — quick/slide attack zone
+      2: { x: 75, y: 6 },   // RF — right pin attack zone
+      // Back row: 3-2 coverage cup (pulled up behind hitters)
+      5: { x: 18, y: 38 },  // LB — inner cup left
+      6: { x: 45, y: 42 },  // CB — inner cup center
+      1: { x: 72, y: 38 },  // RB — inner cup right
     };
   }
-  return base;
+  return r;
 }
 
+// ═══════════════════════════════════════════
+// PHASE 4: DEFENSE — Perimeter (2-0-4)
+// ═══════════════════════════════════════════
+// 2 front-row blockers at net
+// Off-blocker (non-blocking front row) pulls to 3m line for tips
+// 3 back-row diggers on perimeter (sidelines + endline)
+
+function buildDefense() {
+  const r = {};
+  for (let rot = 1; rot <= 6; rot++) {
+    r[rot] = {
+      // Front row: blocking positions at net
+      4: { x: 12, y: 5 },   // LF blocker
+      3: { x: 45, y: 5 },   // CF blocker (middle)
+      2: { x: 78, y: 5 },   // RF blocker
+      // Back row: perimeter dig positions
+      5: { x: 8, y: 75 },   // LB — deep left sideline
+      6: { x: 45, y: 80 },  // CB — deep center endline
+      1: { x: 82, y: 75 },  // RB — deep right sideline
+    };
+  }
+  return r;
+}
+
+// ═══════════════════════════════════════════
+// PHASE 5: TRANSITION — Defense back to offense
+// ═══════════════════════════════════════════
+// Setter releases from defensive position to target area
+// Hitters pull off net for approach run
+// Back-row players ready for pipe/back-row attack
+
+function buildTransition() {
+  const r = {};
+  for (let rot = 1; rot <= 6; rot++) {
+    r[rot] = {
+      // Front row: pull off net for approach
+      4: { x: 12, y: 22 },  // LF — pulls back for approach run
+      3: { x: 40, y: 20 },  // CF — pulls back for quick approach
+      2: { x: 72, y: 22 },  // RF — pulls back for approach
+      // Back row: ready for back-row attack or coverage
+      5: { x: 18, y: 50 },  // LB — ready for pipe
+      6: { x: 45, y: 55 },  // CB — setter target or pipe
+      1: { x: 72, y: 50 },  // RB — ready for D-ball
+    };
+  }
+  return r;
+}
+
+// ═══════════════════════════════════════════
+// Exports
+// ═══════════════════════════════════════════
+
 export const FORMATIONS = [
-  { id: 'base', name: 'Base', type: 'base', description: 'Standard zone positions', placements: buildBase() },
-  { id: 'sr-5-1', name: 'Serve Receive', type: 'serve-receive', description: '5-1 W formation with setter penetration', placements: SR_5_1 },
-  { id: 'offense', name: 'Offense', type: 'offense', description: 'Attack positions with 3-2 coverage', placements: buildOffense() },
+  { id: 'serve', name: 'Serve', type: 'serve', description: 'Pre-serve legal positions, position 1 serves', placements: buildServe() },
+  { id: 'sr-5-1', name: 'Receive', type: 'serve-receive', description: '5-1 W formation, setter penetrates', placements: SR_5_1 },
+  { id: 'offense', name: 'Offense', type: 'offense', description: 'Attack positions with 3-2 coverage cup', placements: buildOffense() },
   { id: 'def-perimeter', name: 'Defense', type: 'defense', description: 'Perimeter defense (2-0-4)', placements: buildDefense() },
+  { id: 'transition', name: 'Transition', type: 'transition', description: 'Defense→Offense, setter releases, hitters approach', placements: buildTransition() },
 ];
 
 export function getFormation(id) {
   return FORMATIONS.find(f => f.id === id) || FORMATIONS[0];
 }
+
+/**
+ * Rally phase sequence — the order coaches step through.
+ */
+export const RALLY_PHASES = [
+  { id: 'serve', formationId: 'serve', label: 'Serve', description: 'Pre-serve positions. Position 1 serves.' },
+  { id: 'receive', formationId: 'sr-5-1', label: 'Receive', description: 'Serve receive W formation.' },
+  { id: 'offense', formationId: 'offense', label: 'Offense', description: 'Attack positions, 3-2 coverage.' },
+  { id: 'defense', formationId: 'def-perimeter', label: 'Defense', description: 'Perimeter defense (2-0-4).' },
+  { id: 'transition', formationId: 'transition', label: 'Transition', description: 'Reset to offense.' },
+];
