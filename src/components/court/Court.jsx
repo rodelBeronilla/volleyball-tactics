@@ -142,6 +142,8 @@ export default function Court({
       viewBox="-2 -5 94 100"
       className="w-full max-h-full"
       style={{ touchAction: 'none' }}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ touchAction: 'none' }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
