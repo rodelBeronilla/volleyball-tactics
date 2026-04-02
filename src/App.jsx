@@ -12,6 +12,7 @@ import LineupPanel from './components/lineup/LineupPanel';
 import StatsPanel from './components/stats/StatsPanel';
 import AnalysisPanel from './components/analysis/AnalysisPanel';
 import SettingsPanel from './components/settings/SettingsPanel';
+import { deriveRotation as deriveRot } from './utils/rotations';
 import { getResponsibilities } from './data/responsibilities';
 
 export default function App() {
@@ -26,28 +27,42 @@ export default function App() {
 
   const handleCloseCard = useCallback(() => dispatch({ type: 'DESELECT_PLAYER' }), [dispatch]);
 
-  // Compute heatmap data: aggregate stat density per zone
+  // Compute heatmap data: aggregate stat density per court zone.
+  // For each stat entry, determine which rotational position (= court zone 1-6)
+  // the player was in by looking up their slot in the lineup at that rotation.
   const heatmapData = useMemo(() => {
-    if (!state.showHeatmap || state.statEntries.length === 0) return null;
-    // Map rotational positions to zones (1→RB, 2→RF, 3→CF, 4→LF, 5→LB, 6→CB)
+    if (!state.showHeatmap || state.statEntries.length === 0 || !activeLineup) return null;
     const zones = {};
+    const POSITIVE_STATS = new Set(['kill', 'attackTip', 'attackTooled', 'ace', 'blockSolo', 'blockAssist', 'dig', 'passPerfect', 'passGood', 'assist', 'freeBall', 'coverDig']);
+
     for (const e of state.statEntries) {
       if (!e.rotation || e.playerId === '__team__') continue;
-      // The rotational position in the rotation determines the zone
-      // We don't know the exact slot, but we can use the rotation entry directly
-      const zone = e.rotation; // rough: rotation correlates with zone activity
+
+      // Derive which slot this player occupied in this rotation
+      const slots = deriveRot(activeLineup.slots, e.rotation);
+      let zone = null;
+      for (let pos = 1; pos <= 6; pos++) {
+        if (slots[pos] === e.playerId) { zone = pos; break; }
+      }
+      // Check libero — libero replaces middle in back row
+      if (!zone && activeLineup.liberoId === e.playerId) {
+        for (let pos of [1, 5, 6]) {
+          const originalPlayer = state.players.find(p => p.id === slots[pos]);
+          if (originalPlayer?.position === 'middle') { zone = pos; break; }
+        }
+      }
+      if (!zone) continue;
+
       if (!zones[zone]) zones[zone] = { total: 0, positive: 0 };
       zones[zone].total++;
-      const stat = e.stat;
-      if (['kill', 'attackTip', 'attackTooled', 'ace', 'blockSolo', 'blockAssist', 'dig', 'passPerfect', 'passGood', 'assist', 'freeBall'].includes(stat)) {
-        zones[zone].positive++;
-      }
+      if (POSITIVE_STATS.has(e.stat)) zones[zone].positive++;
     }
+
     for (const z of Object.values(zones)) {
       z.positiveRate = z.total > 0 ? z.positive / z.total : 0;
     }
     return zones;
-  }, [state.showHeatmap, state.statEntries]);
+  }, [state.showHeatmap, state.statEntries, activeLineup, state.players]);
 
   return (
     <div className="flex flex-col h-full">

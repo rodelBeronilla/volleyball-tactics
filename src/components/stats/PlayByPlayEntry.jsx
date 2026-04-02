@@ -170,7 +170,7 @@ export default function PlayByPlayEntry({ match, players, lineups, rallies, disp
               style={{ background: isActive ? posInfo.color + '33' : 'transparent' }}
             >
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold"
                 style={{ background: posInfo.color }}
               >
                 {p.number}

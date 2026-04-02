@@ -21,9 +21,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+html, body, #root {
   height: 100dvh;
-  height: 100vh; /* fallback */
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -34,11 +34,13 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-#root {
-  height: 100dvh;
-  height: 100vh;
-  max-width: 48rem;
-  margin: 0 auto;
+@media (min-width: 768px) {
+  #root {
+    max-width: 48rem;
+    margin: 0 auto;
+    border-left: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
 }
 
 @keyframes slide-up {

@@ -22,7 +22,11 @@ export default function MovementArrows({ rotation, placements, selectedSlot }) {
 
         const style = ROUTE_STYLES[route.style] || ROUTE_STYLES.approach;
         const markerId = getMarkerId(route.color);
-        const opacity = selectedSlot != null ? style.opacity + 0.2 : style.opacity;
+        // When a slot is selected, show only that player's routes at full opacity
+        // When no slot selected, show all routes at default opacity
+        const opacity = selectedSlot != null
+          ? (route.slot === selectedSlot ? Math.min(1, style.opacity + 0.3) : style.opacity * 0.3)
+          : style.opacity;
 
         // Shorten the line slightly so arrow doesn't overlap with target
         const dx = route.to.x - from.x;
