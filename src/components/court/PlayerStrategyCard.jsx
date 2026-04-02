@@ -110,7 +110,7 @@ export default function PlayerStrategyCard({ selectedSlot, rotation, placements,
               <div key={field} className="flex gap-2">
                 <span className="text-base shrink-0 mt-0.5">{FIELD_ICONS[field]}</span>
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
+                  <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
                     {FIELD_LABELS[field]}
                   </div>
                   <div className="text-sm text-gray-200 leading-snug">{value}</div>

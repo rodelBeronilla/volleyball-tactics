@@ -68,40 +68,43 @@ export default function App() {
     <div className="flex flex-col h-full">
       {state.activeTab === 'court' && (
         <>
-          <FormationSelector
-            activeFormationId={state.activeFormationId}
-            dispatch={dispatch}
-          />
-          <ResponsibilitySelector
-            activeResponsibilityId={state.activeResponsibilityId}
-            dispatch={dispatch}
-          />
-
-          {/* Court overlay toggles */}
-          <div className="flex items-center gap-2 px-3 py-1 bg-[var(--color-surface)]">
+          {/* Compact toolbar: formation + overlays in one row */}
+          <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[var(--color-surface-2)] border-b border-white/5 overflow-x-auto shrink-0">
+            <FormationSelector
+              activeFormationId={state.activeFormationId}
+              dispatch={dispatch}
+              compact
+            />
+            <div className="w-px h-5 bg-white/10 shrink-0" />
             <button
               onClick={() => dispatch({ type: 'TOGGLE_ROUTES' })}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+              className={`text-xs px-2.5 py-1 rounded-full border shrink-0 ${
                 state.showRoutes
                   ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
                   : 'bg-white/5 border-white/10 text-gray-400'
               }`}
             >
-              {state.showRoutes ? 'Routes ON' : 'Routes'}
+              Routes
             </button>
             <button
               onClick={() => dispatch({ type: 'TOGGLE_HEATMAP' })}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+              className={`text-xs px-2.5 py-1 rounded-full border shrink-0 ${
                 state.showHeatmap
                   ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
                   : 'bg-white/5 border-white/10 text-gray-400'
               }`}
             >
-              {state.showHeatmap ? 'Heatmap ON' : 'Heatmap'}
+              Heat
             </button>
+            <ResponsibilitySelector
+              activeResponsibilityId={state.activeResponsibilityId}
+              dispatch={dispatch}
+              compact
+            />
           </div>
 
-          <div className="flex-1 flex items-center justify-center p-2 min-h-0 bg-[var(--color-surface)]">
+          {/* Court — takes all available space */}
+          <div className="flex-1 flex items-center justify-center p-1 min-h-0 bg-[var(--color-surface)]">
             {activeLineup ? (
               <Court
                 placements={placements}
@@ -129,7 +132,7 @@ export default function App() {
             )}
           </div>
 
-          {/* Rotation Summary — between court and controls */}
+          {/* Rotation Summary — compact, expandable */}
           {activeLineup && (
             <RotationSummary
               rotation={state.currentRotation}
@@ -137,6 +140,7 @@ export default function App() {
             />
           )}
 
+          {/* Compact rotation controls */}
           <RotationControls
             currentRotation={state.currentRotation}
             dispatch={dispatch}

@@ -145,7 +145,7 @@ export default function LineupOptimizer({ players, playerProfiles, activeLineup 
                   {[1, 2, 3, 4, 5, 6].map(slot => {
                     const p = players.find(pl => pl.id === candidate.slots[slot]);
                     return (
-                      <span key={slot} className="text-[9px] text-gray-400">
+                      <span key={slot} className="text-[10px] text-gray-400">
                         {slot}:{p?.name?.slice(0, 4) || '?'}
                       </span>
                     );

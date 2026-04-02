@@ -39,7 +39,7 @@ export default function DecisionSupport({ players, playerProfiles, activeLineup,
               }`}>
                 <div className="text-xs text-white font-medium">{s.description}</div>
                 <div className="text-[10px] text-gray-400 mt-0.5">{s.evidence}</div>
-                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold ${
+                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${
                   s.impact === 'high' ? 'bg-red-900/30 text-red-400' :
                   s.impact === 'medium' ? 'bg-yellow-900/30 text-yellow-400' :
                   'bg-blue-900/30 text-blue-400'
