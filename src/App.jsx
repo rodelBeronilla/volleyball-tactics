@@ -7,10 +7,8 @@ import RotationControls from './components/controls/RotationControls';
 import FormationSelector from './components/controls/FormationSelector';
 import ResponsibilitySelector from './components/controls/ResponsibilitySelector';
 import BottomNav from './components/controls/BottomNav';
-import RosterPanel from './components/roster/RosterPanel';
-import LineupPanel from './components/lineup/LineupPanel';
 import StatsPanel from './components/stats/StatsPanel';
-import AnalysisPanel from './components/analysis/AnalysisPanel';
+import TeamPanel from './components/team/TeamPanel';
 import SettingsPanel from './components/settings/SettingsPanel';
 import { deriveRotation as deriveRot } from './utils/rotations';
 import { getResponsibilities } from './data/responsibilities';
@@ -27,9 +25,7 @@ export default function App() {
 
   const handleCloseCard = useCallback(() => dispatch({ type: 'DESELECT_PLAYER' }), [dispatch]);
 
-  // Compute heatmap data: aggregate stat density per court zone.
-  // For each stat entry, determine which rotational position (= court zone 1-6)
-  // the player was in by looking up their slot in the lineup at that rotation.
+  // Heatmap: map stats to court zones via player's rotational position
   const heatmapData = useMemo(() => {
     if (!state.showHeatmap || state.statEntries.length === 0 || !activeLineup) return null;
     const zones = {};
@@ -37,14 +33,11 @@ export default function App() {
 
     for (const e of state.statEntries) {
       if (!e.rotation || e.playerId === '__team__') continue;
-
-      // Derive which slot this player occupied in this rotation
       const slots = deriveRot(activeLineup.slots, e.rotation);
       let zone = null;
       for (let pos = 1; pos <= 6; pos++) {
         if (slots[pos] === e.playerId) { zone = pos; break; }
       }
-      // Check libero — libero replaces middle in back row
       if (!zone && activeLineup.liberoId === e.playerId) {
         for (let pos of [1, 5, 6]) {
           const originalPlayer = state.players.find(p => p.id === slots[pos]);
@@ -52,12 +45,10 @@ export default function App() {
         }
       }
       if (!zone) continue;
-
       if (!zones[zone]) zones[zone] = { total: 0, positive: 0 };
       zones[zone].total++;
       if (POSITIVE_STATS.has(e.stat)) zones[zone].positive++;
     }
-
     for (const z of Object.values(zones)) {
       z.positiveRate = z.total > 0 ? z.positive / z.total : 0;
     }
@@ -66,22 +57,17 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* ── Court Tab ── */}
       {state.activeTab === 'court' && (
         <>
-          {/* Compact toolbar: formation + overlays in one row */}
+          {/* Compact toolbar */}
           <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[var(--color-surface-2)] border-b border-white/5 overflow-x-auto shrink-0">
-            <FormationSelector
-              activeFormationId={state.activeFormationId}
-              dispatch={dispatch}
-              compact
-            />
+            <FormationSelector activeFormationId={state.activeFormationId} dispatch={dispatch} compact />
             <div className="w-px h-5 bg-white/10 shrink-0" />
             <button
               onClick={() => dispatch({ type: 'TOGGLE_ROUTES' })}
               className={`text-xs px-2.5 py-1 rounded-full border shrink-0 ${
-                state.showRoutes
-                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
-                  : 'bg-white/5 border-white/10 text-gray-400'
+                state.showRoutes ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-white/5 border-white/10 text-gray-400'
               }`}
             >
               Routes
@@ -89,21 +75,15 @@ export default function App() {
             <button
               onClick={() => dispatch({ type: 'TOGGLE_HEATMAP' })}
               className={`text-xs px-2.5 py-1 rounded-full border shrink-0 ${
-                state.showHeatmap
-                  ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                  : 'bg-white/5 border-white/10 text-gray-400'
+                state.showHeatmap ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400'
               }`}
             >
               Heat
             </button>
-            <ResponsibilitySelector
-              activeResponsibilityId={state.activeResponsibilityId}
-              dispatch={dispatch}
-              compact
-            />
+            <ResponsibilitySelector activeResponsibilityId={state.activeResponsibilityId} dispatch={dispatch} compact />
           </div>
 
-          {/* Court — takes all available space */}
+          {/* Court */}
           <div className="flex-1 flex items-center justify-center p-1 min-h-0 bg-[var(--color-surface)]">
             {activeLineup ? (
               <Court
@@ -120,33 +100,26 @@ export default function App() {
                 playerProfiles={playerProfiles}
               />
             ) : (
-              <div className="text-gray-500 text-center px-4">
-                <p className="text-lg mb-2">No lineup selected</p>
+              <div className="text-gray-500 text-center px-6">
+                <p className="text-lg mb-2 text-white font-bold">Set Up Your Team</p>
+                <p className="text-sm mb-4">Create a lineup to see your court visualization.</p>
                 <button
-                  onClick={() => dispatch({ type: 'SET_TAB', tab: 'lineups' })}
-                  className="text-sm text-[var(--color-accent)] underline"
+                  onClick={() => dispatch({ type: 'SET_TAB', tab: 'team' })}
+                  className="px-5 py-2.5 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95"
                 >
-                  Go to Lineups to create one
+                  Go to Team
                 </button>
               </div>
             )}
           </div>
 
-          {/* Rotation Summary — compact, expandable */}
+          {/* Rotation summary + controls */}
           {activeLineup && (
-            <RotationSummary
-              rotation={state.currentRotation}
-              placements={placements}
-            />
+            <RotationSummary rotation={state.currentRotation} placements={placements} />
           )}
+          <RotationControls currentRotation={state.currentRotation} dispatch={dispatch} />
 
-          {/* Compact rotation controls */}
-          <RotationControls
-            currentRotation={state.currentRotation}
-            dispatch={dispatch}
-          />
-
-          {/* Strategy Card overlay */}
+          {/* Strategy card overlay */}
           {state.selectedSlot != null && (
             <PlayerStrategyCard
               selectedSlot={state.selectedSlot}
@@ -158,42 +131,28 @@ export default function App() {
         </>
       )}
 
+      {/* ── Stats Tab (includes Record, Matches, Players, Analysis) ── */}
       {state.activeTab === 'stats' && (
         <StatsPanel
           state={state}
           dispatch={dispatch}
           activeMatch={activeMatch}
-        />
-      )}
-
-      {state.activeTab === 'roster' && (
-        <RosterPanel
-          players={state.players}
-          dispatch={dispatch}
-          activeLineup={activeLineup}
-          statEntries={state.statEntries}
-        />
-      )}
-
-      {state.activeTab === 'lineups' && (
-        <LineupPanel
-          lineups={state.lineups}
-          activeLineupId={state.activeLineupId}
-          players={state.players}
-          dispatch={dispatch}
-        />
-      )}
-
-      {state.activeTab === 'analysis' && (
-        <AnalysisPanel
-          state={state}
-          dispatch={dispatch}
           activeLineup={activeLineup}
           playerProfiles={playerProfiles}
         />
       )}
 
-      {state.activeTab === 'settings' && (
+      {/* ── Team Tab (Roster + Lineups) ── */}
+      {state.activeTab === 'team' && (
+        <TeamPanel
+          state={state}
+          dispatch={dispatch}
+          activeLineup={activeLineup}
+        />
+      )}
+
+      {/* ── More Tab (Settings) ── */}
+      {state.activeTab === 'more' && (
         <SettingsPanel state={state} dispatch={dispatch} />
       )}
 

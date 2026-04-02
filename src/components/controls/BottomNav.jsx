@@ -1,10 +1,8 @@
 const tabs = [
   { id: 'court', label: 'Court', icon: '⬡' },
   { id: 'stats', label: 'Stats', icon: '▥' },
-  { id: 'roster', label: 'Roster', icon: '☰' },
-  { id: 'lineups', label: 'Lineups', icon: '▤' },
-  { id: 'analysis', label: 'Analysis', icon: '◈' },
-  { id: 'settings', label: 'More', icon: '⚙' },
+  { id: 'team', label: 'Team', icon: '☰' },
+  { id: 'more', label: 'More', icon: '⚙' },
 ];
 
 export default function BottomNav({ activeTab, dispatch }) {
@@ -21,12 +19,12 @@ export default function BottomNav({ activeTab, dispatch }) {
           aria-selected={t.id === activeTab}
           aria-label={t.label}
           onClick={() => dispatch({ type: 'SET_TAB', tab: t.id })}
-          className={`flex-1 flex flex-col items-center py-1.5 gap-0.5 transition-colors min-w-0 ${
+          className={`flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors ${
             t.id === activeTab ? 'text-[var(--color-accent)]' : 'text-gray-500'
           }`}
         >
-          <span className="text-base leading-none">{t.icon}</span>
-          <span className="text-xs leading-none font-medium truncate w-full text-center">{t.label}</span>
+          <span className="text-lg leading-none">{t.icon}</span>
+          <span className="text-xs leading-none font-medium">{t.label}</span>
         </button>
       ))}
     </nav>

@@ -6,17 +6,24 @@ import MatchForm from './MatchForm';
 import MatchLog from './MatchLog';
 import MatchDetail from './MatchDetail';
 import PlayerStats from './PlayerStats';
+import AnalysisPanel from '../analysis/AnalysisPanel';
 
 const VIEWS = [
-  { id: 'live', label: 'Live' },
-  { id: 'pbp', label: 'PbP' },
-  { id: 'video', label: 'Video' },
+  { id: 'record', label: 'Record' },
   { id: 'matches', label: 'Matches' },
   { id: 'players', label: 'Players' },
+  { id: 'analysis', label: 'Analysis' },
 ];
 
-export default function StatsPanel({ state, dispatch, activeMatch }) {
-  const [view, setView] = useState(activeMatch ? 'live' : 'matches');
+const RECORD_MODES = [
+  { id: 'live', label: 'Live' },
+  { id: 'pbp', label: 'Play-by-Play' },
+  { id: 'video', label: 'Video Review' },
+];
+
+export default function StatsPanel({ state, dispatch, activeMatch, activeLineup, playerProfiles }) {
+  const [view, setView] = useState(activeMatch ? 'record' : 'matches');
+  const [recordMode, setRecordMode] = useState('live');
   const [showMatchForm, setShowMatchForm] = useState(false);
   const [detailMatchId, setDetailMatchId] = useState(null);
 
@@ -25,20 +32,19 @@ export default function StatsPanel({ state, dispatch, activeMatch }) {
   const handleCreateMatch = (data) => {
     dispatch({ type: 'CREATE_MATCH', ...data });
     setShowMatchForm(false);
-    setView('live');
+    setView('record');
   };
 
   const handleResumeMatch = (matchId) => {
     const match = state.matches.find(m => m.id === matchId);
     if (match && !match.completed) {
       dispatch({ type: 'SET_ACTIVE_MATCH', matchId });
-      setView('live');
+      setView('record');
     } else {
       setDetailMatchId(matchId);
     }
   };
 
-  // If viewing match detail, show that instead
   if (detailMatch) {
     return (
       <div className="flex flex-col h-full bg-[var(--color-surface)]">
@@ -52,108 +58,78 @@ export default function StatsPanel({ state, dispatch, activeMatch }) {
     );
   }
 
-  const needsMatch = view === 'live' || view === 'pbp' || view === 'video';
+  const needsMatch = view === 'record';
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-surface)]">
-      {/* View selector */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-surface-2)] border-b border-white/5">
+      {/* Main view tabs */}
+      <div className="flex items-center gap-1 px-2 py-1.5 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
         <div className="flex gap-1 flex-1 overflow-x-auto">
           {VIEWS.map(v => (
             <button
               key={v.id}
               onClick={() => setView(v.id)}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                 v.id === view
                   ? 'bg-[var(--color-accent)] text-white'
                   : 'bg-[var(--color-surface-3)] text-gray-400'
               }`}
             >
               {v.label}
-              {v.id === 'live' && activeMatch && (
+              {v.id === 'record' && activeMatch && (
                 <span className="ml-1 w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
               )}
             </button>
           ))}
         </div>
-        {!needsMatch && (
+        {!needsMatch && view !== 'analysis' && (
           <button
-            onClick={() => activeMatch ? setView('live') : setShowMatchForm(true)}
-            className="px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white text-xs font-bold active:scale-95 transition-transform shrink-0"
+            onClick={() => activeMatch ? setView('record') : setShowMatchForm(true)}
+            className="px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white text-xs font-bold active:scale-95 shrink-0"
           >
             {activeMatch ? 'Resume' : '+ Match'}
           </button>
         )}
       </div>
 
-      {/* Live entry */}
-      {view === 'live' && (
-        activeMatch ? (
-          <LiveEntry
-            match={activeMatch}
-            players={state.players}
-            lineups={state.lineups}
-            statEntries={state.statEntries}
-            dispatch={dispatch}
-            currentRotation={state.currentRotation}
-            activeSetNumber={state.activeSetNumber}
-          />
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 px-4">
-            <p className="text-lg mb-3">No active match</p>
+      {/* Record mode selector */}
+      {view === 'record' && activeMatch && (
+        <div className="flex gap-1 px-2 py-1 bg-[var(--color-surface)] border-b border-white/5 shrink-0">
+          {RECORD_MODES.map(m => (
             <button
-              onClick={() => setShowMatchForm(true)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95"
+              key={m.id}
+              onClick={() => setRecordMode(m.id)}
+              className={`px-2.5 py-1 rounded text-xs font-medium ${
+                m.id === recordMode ? 'bg-white/10 text-white' : 'text-gray-500'
+              }`}
             >
-              Start New Match
+              {m.label}
             </button>
-          </div>
-        )
+          ))}
+        </div>
       )}
 
-      {/* Play-by-Play entry */}
-      {view === 'pbp' && (
+      {/* Record view */}
+      {view === 'record' && (
         activeMatch ? (
-          <PlayByPlayEntry
-            match={activeMatch}
-            players={state.players}
-            lineups={state.lineups}
-            rallies={state.rallies}
-            dispatch={dispatch}
-            currentRotation={state.currentRotation}
-          />
+          <>
+            {recordMode === 'live' && (
+              <LiveEntry match={activeMatch} players={state.players} lineups={state.lineups} statEntries={state.statEntries} dispatch={dispatch} currentRotation={state.currentRotation} activeSetNumber={state.activeSetNumber} />
+            )}
+            {recordMode === 'pbp' && (
+              <PlayByPlayEntry match={activeMatch} players={state.players} lineups={state.lineups} rallies={state.rallies} dispatch={dispatch} currentRotation={state.currentRotation} />
+            )}
+            {recordMode === 'video' && (
+              <VideoReviewEntry match={activeMatch} players={state.players} lineups={state.lineups} dispatch={dispatch} currentRotation={state.currentRotation} activeSetNumber={state.activeSetNumber} />
+            )}
+          </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 px-4">
-            <p className="text-lg mb-3">No active match</p>
-            <p className="text-sm mb-3 text-center">Create a match first, then enter play-by-play data retroactively</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 px-6">
+            <p className="text-lg mb-2 text-white font-bold">Record Stats</p>
+            <p className="text-sm mb-4 text-center">Start a match to record stats live, enter play-by-play retroactively, or review game video.</p>
             <button
               onClick={() => setShowMatchForm(true)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95"
-            >
-              Start New Match
-            </button>
-          </div>
-        )
-      )}
-
-      {/* Video review entry */}
-      {view === 'video' && (
-        activeMatch ? (
-          <VideoReviewEntry
-            match={activeMatch}
-            players={state.players}
-            lineups={state.lineups}
-            dispatch={dispatch}
-            currentRotation={state.currentRotation}
-            activeSetNumber={state.activeSetNumber}
-          />
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 px-4">
-            <p className="text-lg mb-3">No active match</p>
-            <p className="text-sm mb-3 text-center">Create a match, then enter stats while reviewing recorded video</p>
-            <button
-              onClick={() => setShowMatchForm(true)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95"
+              className="px-5 py-2.5 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95"
             >
               Start New Match
             </button>
@@ -171,7 +147,7 @@ export default function StatsPanel({ state, dispatch, activeMatch }) {
         />
       )}
 
-      {/* Player stats */}
+      {/* Player profiles */}
       {view === 'players' && (
         <PlayerStats
           players={state.players}
@@ -179,7 +155,17 @@ export default function StatsPanel({ state, dispatch, activeMatch }) {
         />
       )}
 
-      {/* New match form */}
+      {/* Analysis */}
+      {view === 'analysis' && (
+        <AnalysisPanel
+          state={state}
+          dispatch={dispatch}
+          activeLineup={activeLineup}
+          playerProfiles={playerProfiles}
+        />
+      )}
+
+      {/* Match form modal */}
       {showMatchForm && (
         <MatchForm
           lineups={state.lineups}
