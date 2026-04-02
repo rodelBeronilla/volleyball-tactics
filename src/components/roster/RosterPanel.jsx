@@ -73,36 +73,25 @@ export default function RosterPanel({ players, dispatch, activeLineup, statEntri
                   {inLineup ? ' • In lineup' : ''}
                 </div>
                 {(() => {
+                  // Show top 2 attributes from base ratings or effective ratings
+                  const source = p.baseRatings || (p.archetype && ARCHETYPES[p.archetype]?.ratings);
+                  if (!source) return null;
                   const eff = getEffectiveRatings(p, statEntries);
-                  if (eff.hasStats) {
-                    // Show stat-adjusted top attributes with delta
-                    const top = getTopAttributes({ ratings: eff.ratings });
-                    return (
-                      <div className="flex gap-1 mt-0.5">
-                        {top.map(({ attr, value }) => {
-                          const delta = Math.round((value - eff.baseline[attr]) * 10) / 10;
-                          return (
-                            <span key={attr} className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 text-xs">
-                              {ATTRIBUTE_LABELS[attr]} {value}
-                              {delta !== 0 && <span className={delta > 0 ? 'text-green-400 ml-0.5' : 'text-red-400 ml-0.5'}>{delta > 0 ? '+' : ''}{delta}</span>}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    );
-                  }
-                  if (p.archetype && ARCHETYPES[p.archetype]) {
-                    return (
-                      <div className="flex gap-1 mt-0.5">
-                        {getTopAttributes(ARCHETYPES[p.archetype]).map(({ attr, value }) => (
+                  const top = getTopAttributes(eff.hasStats ? { ratings: eff.ratings } : { ratings: source });
+                  return (
+                    <div className="flex gap-1 mt-0.5">
+                      {top.map(({ attr, value }) => {
+                        const base = (p.baseRatings || {})[attr] || value;
+                        const delta = eff.hasStats ? Math.round((value - base) * 10) / 10 : 0;
+                        return (
                           <span key={attr} className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 text-xs">
                             {ATTRIBUTE_LABELS[attr]} {value}
+                            {delta !== 0 && <span className={delta > 0 ? 'text-green-400 ml-0.5' : 'text-red-400 ml-0.5'}>{delta > 0 ? '+' : ''}{delta}</span>}
                           </span>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return null;
+                        );
+                      })}
+                    </div>
+                  );
                 })()}
               </div>
               <div className="flex gap-1">

@@ -4,6 +4,7 @@ import { DEFAULT_PLAYERS, DEFAULT_LINEUP } from '../data/defaults';
 import { deriveRotation, isBackRow } from '../utils/rotations';
 import { getFormation } from '../data/formations';
 import { computeFullProfile } from '../utils/playerProfileEngine';
+import { ATTRIBUTES } from '../data/archetypes';
 
 const initialState = {
   players: load('players', DEFAULT_PLAYERS),
@@ -45,14 +46,33 @@ function reducer(state, action) {
     // Player CRUD
     case 'ADD_PLAYER': {
       const id = 'p' + Date.now();
-      return { ...state, players: [...state.players, { ...action.player, id }], editingPlayer: null };
-    }
-    case 'UPDATE_PLAYER':
-      return {
-        ...state,
-        players: state.players.map(p => p.id === action.player.id ? action.player : p),
-        editingPlayer: null,
+      const newPlayer = {
+        ...action.player,
+        id,
+        ratingHistory: action.player.baseRatings
+          ? [{ date: new Date().toISOString().slice(0, 10), ratings: { ...action.player.baseRatings }, source: 'initial' }]
+          : [],
       };
+      return { ...state, players: [...state.players, newPlayer], editingPlayer: null };
+    }
+    case 'UPDATE_PLAYER': {
+      const updated = state.players.map(p => {
+        if (p.id !== action.player.id) return p;
+        const merged = { ...p, ...action.player };
+        // Append rating snapshot if baseRatings changed
+        if (action.player.baseRatings) {
+          const history = [...(p.ratingHistory || [])];
+          const lastEntry = history[history.length - 1];
+          const ratingsChanged = !lastEntry || ATTRIBUTES.some(a => (lastEntry.ratings[a] || 0) !== (action.player.baseRatings[a] || 0));
+          if (ratingsChanged) {
+            history.push({ date: new Date().toISOString().slice(0, 10), ratings: { ...action.player.baseRatings }, source: 'coach' });
+          }
+          merged.ratingHistory = history;
+        }
+        return merged;
+      });
+      return { ...state, players: updated, editingPlayer: null };
+    }
     case 'DELETE_PLAYER':
       return {
         ...state,

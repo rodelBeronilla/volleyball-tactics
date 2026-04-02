@@ -151,8 +151,9 @@ function deriveRatingsFromStats(statLine) {
  * @returns {{ ratings: Object, statDerived: Object, hasStats: boolean }}
  */
 export function getEffectiveRatings(player, statEntries) {
+  // Coach's base ratings take priority over archetype
   const arch = player.archetype ? ARCHETYPES[player.archetype] : null;
-  const baseline = arch ? arch.ratings : (POSITION_DEFAULTS[player.position] || POSITION_DEFAULTS.outside);
+  const baseline = player.baseRatings || (arch ? arch.ratings : (POSITION_DEFAULTS[player.position] || POSITION_DEFAULTS.outside));
 
   const statLine = getPlayerSummary(statEntries, player.id);
   const derived = deriveRatingsFromStats(statLine);

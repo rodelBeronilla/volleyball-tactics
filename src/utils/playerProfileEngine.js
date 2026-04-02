@@ -271,9 +271,12 @@ export function computeFullProfile(player, statEntries, matches) {
   const playerEntries = statEntries.filter(e => e.playerId === player.id);
   const hasStats = playerEntries.length > 0;
 
-  // Baseline
-  const arch = player.archetype ? ARCHETYPES[player.archetype] : null;
-  const baseline = arch ? { ...arch.ratings } : { ...(POSITION_DEFAULTS[player.position] || POSITION_DEFAULTS.outside) };
+  // Baseline: coach's manual scores take priority, then archetype, then position defaults
+  const baseline = player.baseRatings
+    ? { ...player.baseRatings }
+    : (player.archetype && ARCHETYPES[player.archetype])
+      ? { ...ARCHETYPES[player.archetype].ratings }
+      : { ...(POSITION_DEFAULTS[player.position] || POSITION_DEFAULTS.outside) };
 
   if (!hasStats) {
     return {
