@@ -224,3 +224,27 @@ export const RALLY_PHASES = [
 ];
 
 export { SETTER_POSITION };
+
+/**
+ * Find which rotational position the setter occupies, given actual lineup + players.
+ * Falls back to SETTER_POSITION[rot] if no lineup/players available.
+ */
+export function findDynamicSetterPos(lineup, players, rotation) {
+  if (!lineup || !players) return SETTER_POSITION[rotation];
+
+  // Find which base slot has a setter
+  let setterSlot = null;
+  for (let s = 1; s <= 6; s++) {
+    const pid = lineup.slots[s];
+    const player = pid ? players.find(p => p.id === pid) : null;
+    if (player?.position === 'setter') { setterSlot = s; break; }
+  }
+
+  if (!setterSlot) return SETTER_POSITION[rotation]; // fallback
+
+  // deriveRotation: position P gets player from slot ((P+rot-2)%6)+1
+  // We need to find P where sourceSlot = setterSlot
+  // ((P+rot-2)%6)+1 = setterSlot → P = (setterSlot - rot + 7) % 6; if 0 → 6
+  const p = (setterSlot - rotation + 7) % 6;
+  return p === 0 ? 6 : p;
+}

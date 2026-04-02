@@ -7,27 +7,69 @@
  * buildStrategy() → STRATEGY_5_1[rotation][slot] → structured object
  */
 
-// Map each rotation × position → functional role
-// Derived from deriveRotation: position P in rotation R gets the player from base slot ((P+R-2)%6)+1
-// Base (R1): slot1=S, slot2=OPP, slot3=MB1, slot4=OH1, slot5=MB2, slot6=OH2
-// After applying deriveRotation for each R:
-//   R2: pos1←slot2(OPP), pos2←slot3(MB1), pos3←slot4(OH1), pos4←slot5(MB2), pos5←slot6(OH2), pos6←slot1(S)
-const BASE_ROLES = { 1: 'S', 2: 'OPP', 3: 'MB1', 4: 'OH1', 5: 'MB2', 6: 'OH2' };
+// Static role map assuming canonical 5-1: slot1=S, slot2=OPP, slot3=MB1, slot4=OH1, slot5=MB2, slot6=OH2
+// Used as fallback when no lineup data available (route/strategy pre-generation)
+const DEFAULT_BASE_ROLES = { 1: 'S', 2: 'OPP', 3: 'MB1', 4: 'OH1', 5: 'MB2', 6: 'OH2' };
 
-function buildSlotRoleMap() {
+function buildStaticRoleMap() {
   const map = {};
   for (let rot = 1; rot <= 6; rot++) {
     map[rot] = {};
     const shift = rot - 1;
     for (let pos = 1; pos <= 6; pos++) {
       const sourceSlot = ((pos + shift - 1) % 6) + 1;
-      map[rot][pos] = BASE_ROLES[sourceSlot];
+      map[rot][pos] = DEFAULT_BASE_ROLES[sourceSlot];
     }
   }
   return map;
 }
 
-export const SLOT_ROLE_MAP = buildSlotRoleMap();
+// Static fallback — used for pre-built routes/strategy when no lineup context
+export const SLOT_ROLE_MAP = buildStaticRoleMap();
+
+// Position→role abbreviation mapping
+const POS_TO_ROLE = {
+  setter: 'S', outside: 'OH', middle: 'MB', opposite: 'OPP', libero: 'L', ds: 'DS',
+};
+
+/**
+ * Dynamic role map — derives roles from actual lineup + roster.
+ * Use this at render time when you have lineup and players available.
+ *
+ * @param {Object} lineup - { slots: {1: playerId, ...}, liberoId }
+ * @param {Array} players - player objects with .id and .position
+ * @param {number} rotation - 1-6
+ * @returns {Object} { 1: 'S', 2: 'OH', 3: 'MB', ... } per position
+ */
+export function getDynamicRoleMap(lineup, players, rotation) {
+  if (!lineup || !players) return SLOT_ROLE_MAP[rotation] || {};
+
+  const shift = rotation - 1;
+  const roleMap = {};
+  const roleCounts = {}; // Track OH1 vs OH2, MB1 vs MB2
+
+  for (let pos = 1; pos <= 6; pos++) {
+    const sourceSlot = ((pos + shift - 1) % 6) + 1;
+    const playerId = lineup.slots[sourceSlot];
+    const player = playerId ? players.find(p => p.id === playerId) : null;
+
+    if (player) {
+      const baseRole = POS_TO_ROLE[player.position] || 'OH';
+      // Differentiate OH1/OH2 and MB1/MB2
+      if (baseRole === 'OH' || baseRole === 'MB') {
+        roleCounts[baseRole] = (roleCounts[baseRole] || 0) + 1;
+        roleMap[pos] = baseRole + roleCounts[baseRole];
+      } else {
+        roleMap[pos] = baseRole;
+      }
+    } else {
+      // Fallback to static
+      roleMap[pos] = SLOT_ROLE_MAP[rotation]?.[pos] || 'OH1';
+    }
+  }
+
+  return roleMap;
+}
 
 // Role templates: front row vs back row strategies
 const ROLE_TEMPLATES = {

@@ -2,7 +2,7 @@ import { useReducer, useEffect, useCallback, useMemo } from 'react';
 import { load, save } from '../utils/storage';
 import { DEFAULT_PLAYERS, DEFAULT_LINEUP } from '../data/defaults';
 import { deriveRotation, isBackRow } from '../utils/rotations';
-import { getFormation } from '../data/formations';
+import { getFormation, findDynamicSetterPos } from '../data/formations';
 import { computeFullProfile } from '../utils/playerProfileEngine';
 import { ATTRIBUTES } from '../data/archetypes';
 
@@ -419,6 +419,15 @@ export function useAppState() {
   const formation = getFormation(formationId);
   const placements = [];
 
+  // Dynamic setter position — works even if setter isn't in the default slot 1
+  const dynamicSetterPos = activeLineup
+    ? findDynamicSetterPos(activeLineup, state.players, state.currentRotation)
+    : null;
+
+  // Phases where setter should be at target (right-front setting position)
+  const SETTER_TARGET_PHASES = new Set(['pass', 'pass-plan', 'attack-plan', 'attack', 'offense', 'transition', 'transition-plan']);
+  const setterAtTarget = SETTER_TARGET_PHASES.has(state.courtPhase);
+
   if (activeLineup && formation) {
     const rotPlacements = formation.placements[state.currentRotation] || {};
     const overrides = activeLineup.overrides?.[`r${state.currentRotation}`] || {};
@@ -437,7 +446,15 @@ export function useAppState() {
       }
 
       const player = state.players.find(p => p.id === playerId);
-      const coords = overrides[pos] || rotPlacements[pos] || { x: 45, y: 45 };
+
+      // Dynamic setter target: if this is the setter's position and we're in a setter-target phase,
+      // override coords to put setter at the setting position regardless of static formation data
+      let coords;
+      if (setterAtTarget && pos === dynamicSetterPos && player?.position === 'setter') {
+        coords = overrides[pos] || { x: 68, y: 8 }; // Setter target position
+      } else {
+        coords = overrides[pos] || rotPlacements[pos] || { x: 45, y: 45 };
+      }
 
       placements.push({
         rotationalPosition: pos,
