@@ -24,7 +24,7 @@ const TAP_TIME = 250;
 export default function Court({
   placements, dispatch, onSwipeLeft, onSwipeRight,
   responsibilities, selectedSlot, showRoutes, rotation,
-  heatmapData, heatmapMode, playerProfiles, showCoverage, courtPhase,
+  heatmapData, heatmapMode, playerProfiles, showCoverage, courtPhase, rallyStep,
 }) {
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
@@ -207,8 +207,8 @@ export default function Court({
         />
       ))}
 
-      {/* Rally ball — shows game action per phase */}
-      {courtPhase && <RallyBall phase={courtPhase} />}
+      {/* Rally ball — position from current step */}
+      {rallyStep && <RallyBall step={rallyStep} />}
     </svg>
   );
 }
