@@ -5,6 +5,7 @@ import OverlapIndicator from './OverlapIndicator';
 import ArrowDefs from './ArrowDefs';
 import MovementArrows from './MovementArrows';
 import ZoneHeatmap from './ZoneHeatmap';
+import CoverageOverlay from './CoverageOverlay';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 function screenToSVG(svgEl, clientX, clientY) {
@@ -22,7 +23,7 @@ const TAP_TIME = 250;
 export default function Court({
   placements, dispatch, onSwipeLeft, onSwipeRight,
   responsibilities, selectedSlot, showRoutes, rotation,
-  heatmapData, heatmapMode, playerProfiles,
+  heatmapData, heatmapMode, playerProfiles, showCoverage,
 }) {
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
@@ -152,7 +153,10 @@ export default function Court({
       <ArrowDefs />
       <CourtMarkings />
 
-      {/* Heatmap layer — below everything interactive */}
+      {/* Coverage zones — defense phase */}
+      {showCoverage && <CoverageOverlay selectedSlot={selectedSlot} />}
+
+      {/* Heatmap layer */}
       {heatmapData && <ZoneHeatmap data={heatmapData} mode={heatmapMode} />}
 
       <OverlapIndicator placements={renderPlacements} />

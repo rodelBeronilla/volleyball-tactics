@@ -19,6 +19,8 @@ const initialState = {
   selectedSlot: null,
   showRoutes: false,
   showHeatmap: false,
+  showCoverage: false,
+  courtPhase: 'receive', // 'receive' | 'offense' | 'defense'
 
   // Stat tracking
   experimentNotes: load('experimentNotes', []),
@@ -151,6 +153,12 @@ function reducer(state, action) {
 
     case 'TOGGLE_HEATMAP':
       return { ...state, showHeatmap: !state.showHeatmap };
+
+    case 'TOGGLE_COVERAGE':
+      return { ...state, showCoverage: !state.showCoverage };
+
+    case 'SET_COURT_PHASE':
+      return { ...state, courtPhase: action.phase };
 
     // Clear selection on rotation change
     case 'SET_ROTATION':
@@ -392,8 +400,10 @@ export function useAppState() {
     ? deriveRotation(activeLineup.slots, state.currentRotation)
     : {};
 
-  // Derived: court placements with formation positions
-  const formation = getFormation(state.activeFormationId);
+  // Derived: formation based on court phase
+  const PHASE_FORMATION = { receive: 'sr-5-1', offense: 'offense', defense: 'def-perimeter' };
+  const formationId = PHASE_FORMATION[state.courtPhase] || state.activeFormationId;
+  const formation = getFormation(formationId);
   const placements = [];
 
   if (activeLineup && formation) {

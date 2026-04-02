@@ -79,10 +79,25 @@ const DEF_PERIMETER = {
   6: { 1: { x: 80, y: 80 }, 2: { x: 80, y: 10 }, 3: { x: 45, y: 10 }, 4: { x: 10, y: 10 }, 5: { x: 10, y: 80 }, 6: { x: 45, y: 55 } },
 };
 
+// Offense/Transition — after pass, hitters approach to attack positions
+const OFFENSE_TRANSITION = {};
+for (let r = 1; r <= 6; r++) {
+  OFFENSE_TRANSITION[r] = {
+    // Front row approaches net for attack; back row supports
+    2: { x: 75, y: 8 },  // RF at net
+    3: { x: 45, y: 8 },  // CF at net
+    4: { x: 15, y: 8 },  // LF at net
+    1: { x: 75, y: 50 }, // RB coverage
+    5: { x: 15, y: 50 }, // LB coverage
+    6: { x: 45, y: 45 }, // CB coverage / setter target
+  };
+}
+
 export const FORMATIONS = [
   { id: 'base', name: 'Base', type: 'base', description: 'Standard zone positions', placements: BASE },
-  { id: 'sr-5-1', name: '5-1 Serve Receive', type: 'serve-receive', description: 'W formation, setter penetrates', placements: SR_5_1 },
-  { id: 'def-perimeter', name: 'Perimeter Defense', type: 'defense', description: 'Players deep at court boundaries', placements: DEF_PERIMETER },
+  { id: 'sr-5-1', name: 'Serve Receive', type: 'serve-receive', description: 'W formation, setter penetrates', placements: SR_5_1 },
+  { id: 'offense', name: 'Offense', type: 'offense', description: 'Transition to attack positions', placements: OFFENSE_TRANSITION },
+  { id: 'def-perimeter', name: 'Defense', type: 'defense', description: 'Perimeter defensive positions', placements: DEF_PERIMETER },
 ];
 
 export function getFormation(id) {

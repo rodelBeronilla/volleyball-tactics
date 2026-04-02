@@ -13,7 +13,7 @@ export default function PlayerToken({ placement, onPointerDown, isDragging, isSe
   return (
     <g
       transform={`translate(${x}, ${y})`}
-      style={{ cursor: 'grab' }}
+      style={{ cursor: 'grab', transition: isDragging ? 'none' : 'transform 0.4s ease-out' }}
       onPointerDown={onPointerDown}
     >
       {/* Selection glow ring */}
