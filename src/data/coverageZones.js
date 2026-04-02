@@ -1,51 +1,51 @@
 /**
- * Defensive coverage zones per rotational position.
- * Each zone is defined as an SVG polygon (array of {x,y} points)
- * relative to the court viewBox (0-90).
+ * Defensive coverage zones — volleyball theory correct.
  *
- * Zones represent the area each player is responsible for in perimeter defense.
- * The zones are position-based (1-6), not role-based.
+ * Perimeter Defense (2-0-4):
+ * - 2 blockers at net (front-row players)
+ * - 0 players behind block (no "middle up" defender)
+ * - 4 diggers on perimeter (3 back-row + 1 off-blocker on 3m line)
+ *
+ * Zone responsibility:
+ * - LF (pos 4): Block left side OR pull to 3m line for tips if not blocking
+ * - CF (pos 3): Block middle, read and close
+ * - RF (pos 2): Block right side OR pull to 3m line for tips if not blocking
+ * - LB (pos 5): Deep left sideline — digs line shots and cross-court
+ * - CB (pos 6): Deep center/endline — covers power angles through/over block
+ * - RB (pos 1): Deep right sideline — digs line shots and sharp cross
  */
 
-// Front-row defensive zones (positions 2, 3, 4) — block and tip coverage
-// Back-row defensive zones (positions 1, 5, 6) — deep court coverage
+// Front-row zones (blocking + tip responsibility)
+// Back-row zones (perimeter dig responsibility)
 export const DEFENSE_ZONES = {
-  4: { // LF — left-side block + tip coverage
-    points: [{ x: 0, y: 0 }, { x: 30, y: 0 }, { x: 30, y: 30 }, { x: 0, y: 30 }],
+  4: { // LF — block + left tip coverage
+    points: [{ x: 0, y: 0 }, { x: 30, y: 0 }, { x: 30, y: 28 }, { x: 0, y: 28 }],
     color: '#3b82f6',
-    label: 'Block/Tip L',
+    label: 'Block L / Tips',
   },
-  3: { // CF — middle block + short coverage
-    points: [{ x: 30, y: 0 }, { x: 60, y: 0 }, { x: 60, y: 30 }, { x: 30, y: 30 }],
+  3: { // CF — middle block
+    points: [{ x: 30, y: 0 }, { x: 60, y: 0 }, { x: 60, y: 28 }, { x: 30, y: 28 }],
     color: '#ef4444',
-    label: 'Block/Short',
+    label: 'Block Mid',
   },
-  2: { // RF — right-side block + tip coverage
-    points: [{ x: 60, y: 0 }, { x: 90, y: 0 }, { x: 90, y: 30 }, { x: 60, y: 30 }],
+  2: { // RF — block + right tip coverage
+    points: [{ x: 60, y: 0 }, { x: 90, y: 0 }, { x: 90, y: 28 }, { x: 60, y: 28 }],
     color: '#22c55e',
-    label: 'Block/Tip R',
+    label: 'Block R / Tips',
   },
-  5: { // LB — deep left defense
-    points: [{ x: 0, y: 30 }, { x: 30, y: 30 }, { x: 45, y: 60 }, { x: 0, y: 60 }, { x: 0, y: 90 }],
+  5: { // LB — deep left perimeter
+    points: [{ x: 0, y: 28 }, { x: 30, y: 28 }, { x: 30, y: 90 }, { x: 0, y: 90 }],
     color: '#3b82f6',
-    label: 'Deep Left',
+    label: 'Dig Left',
   },
-  6: { // CB — deep center / power alley
-    points: [{ x: 30, y: 30 }, { x: 60, y: 30 }, { x: 90, y: 90 }, { x: 0, y: 90 }, { x: 0, y: 60 }, { x: 45, y: 60 }],
+  6: { // CB — deep center, endline
+    points: [{ x: 30, y: 28 }, { x: 60, y: 28 }, { x: 60, y: 90 }, { x: 30, y: 90 }],
     color: '#f97316',
-    label: 'Deep Center',
+    label: 'Dig Center',
   },
-  1: { // RB — deep right defense / line
-    points: [{ x: 60, y: 30 }, { x: 90, y: 30 }, { x: 90, y: 90 }, { x: 60, y: 60 }],
+  1: { // RB — deep right perimeter
+    points: [{ x: 60, y: 28 }, { x: 90, y: 28 }, { x: 90, y: 90 }, { x: 60, y: 90 }],
     color: '#22c55e',
-    label: 'Deep Right',
+    label: 'Dig Right',
   },
-};
-
-// Serve receive zones (who covers which area)
-export const SERVE_RECEIVE_ZONES = {
-  // Back-row passers cover these areas (varies by rotation, simplified)
-  left: { points: [{ x: 0, y: 35 }, { x: 30, y: 35 }, { x: 30, y: 90 }, { x: 0, y: 90 }], color: '#3b82f6' },
-  center: { points: [{ x: 30, y: 35 }, { x: 60, y: 35 }, { x: 60, y: 90 }, { x: 30, y: 90 }], color: '#f97316' },
-  right: { points: [{ x: 60, y: 35 }, { x: 90, y: 35 }, { x: 90, y: 90 }, { x: 60, y: 90 }], color: '#22c55e' },
 };
