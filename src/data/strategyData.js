@@ -7,18 +7,27 @@
  * buildStrategy() → STRATEGY_5_1[rotation][slot] → structured object
  */
 
-// Map each rotation × slot → functional role
-// In a 5-1: slots rotate but roles stay with players
-// Slot assignment follows: S=Setter, OH1=Outside1, OH2=Outside2, MB1=Middle1, MB2=Middle2, OPP=Opposite
-// Default lineup: slot1=S, slot2=OPP, slot3=MB1, slot4=OH1, slot5=MB2, slot6=OH2
-export const SLOT_ROLE_MAP = {
-  1: { 1: 'S',   2: 'OPP', 3: 'MB1', 4: 'OH1', 5: 'MB2', 6: 'OH2' },
-  2: { 1: 'OH2', 2: 'S',   3: 'OPP', 4: 'MB1', 5: 'OH1', 6: 'MB2' },
-  3: { 1: 'MB2', 2: 'OH2', 3: 'S',   4: 'OPP', 5: 'MB1', 6: 'OH1' },
-  4: { 1: 'OH1', 2: 'MB2', 3: 'OH2', 4: 'S',   5: 'OPP', 6: 'MB1' },
-  5: { 1: 'MB1', 2: 'OH1', 3: 'MB2', 4: 'OH2', 5: 'S',   6: 'OPP' },
-  6: { 1: 'OPP', 2: 'MB1', 3: 'OH1', 4: 'OH2', 5: 'MB2', 6: 'S'   },
-};
+// Map each rotation × position → functional role
+// Derived from deriveRotation: position P in rotation R gets the player from base slot ((P+R-2)%6)+1
+// Base (R1): slot1=S, slot2=OPP, slot3=MB1, slot4=OH1, slot5=MB2, slot6=OH2
+// After applying deriveRotation for each R:
+//   R2: pos1←slot2(OPP), pos2←slot3(MB1), pos3←slot4(OH1), pos4←slot5(MB2), pos5←slot6(OH2), pos6←slot1(S)
+const BASE_ROLES = { 1: 'S', 2: 'OPP', 3: 'MB1', 4: 'OH1', 5: 'MB2', 6: 'OH2' };
+
+function buildSlotRoleMap() {
+  const map = {};
+  for (let rot = 1; rot <= 6; rot++) {
+    map[rot] = {};
+    const shift = rot - 1;
+    for (let pos = 1; pos <= 6; pos++) {
+      const sourceSlot = ((pos + shift - 1) % 6) + 1;
+      map[rot][pos] = BASE_ROLES[sourceSlot];
+    }
+  }
+  return map;
+}
+
+export const SLOT_ROLE_MAP = buildSlotRoleMap();
 
 // Role templates: front row vs back row strategies
 const ROLE_TEMPLATES = {

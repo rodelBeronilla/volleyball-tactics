@@ -401,7 +401,11 @@ export function useAppState() {
     : {};
 
   // Derived: formation based on court phase
-  const PHASE_FORMATION = { serve: 'serve', receive: 'sr-5-1', offense: 'offense', defense: 'def-perimeter', transition: 'transition' };
+  const PHASE_FORMATION = {
+    serve: 'serve', receive: 'sr-5-1', pass: 'sr-5-1',
+    offense: 'offense', coverage: 'offense',
+    defense: 'def-perimeter', transition: 'transition',
+  };
   const formationId = PHASE_FORMATION[state.courtPhase] || state.activeFormationId;
   const formation = getFormation(formationId);
   const placements = [];

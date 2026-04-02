@@ -189,12 +189,29 @@ export function getFormation(id) {
 }
 
 /**
- * Rally phase sequence — the order coaches step through.
+ * Rally phase sequence — granular step-through for coaching.
+ * Each phase shows a specific moment in the rally with contextual info.
  */
 export const RALLY_PHASES = [
-  { id: 'serve', formationId: 'serve', label: 'Serve', description: 'Pre-serve positions. Position 1 serves.' },
-  { id: 'receive', formationId: 'sr-5-1', label: 'Receive', description: 'Serve receive W formation.' },
-  { id: 'offense', formationId: 'offense', label: 'Offense', description: 'Attack positions, 3-2 coverage.' },
-  { id: 'defense', formationId: 'def-perimeter', label: 'Defense', description: 'Perimeter defense (2-0-4).' },
-  { id: 'transition', formationId: 'transition', label: 'Transition', description: 'Reset to offense.' },
+  { id: 'serve', formationId: 'serve', label: 'Serve',
+    description: 'Pre-serve legal positions. Server (pos 1) behind endline.',
+    showRoutes: false, showCoverage: false },
+  { id: 'receive', formationId: 'sr-5-1', label: 'Receive',
+    description: 'Serve incoming. Passers in W, setter cheats to target area.',
+    showRoutes: false, showCoverage: false },
+  { id: 'pass', formationId: 'sr-5-1', label: 'Pass',
+    description: 'Ball passed to setter. Setter penetrates, hitters load approach.',
+    showRoutes: true, showCoverage: false },
+  { id: 'offense', formationId: 'offense', label: 'Attack',
+    description: 'Setter distributes. All attack options shown — 4-ball, quick, slide, 2-ball, pipe, D-ball.',
+    showRoutes: true, showCoverage: false },
+  { id: 'coverage', formationId: 'offense', label: 'Cover',
+    description: 'Attack coverage (3-2 cup). 3 closest players behind hitter, 2 deep.',
+    showRoutes: false, showCoverage: true },
+  { id: 'defense', formationId: 'def-perimeter', label: 'Defense',
+    description: 'Opponent attacks. 2 blockers at net, 4 diggers on perimeter.',
+    showRoutes: false, showCoverage: true },
+  { id: 'transition', formationId: 'transition', label: 'Transition',
+    description: 'Dig → setter releases to target. Hitters pull off net for approach.',
+    showRoutes: true, showCoverage: false },
 ];

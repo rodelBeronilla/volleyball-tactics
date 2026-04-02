@@ -24,14 +24,27 @@ export default function App() {
   const currentPhase = RALLY_PHASES[currentPhaseIdx >= 0 ? currentPhaseIdx : 0];
 
   const handleNextPhase = useCallback(() => {
-    const next = (currentPhaseIdx + 1) % RALLY_PHASES.length;
-    dispatch({ type: 'SET_COURT_PHASE', phase: RALLY_PHASES[next].id });
-  }, [currentPhaseIdx, dispatch]);
+    const isLastPhase = currentPhaseIdx >= RALLY_PHASES.length - 1;
+    if (isLastPhase) {
+      // At end of rally → advance to next rotation, reset to Serve
+      const nextRot = state.currentRotation === 6 ? 1 : state.currentRotation + 1;
+      dispatch({ type: 'SET_ROTATION', rotation: nextRot });
+      dispatch({ type: 'SET_COURT_PHASE', phase: RALLY_PHASES[0].id });
+    } else {
+      dispatch({ type: 'SET_COURT_PHASE', phase: RALLY_PHASES[currentPhaseIdx + 1].id });
+    }
+  }, [currentPhaseIdx, dispatch, state.currentRotation]);
 
   const handlePrevPhase = useCallback(() => {
-    const prev = (currentPhaseIdx - 1 + RALLY_PHASES.length) % RALLY_PHASES.length;
-    dispatch({ type: 'SET_COURT_PHASE', phase: RALLY_PHASES[prev].id });
-  }, [currentPhaseIdx, dispatch]);
+    if (currentPhaseIdx <= 0) {
+      // At start → go to previous rotation's last phase
+      const prevRot = state.currentRotation === 1 ? 6 : state.currentRotation - 1;
+      dispatch({ type: 'SET_ROTATION', rotation: prevRot });
+      dispatch({ type: 'SET_COURT_PHASE', phase: RALLY_PHASES[RALLY_PHASES.length - 1].id });
+    } else {
+      dispatch({ type: 'SET_COURT_PHASE', phase: RALLY_PHASES[currentPhaseIdx - 1].id });
+    }
+  }, [currentPhaseIdx, dispatch, state.currentRotation]);
 
   // Heatmap data
   const heatmapData = useMemo(() => {
@@ -125,11 +138,11 @@ export default function App() {
                   placements={placements} dispatch={dispatch}
                   onSwipeLeft={onSwipeLeft} onSwipeRight={onSwipeRight}
                   selectedSlot={state.selectedSlot}
-                  showRoutes={state.showRoutes && (state.courtPhase === 'receive' || state.courtPhase === 'offense' || state.courtPhase === 'transition')}
+                  showRoutes={currentPhase.showRoutes || state.showRoutes}
                   rotation={state.currentRotation}
                   heatmapData={state.showHeatmap ? heatmapData : null}
                   heatmapMode="quality" playerProfiles={playerProfiles}
-                  showCoverage={state.showCoverage && (state.courtPhase === 'defense')}
+                  showCoverage={currentPhase.showCoverage || state.showCoverage}
                   courtPhase={state.courtPhase}
                 />
               ) : (
