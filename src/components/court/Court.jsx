@@ -4,6 +4,7 @@ import PlayerToken from './PlayerToken';
 import OverlapIndicator from './OverlapIndicator';
 import ArrowDefs from './ArrowDefs';
 import MovementArrows from './MovementArrows';
+import ZoneHeatmap from './ZoneHeatmap';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 function screenToSVG(svgEl, clientX, clientY) {
@@ -15,12 +16,13 @@ function screenToSVG(svgEl, clientX, clientY) {
   return pt.matrixTransform(ctm.inverse());
 }
 
-const TAP_DISTANCE = 4;
+const TAP_DISTANCE = 8;
 const TAP_TIME = 250;
 
 export default function Court({
   placements, dispatch, onSwipeLeft, onSwipeRight,
   responsibilities, selectedSlot, showRoutes, rotation,
+  heatmapData, heatmapMode, playerProfiles,
 }) {
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
@@ -147,6 +149,10 @@ export default function Court({
     >
       <ArrowDefs />
       <CourtMarkings />
+
+      {/* Heatmap layer — below everything interactive */}
+      {heatmapData && <ZoneHeatmap data={heatmapData} mode={heatmapMode} />}
+
       <OverlapIndicator placements={renderPlacements} />
 
       {/* Movement arrows layer — behind players, above court */}
@@ -186,6 +192,7 @@ export default function Court({
           placement={p}
           isDragging={dragging?.slot === p.rotationalPosition}
           isSelected={selectedSlot === p.rotationalPosition}
+          impactScore={playerProfiles?.[p.playerId]?.impactScore}
           onPointerDown={(e) => handlePointerDown(e, p.rotationalPosition)}
         />
       ))}

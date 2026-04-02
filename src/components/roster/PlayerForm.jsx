@@ -1,6 +1,32 @@
 import { useState } from 'react';
 import { POSITIONS } from '../../data/positions';
-import { ARCHETYPES } from '../../data/archetypes';
+import { ARCHETYPES, ATTRIBUTES, ATTRIBUTE_LABELS } from '../../data/archetypes';
+
+function RatingBar({ value, max = 10 }) {
+  const pct = (value / max) * 100;
+  const color = value >= 8 ? '#22c55e' : value >= 5 ? '#eab308' : '#ef4444';
+  return (
+    <div className="flex items-center gap-1.5 flex-1">
+      <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <span className="text-[10px] text-gray-400 w-4 text-right tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function AttributeProfile({ ratings }) {
+  return (
+    <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5">
+      {ATTRIBUTES.map(attr => (
+        <div key={attr} className="flex items-center gap-1.5">
+          <span className="text-[10px] text-gray-500 w-8 shrink-0">{ATTRIBUTE_LABELS[attr].slice(0, 3)}</span>
+          <RatingBar value={ratings[attr]} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function PlayerForm({ player, onSave, onClose }) {
   const [name, setName] = useState(player?.name || '');
@@ -49,7 +75,7 @@ export default function PlayerForm({ player, onSave, onClose }) {
             <label className="block text-xs text-gray-400 mb-1">Number</label>
             <input
               type="number"
-              min="1"
+              min="0"
               max="99"
               value={number}
               onChange={e => setNumber(e.target.value)}
@@ -108,14 +134,7 @@ export default function PlayerForm({ player, onSave, onClose }) {
                   >
                     <span className="font-bold">{arch.label}</span>
                     <span className="text-gray-400 ml-2">{arch.description}</span>
-                    <div className="flex gap-1 mt-1">
-                      {arch.strengths.map(s => (
-                        <span key={s} className="px-1.5 py-0.5 rounded bg-green-900/30 text-green-400 text-[10px]">{s}</span>
-                      ))}
-                      {arch.weaknesses.map(w => (
-                        <span key={w} className="px-1.5 py-0.5 rounded bg-red-900/30 text-red-400 text-[10px]">{w}</span>
-                      ))}
-                    </div>
+                    <AttributeProfile ratings={arch.ratings} />
                   </button>
                 ))}
               </div>

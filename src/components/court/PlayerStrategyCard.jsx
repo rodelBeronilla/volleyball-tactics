@@ -66,7 +66,8 @@ export default function PlayerStrategyCard({ selectedSlot, rotation, placements,
   return (
     <div
       ref={cardRef}
-      className="fixed bottom-12 left-0 right-0 z-50 animate-slide-up"
+      className="fixed bottom-14 left-0 right-0 z-50 animate-slide-up"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div
         className="mx-2 rounded-t-2xl overflow-hidden shadow-2xl"

@@ -11,6 +11,8 @@ export default function LineupPanel({ lineups, activeLineupId, players, dispatch
   };
 
   const handleDeleteLineup = (id) => {
+    const lineup = lineups.find(l => l.id === id);
+    if (!window.confirm(`Delete "${lineup?.name || 'this lineup'}"?`)) return;
     dispatch({ type: 'DELETE_LINEUP', id });
   };
 

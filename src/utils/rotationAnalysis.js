@@ -17,9 +17,9 @@ const ROLE_LABELS = {
  * @returns {{ headline, frontRow, backRow, attackOptions, serveReceive }}
  */
 export function analyzeRotation(rotation, placements) {
-  const roleMap = SLOT_ROLE_MAP[rotation];
+  const roleMap = SLOT_ROLE_MAP[rotation] || {};
   const setterSlot = Object.entries(roleMap).find(([, role]) => role === 'S')?.[0];
-  const setterPos = parseInt(setterSlot);
+  const setterPos = setterSlot ? parseInt(setterSlot) : null;
   const setterFront = setterPos === 2 || setterPos === 3 || setterPos === 4;
 
   // Build front/back row info
@@ -45,7 +45,9 @@ export function analyzeRotation(rotation, placements) {
   }
 
   // Headline
-  const headline = `R${rotation}: Setter in ${setterSlot} — ${setterFront ? '2' : '3'}-hitter offense`;
+  const headline = setterSlot
+    ? `R${rotation}: Setter in ${setterSlot} — ${setterFront ? '2' : '3'}-hitter offense`
+    : `R${rotation}`;
 
   // Attack options based on who's where
   const attackOptions = [];

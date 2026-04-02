@@ -1,8 +1,10 @@
 const tabs = [
   { id: 'court', label: 'Court', icon: '⬡' },
+  { id: 'stats', label: 'Stats', icon: '▥' },
   { id: 'roster', label: 'Roster', icon: '☰' },
   { id: 'lineups', label: 'Lineups', icon: '▤' },
   { id: 'analysis', label: 'Analysis', icon: '◈' },
+  { id: 'settings', label: 'Settings', icon: '⚙' },
 ];
 
 export default function BottomNav({ activeTab, dispatch }) {

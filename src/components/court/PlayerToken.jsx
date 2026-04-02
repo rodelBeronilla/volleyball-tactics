@@ -1,7 +1,7 @@
 import { POSITIONS } from '../../data/positions';
 import { isFrontRow } from '../../utils/rotations';
 
-export default function PlayerToken({ placement, onPointerDown, isDragging, isSelected }) {
+export default function PlayerToken({ placement, onPointerDown, isDragging, isSelected, impactScore }) {
   const { player, rotationalPosition, x, y, isLiberoIn } = placement;
   if (!player) return null;
 
@@ -94,6 +94,19 @@ export default function PlayerToken({ placement, onPointerDown, isDragging, isSe
           {rotationalPosition}
         </text>
       </g>
+
+      {/* Impact badge — bottom right */}
+      {impactScore != null && impactScore > 0 && (
+        <circle
+          cx={radius - 1}
+          cy={radius - 1}
+          r="1.5"
+          fill={impactScore >= 70 ? '#22c55e' : impactScore >= 40 ? '#eab308' : '#ef4444'}
+          stroke="#000"
+          strokeWidth="0.3"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
     </g>
   );
 }

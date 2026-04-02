@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { POSITIONS } from '../../data/positions';
-import { ARCHETYPES } from '../../data/archetypes';
+import { ARCHETYPES, getTopAttributes, ATTRIBUTE_LABELS } from '../../data/archetypes';
+import { getEffectiveRatings } from '../../utils/statRatings';
 import PlayerForm from './PlayerForm';
 
-export default function RosterPanel({ players, dispatch, activeLineup }) {
+export default function RosterPanel({ players, dispatch, activeLineup, statEntries = [] }) {
   const [showForm, setShowForm] = useState(false);
   const [editPlayer, setEditPlayer] = useState(null);
 
@@ -28,6 +29,9 @@ export default function RosterPanel({ players, dispatch, activeLineup }) {
   };
 
   const handleDelete = (id) => {
+    const player = players.find(p => p.id === id);
+    const name = player?.name || 'this player';
+    if (!window.confirm(`Delete ${name}? This will also remove them from any lineups.`)) return;
     dispatch({ type: 'DELETE_PLAYER', id });
   };
 
@@ -68,6 +72,38 @@ export default function RosterPanel({ players, dispatch, activeLineup }) {
                   {p.archetype && ARCHETYPES[p.archetype] ? ` • ${ARCHETYPES[p.archetype].label}` : ''}
                   {inLineup ? ' • In lineup' : ''}
                 </div>
+                {(() => {
+                  const eff = getEffectiveRatings(p, statEntries);
+                  if (eff.hasStats) {
+                    // Show stat-adjusted top attributes with delta
+                    const top = getTopAttributes({ ratings: eff.ratings });
+                    return (
+                      <div className="flex gap-1 mt-0.5">
+                        {top.map(({ attr, value }) => {
+                          const delta = Math.round((value - eff.baseline[attr]) * 10) / 10;
+                          return (
+                            <span key={attr} className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 text-[10px]">
+                              {ATTRIBUTE_LABELS[attr]} {value}
+                              {delta !== 0 && <span className={delta > 0 ? 'text-green-400 ml-0.5' : 'text-red-400 ml-0.5'}>{delta > 0 ? '+' : ''}{delta}</span>}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                  if (p.archetype && ARCHETYPES[p.archetype]) {
+                    return (
+                      <div className="flex gap-1 mt-0.5">
+                        {getTopAttributes(ARCHETYPES[p.archetype]).map(({ attr, value }) => (
+                          <span key={attr} className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 text-[10px]">
+                            {ATTRIBUTE_LABELS[attr]} {value}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
               <div className="flex gap-1">
                 <button
