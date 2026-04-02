@@ -10,6 +10,8 @@
  *   2. MOVE step — players animate to new positions
  */
 
+import { SLOT_ROLE_MAP } from './strategyData';
+
 function findSetterPos(rot) {
   const p = (8 - rot) % 6;
   return p === 0 ? 6 : p;
@@ -61,46 +63,82 @@ const SR_5_1 = {
   },
 };
 
-// ── PASS: Setter at target, hitters loading ──
+// Attack zone by ROLE (not by position number)
+// Attack zone by ROLE — where each role attacks from
+// OH attacks from left pin (zone 4). OPP attacks from right pin (zone 2).
+// MB1 runs quick in front of setter. MB2 runs slide behind setter.
+const ROLE_ATTACK_ZONE = {
+  'OH1': { front: { x: 8, y: 4 }, back: { x: 45, y: 30 } },    // Left pin / pipe
+  'OH2': { front: { x: 8, y: 4 }, back: { x: 45, y: 30 } },    // Left pin / pipe
+  'MB1': { front: { x: 42, y: 4 }, back: null },                  // Quick (in front of setter)
+  'MB2': { front: { x: 55, y: 4 }, back: null },                  // Slide (behind setter)
+  'OPP': { front: { x: 80, y: 4 }, back: { x: 75, y: 30 } },    // Right pin / D-ball
+  'S':   { front: { x: 68, y: 8 }, back: { x: 68, y: 8 } },     // Setter target
+};
+
+// Loading position (slightly off net, preparing approach)
+const ROLE_LOAD_POS = {
+  'OH1': { front: { x: 8, y: 20 }, back: { x: 20, y: 45 } },
+  'OH2': { front: { x: 8, y: 20 }, back: { x: 20, y: 45 } },
+  'MB1': { front: { x: 42, y: 18 }, back: null },
+  'MB2': { front: { x: 55, y: 18 }, back: null },
+  'OPP': { front: { x: 80, y: 20 }, back: { x: 72, y: 45 } },
+  'S':   { front: { x: 68, y: 8 }, back: { x: 68, y: 8 } },
+};
+
+function getRolePos(roleMap, pos, posMap, fallback) {
+  const role = roleMap[pos];
+  const front = isFront(pos);
+  const zoneData = posMap[role];
+  if (!zoneData) return fallback;
+  const target = front ? zoneData.front : zoneData.back;
+  return target || fallback;
+}
+
+// ── PASS: Setter at target, hitters loading approach ──
 function buildPass() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
-    const sPos = SETTER_POSITION[rot];
+    const roleMap = SLOT_ROLE_MAP[rot];
     r[rot] = {};
     for (let pos = 1; pos <= 6; pos++) {
-      if (pos === sPos) {
+      const role = roleMap[pos];
+      if (role === 'S') {
         r[rot][pos] = { ...SETTER_TARGET };
-      } else if (isFront(pos)) {
-        if (pos === 4) r[rot][pos] = { x: 10, y: 18 };
-        else if (pos === 3) r[rot][pos] = { x: 40, y: 15 };
-        else r[rot][pos] = { x: 78, y: 18 };
       } else {
-        if (pos === 1) r[rot][pos] = { x: 72, y: 45 };
-        else if (pos === 5) r[rot][pos] = { x: 18, y: 45 };
-        else r[rot][pos] = { x: 45, y: 50 };
+        const target = getRolePos(roleMap, pos, ROLE_LOAD_POS, { x: 45, y: 45 });
+        r[rot][pos] = { ...target };
       }
     }
   }
   return r;
 }
 
-// ── OFFENSE: Attack zones + coverage ──
+// ── OFFENSE: Hitters at ROLE-APPROPRIATE attack zones ──
 function buildOffense() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
-    const sPos = SETTER_POSITION[rot];
+    const roleMap = SLOT_ROLE_MAP[rot];
     r[rot] = {};
     for (let pos = 1; pos <= 6; pos++) {
-      if (pos === sPos) {
+      const role = roleMap[pos];
+      if (role === 'S') {
         r[rot][pos] = { ...SETTER_TARGET };
       } else if (isFront(pos)) {
-        if (pos === 4) r[rot][pos] = { x: 8, y: 4 };
-        else if (pos === 3) r[rot][pos] = { x: 38, y: 4 };
-        else r[rot][pos] = { x: 78, y: 4 };
+        const target = getRolePos(roleMap, pos, ROLE_ATTACK_ZONE, { x: 45, y: 4 });
+        r[rot][pos] = { ...target };
       } else {
-        if (pos === 1) r[rot][pos] = { x: 68, y: 35 };
-        else if (pos === 5) r[rot][pos] = { x: 18, y: 35 };
-        else r[rot][pos] = { x: 42, y: 40 };
+        // Back-row: coverage cup positions
+        const backZone = ROLE_ATTACK_ZONE[role]?.back;
+        if (backZone) {
+          // Back-row attacker (OH pipe, OPP D-ball) — at their attack zone
+          r[rot][pos] = { ...backZone };
+        } else {
+          // Non-attacking back-row (MB replaced by libero) — coverage
+          if (pos === 1) r[rot][pos] = { x: 68, y: 38 };
+          else if (pos === 5) r[rot][pos] = { x: 18, y: 38 };
+          else r[rot][pos] = { x: 42, y: 42 };
+        }
       }
     }
   }
@@ -119,23 +157,19 @@ function buildDefense() {
   return r;
 }
 
-// ── TRANSITION: Setter to target, hitters pull off ──
+// ── TRANSITION: Setter to target, hitters at loading positions ──
 function buildTransition() {
   const r = {};
   for (let rot = 1; rot <= 6; rot++) {
-    const sPos = SETTER_POSITION[rot];
+    const roleMap = SLOT_ROLE_MAP[rot];
     r[rot] = {};
     for (let pos = 1; pos <= 6; pos++) {
-      if (pos === sPos) {
+      const role = roleMap[pos];
+      if (role === 'S') {
         r[rot][pos] = { ...SETTER_TARGET };
-      } else if (isFront(pos)) {
-        if (pos === 4) r[rot][pos] = { x: 10, y: 22 };
-        else if (pos === 3) r[rot][pos] = { x: 38, y: 20 };
-        else r[rot][pos] = { x: 78, y: 22 };
       } else {
-        if (pos === 1) r[rot][pos] = { x: 72, y: 48 };
-        else if (pos === 5) r[rot][pos] = { x: 18, y: 48 };
-        else r[rot][pos] = { x: 45, y: 52 };
+        const target = getRolePos(roleMap, pos, ROLE_LOAD_POS, { x: 45, y: 45 });
+        r[rot][pos] = { ...target };
       }
     }
   }
