@@ -5,6 +5,7 @@ import { deriveRotation, isBackRow } from '../utils/rotations';
 import { getFormation, findDynamicSetterPos } from '../data/formations';
 import { computeFullProfile } from '../utils/playerProfileEngine';
 import { ATTRIBUTES } from '../data/archetypes';
+import { createNightPlanShell, computeFlowSub } from '../data/systems';
 
 const initialState = {
   players: load('players', DEFAULT_PLAYERS),
@@ -29,6 +30,14 @@ const initialState = {
   rallies: load('rallies', []),
   activeMatchId: load('activeMatchId', null),
   activeSetNumber: load('activeSetNumber', 1),
+
+  // Game Day
+  nightPlans: load('nightPlans', []),
+  activeNightPlanId: load('activeNightPlanId', null),
+
+  // Practice Planner
+  practicePlans: load('practicePlans', []),
+  activePracticePlanId: load('activePracticePlanId', null),
 };
 
 function reducer(state, action) {
@@ -281,6 +290,8 @@ function reducer(state, action) {
         statEntries: action.data.statEntries,
         rallies: action.data.rallies || [],
         experimentNotes: action.data.experimentNotes || [],
+        nightPlans: action.data.nightPlans || state.nightPlans,
+        practicePlans: action.data.practicePlans || state.practicePlans,
         activeLineupId: action.data.activeLineupId || state.activeLineupId,
         activeFormationId: action.data.activeFormationId || state.activeFormationId,
         activeMatchId: null,
@@ -367,6 +378,399 @@ function reducer(state, action) {
       };
     }
 
+    // ── Game Day: Night Plans ──
+    case 'CREATE_NIGHT_PLAN': {
+      const plan = createNightPlanShell(action.name, action.date);
+      return { ...state, nightPlans: [...state.nightPlans, plan], activeNightPlanId: plan.id };
+    }
+    case 'UPDATE_NIGHT_PLAN':
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p =>
+          p.id === action.planId ? { ...p, ...action.updates } : p
+        ),
+      };
+    case 'DELETE_NIGHT_PLAN':
+      return {
+        ...state,
+        nightPlans: state.nightPlans.filter(p => p.id !== action.planId),
+        activeNightPlanId: state.activeNightPlanId === action.planId ? null : state.activeNightPlanId,
+      };
+    case 'SET_ACTIVE_NIGHT_PLAN':
+      return { ...state, activeNightPlanId: action.planId };
+
+    case 'SET_SET_SYSTEM': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => si === action.setIndex ? { ...s, system: action.system } : s);
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'SET_SET_LINEUP': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => si === action.setIndex ? { ...s, lineupId: action.lineupId } : s);
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'SET_SET_SERVING_ORDER': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => si === action.setIndex ? { ...s, servingOrder: action.servingOrder } : s);
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'SET_SET_TRIOS': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => si === action.setIndex ? { ...s, trios: action.trios } : s);
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'SET_SET_OPPONENT': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) =>
+            mi === action.matchIndex ? { ...m, opponent: action.opponent } : m
+          );
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'START_SET': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => {
+              if (si !== action.setIndex) return s;
+              const live = { ...s.live, active: true, currentRotation: 1, ourScore: 0, theirScore: 0, servingTeam: 'us', subHistory: [] };
+              // Initialize FLOW trio state from trio config
+              if (s.system === 'FLOW' && s.trios) {
+                live.trioState = {
+                  setters: { onCourt: [...(s.trios.setters.onCourt || [])], benchPlayerId: s.trios.setters.bench },
+                  hitters: { onCourt: [...(s.trios.hitters.onCourt || [])], benchPlayerId: s.trios.hitters.bench },
+                  middles: { onCourt: [...(s.trios.middles.onCourt || [])], benchPlayerId: s.trios.middles.bench },
+                };
+              }
+              if (s.servingOrder?.length > 0) live.currentServer = s.servingOrder[0];
+              return { ...s, live };
+            });
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'END_SET': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => {
+              if (si !== action.setIndex) return s;
+              return {
+                ...s,
+                completed: true,
+                result: { ourScore: s.live.ourScore, theirScore: s.live.theirScore },
+                live: { ...s.live, active: false },
+              };
+            });
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'GAMEDAY_SCORE_POINT': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => {
+              if (si !== action.setIndex) return s;
+              const live = { ...s.live };
+              if (action.team === 'us') live.ourScore++;
+              else live.theirScore++;
+              return { ...s, live };
+            });
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'GAMEDAY_SIDEOUT': {
+      return {
+        ...state,
+        nightPlans: state.nightPlans.map(p => {
+          if (p.id !== state.activeNightPlanId) return p;
+          const matches = p.matches.map((m, mi) => {
+            if (mi !== action.matchIndex) return m;
+            const sets = m.sets.map((s, si) => {
+              if (si !== action.setIndex) return s;
+              const live = { ...s.live };
+              // Flip serving team
+              live.servingTeam = live.servingTeam === 'us' ? 'them' : 'us';
+              // If we gained serve, rotate
+              if (live.servingTeam === 'us') {
+                live.currentRotation = live.currentRotation === 6 ? 1 : live.currentRotation + 1;
+              }
+              // FLOW sub: the player who just served subs out
+              if (s.system === 'FLOW' && live.currentServer && live.trioState) {
+                const sub = computeFlowSub(live.trioState, live.currentServer);
+                if (sub) {
+                  live.trioState = { ...live.trioState };
+                  const trio = { ...live.trioState[sub.trioName] };
+                  trio.onCourt = trio.onCourt.map(id => id === sub.outPlayerId ? sub.inPlayerId : id);
+                  trio.benchPlayerId = sub.outPlayerId;
+                  live.trioState[sub.trioName] = trio;
+                  // Update serving order
+                  const so = [...(s.servingOrder || [])];
+                  const idx = so.indexOf(sub.outPlayerId);
+                  if (idx !== -1) so[idx] = sub.inPlayerId;
+                  // Store sub history
+                  live.subHistory = [...(live.subHistory || []), {
+                    timestamp: Date.now(), trioName: sub.trioName,
+                    outPlayerId: sub.outPlayerId, inPlayerId: sub.inPlayerId,
+                    rotation: live.currentRotation,
+                  }];
+                  // Update serving order on the set level too
+                  return { ...s, servingOrder: so, live };
+                }
+              }
+              // Advance server in serving order
+              if (s.servingOrder?.length > 0 && live.servingTeam === 'us') {
+                const curIdx = s.servingOrder.indexOf(live.currentServer);
+                live.currentServer = s.servingOrder[(curIdx + 1) % s.servingOrder.length];
+              }
+              return { ...s, live };
+            });
+            return { ...m, sets };
+          });
+          return { ...p, matches };
+        }),
+      };
+    }
+    case 'GAMEDAY_START_MATCH_STATS': {
+      // Bridge: create a match in the Stats system from a Game Day set
+      const matchId = 'match-' + Date.now();
+      const match = {
+        id: matchId,
+        opponent: action.opponent || 'Opponent',
+        date: action.date || new Date().toISOString().slice(0, 10),
+        lineupId: action.lineupId || state.activeLineupId,
+        sets: [{ number: 1, ourScore: 0, theirScore: 0, won: null }],
+        completed: false,
+        createdAt: new Date().toISOString(),
+        nightPlanSetRef: action.nightPlanSetRef || null,
+      };
+      return {
+        ...state,
+        matches: [...state.matches, match],
+        activeMatchId: matchId,
+        activeSetNumber: 1,
+        currentRotation: 1,
+      };
+    }
+
+    // ── Practice Planner ──
+    case 'CREATE_PRACTICE_PLAN': {
+      const plan = {
+        id: 'practice-' + Date.now(),
+        name: action.name || 'Practice',
+        date: action.date || new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toISOString(),
+        blocks: [],
+      };
+      return { ...state, practicePlans: [...state.practicePlans, plan], activePracticePlanId: plan.id };
+    }
+    case 'UPDATE_PRACTICE_PLAN':
+      return {
+        ...state,
+        practicePlans: state.practicePlans.map(p =>
+          p.id === action.planId ? { ...p, ...action.updates } : p
+        ),
+      };
+    case 'DELETE_PRACTICE_PLAN':
+      return {
+        ...state,
+        practicePlans: state.practicePlans.filter(p => p.id !== action.planId),
+        activePracticePlanId: state.activePracticePlanId === action.planId ? null : state.activePracticePlanId,
+      };
+    case 'SET_ACTIVE_PRACTICE_PLAN':
+      return { ...state, activePracticePlanId: action.planId };
+    case 'ADD_DRILL_TO_PLAN': {
+      return {
+        ...state,
+        practicePlans: state.practicePlans.map(p => {
+          if (p.id !== state.activePracticePlanId) return p;
+          const block = {
+            id: 'block-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+            drillId: action.drillId,
+            duration: action.duration || 10,
+            coachNotes: '',
+            targetPlayerIds: [],
+            playerNotes: {},
+          };
+          return { ...p, blocks: [...p.blocks, block] };
+        }),
+      };
+    }
+    case 'REMOVE_DRILL_FROM_PLAN':
+      return {
+        ...state,
+        practicePlans: state.practicePlans.map(p => {
+          if (p.id !== state.activePracticePlanId) return p;
+          return { ...p, blocks: p.blocks.filter(b => b.id !== action.blockId) };
+        }),
+      };
+    case 'REORDER_DRILL_BLOCKS': {
+      return {
+        ...state,
+        practicePlans: state.practicePlans.map(p => {
+          if (p.id !== state.activePracticePlanId) return p;
+          const blocks = [...p.blocks];
+          const [moved] = blocks.splice(action.fromIndex, 1);
+          blocks.splice(action.toIndex, 0, moved);
+          return { ...p, blocks };
+        }),
+      };
+    }
+    case 'UPDATE_DRILL_BLOCK':
+      return {
+        ...state,
+        practicePlans: state.practicePlans.map(p => {
+          if (p.id !== state.activePracticePlanId) return p;
+          return {
+            ...p,
+            blocks: p.blocks.map(b =>
+              b.id === action.blockId ? { ...b, ...action.updates } : b
+            ),
+          };
+        }),
+      };
+
+    // ── Film Review (extends existing rallies) ──
+    case 'CREATE_FILM_RALLY': {
+      const rallyId = 'rally-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+      // Build actions[] for the stat pipeline from touches
+      const actions = (action.touches || []).map((t, i) => ({
+        playerId: t.playerId,
+        stat: t.action,
+        order: i + 1,
+      }));
+      const rally = {
+        id: rallyId,
+        matchId: action.matchId || null,
+        setNumber: action.setNumber || null,
+        rallyNumber: action.rallyNumber || null,
+        rotation: action.rotation,
+        ourScore: action.ourScore || 0,
+        theirScore: action.theirScore || 0,
+        servingTeam: action.servingTeam || 'us',
+        outcome: action.outcome || 'won',
+        actions,
+        filmReview: {
+          version: 1,
+          touches: action.touches || [],
+          tags: action.tags || [],
+          notes: action.notes || '',
+          playerPositions: action.playerPositions || {},
+        },
+      };
+      // Flatten to stat entries
+      const newStatEntries = actions.filter(a => a.playerId).map(a => ({
+        id: 'stat-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        matchId: rally.matchId,
+        setNumber: rally.setNumber,
+        playerId: a.playerId,
+        rotation: rally.rotation,
+        stat: a.stat,
+        rallyId: rally.id,
+        timestamp: Date.now(),
+      }));
+      return {
+        ...state,
+        rallies: [...state.rallies, rally],
+        statEntries: [...state.statEntries, ...newStatEntries],
+      };
+    }
+    case 'UPDATE_RALLY_FILM_REVIEW':
+      return {
+        ...state,
+        rallies: state.rallies.map(r =>
+          r.id === action.rallyId ? { ...r, filmReview: { ...r.filmReview, ...action.filmReview } } : r
+        ),
+      };
+    case 'DELETE_RALLY_FILM_REVIEW':
+      return {
+        ...state,
+        rallies: state.rallies.map(r => {
+          if (r.id !== action.rallyId) return r;
+          const { filmReview: _removed, ...rest } = r;
+          return rest;
+        }),
+      };
+
+    // ── Enhanced Stats ──
+    case 'SYNC_SET_SCORE_FROM_RALLIES': {
+      const matchRallies = state.rallies.filter(r => r.matchId === action.matchId && r.setNumber === action.setNumber);
+      let ourScore = 0, theirScore = 0;
+      for (const r of matchRallies) {
+        if (r.outcome === 'won') ourScore++;
+        else theirScore++;
+      }
+      return {
+        ...state,
+        matches: state.matches.map(m => {
+          if (m.id !== action.matchId) return m;
+          return {
+            ...m,
+            sets: m.sets.map(s =>
+              s.number === action.setNumber ? { ...s, ourScore, theirScore } : s
+            ),
+          };
+        }),
+      };
+    }
+
     default:
       return state;
   }
@@ -388,6 +792,10 @@ export function useAppState() {
   useEffect(() => { save('rallies', state.rallies); }, [state.rallies]);
   useEffect(() => { save('activeMatchId', state.activeMatchId); }, [state.activeMatchId]);
   useEffect(() => { save('activeSetNumber', state.activeSetNumber); }, [state.activeSetNumber]);
+  useEffect(() => { save('nightPlans', state.nightPlans); }, [state.nightPlans]);
+  useEffect(() => { save('activeNightPlanId', state.activeNightPlanId); }, [state.activeNightPlanId]);
+  useEffect(() => { save('practicePlans', state.practicePlans); }, [state.practicePlans]);
+  useEffect(() => { save('activePracticePlanId', state.activePracticePlanId); }, [state.activePracticePlanId]);
 
   // Derived: active lineup
   const activeLineup = state.lineups.find(l => l.id === state.activeLineupId) || null;

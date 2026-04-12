@@ -7,6 +7,9 @@ import BottomNav from './components/controls/BottomNav';
 import StatsPanel from './components/stats/StatsPanel';
 import TeamPanel from './components/team/TeamPanel';
 import SettingsPanel from './components/settings/SettingsPanel';
+import GameDayPanel from './components/gameday/GameDayPanel';
+import PracticePanel from './components/practice/PracticePanel';
+import FilmReviewPanel from './components/film/FilmReviewPanel';
 import { deriveRotation as deriveRot } from './utils/rotations';
 import { generateRallySteps } from './data/rallyFlow';
 
@@ -160,7 +163,7 @@ export default function App() {
                 <div className="text-gray-500 text-center px-6">
                   <p className="text-lg mb-2 text-white font-bold">Set Up Your Team</p>
                   <p className="text-sm mb-4">Create a lineup to see the playbook.</p>
-                  <button onClick={() => dispatch({ type: 'SET_TAB', tab: 'team' })}
+                  <button onClick={() => dispatch({ type: 'SET_TAB', tab: 'more' })}
                     className="px-5 py-2.5 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95">
                     Go to Team
                   </button>
@@ -178,9 +181,18 @@ export default function App() {
           </>
         )}
 
+        {state.activeTab === 'gameday' && (
+          <GameDayPanel state={state} dispatch={dispatch} placements={placements} playerProfiles={playerProfiles} />
+        )}
         {state.activeTab === 'stats' && (
           <StatsPanel state={state} dispatch={dispatch} activeMatch={activeMatch}
-            activeLineup={activeLineup} playerProfiles={playerProfiles} />
+            activeLineup={activeLineup} playerProfiles={playerProfiles} placements={placements} />
+        )}
+        {state.activeTab === 'practice' && (
+          <PracticePanel state={state} dispatch={dispatch} playerProfiles={playerProfiles} />
+        )}
+        {state.activeTab === 'film' && (
+          <FilmReviewPanel state={state} dispatch={dispatch} placements={placements} playerProfiles={playerProfiles} />
         )}
         {state.activeTab === 'team' && (
           <TeamPanel state={state} dispatch={dispatch} activeLineup={activeLineup} />

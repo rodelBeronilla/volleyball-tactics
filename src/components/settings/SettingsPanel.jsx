@@ -1,9 +1,12 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { getStorageUsage, exportAllData, parseImportData, compactOldEntries } from '../../utils/storageManager';
+import TeamPanel from '../team/TeamPanel';
 
 export default function SettingsPanel({ state, dispatch }) {
   const fileRef = useRef(null);
+  const [subView, setSubView] = useState('settings'); // 'settings' | 'team'
   const usage = getStorageUsage();
+  const activeLineup = state.lineups.find(l => l.id === state.activeLineupId) || null;
 
   const handleExport = () => {
     const data = exportAllData(state);
@@ -46,13 +49,34 @@ export default function SettingsPanel({ state, dispatch }) {
     window.location.reload();
   };
 
+  if (subView === 'team') {
+    return (
+      <div className="flex-1 flex flex-col bg-[var(--color-surface)]">
+        <div className="flex items-center gap-2 px-4 py-3 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
+          <button onClick={() => setSubView('settings')} className="text-gray-400 text-sm">← Back</button>
+          <h2 className="text-lg font-bold text-white">Team</h2>
+        </div>
+        <TeamPanel state={state} dispatch={dispatch} activeLineup={activeLineup} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-[var(--color-surface)] overflow-y-auto">
       <div className="px-4 py-3 bg-[var(--color-surface-2)] border-b border-white/5">
-        <h2 className="text-lg font-bold text-white">Settings</h2>
+        <h2 className="text-lg font-bold text-white">More</h2>
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Team management */}
+        <button
+          onClick={() => setSubView('team')}
+          className="w-full py-3 rounded-lg bg-[var(--color-surface-2)] text-white text-sm font-bold active:scale-[0.98] transition-transform border border-white/5 flex items-center justify-between px-4"
+        >
+          <span>Team — Roster & Lineups</span>
+          <span className="text-gray-500">→</span>
+        </button>
+
         {/* Storage usage */}
         <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5">
           <div className="text-xs font-bold text-gray-300 mb-2">Storage Usage</div>

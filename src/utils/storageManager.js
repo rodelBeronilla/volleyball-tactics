@@ -78,7 +78,7 @@ export function compactOldEntries(statEntries, matches, keepRecentN = 10) {
  */
 export function exportAllData(state) {
   return {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     players: state.players,
     lineups: state.lineups,
@@ -86,6 +86,8 @@ export function exportAllData(state) {
     statEntries: state.statEntries,
     rallies: state.rallies || [],
     experimentNotes: state.experimentNotes || [],
+    nightPlans: state.nightPlans || [],
+    practicePlans: state.practicePlans || [],
     activeLineupId: state.activeLineupId,
     activeFormationId: state.activeFormationId,
   };
@@ -110,6 +112,8 @@ export function parseImportData(json) {
       statEntries: data.statEntries || [],
       rallies: data.rallies || [],
       experimentNotes: data.experimentNotes || [],
+      nightPlans: data.nightPlans || [],
+      practicePlans: data.practicePlans || [],
       activeLineupId: data.activeLineupId || (data.lineups[0]?.id || null),
       activeFormationId: data.activeFormationId || 'sr-5-1',
     };

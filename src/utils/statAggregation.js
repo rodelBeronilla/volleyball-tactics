@@ -224,3 +224,60 @@ export function computeRallyRates(entries, filters = {}) {
     totalRallies: total,
   };
 }
+
+/**
+ * Generate a summary for a completed set.
+ * @param {Array} rallies - all rally objects
+ * @param {Array} statEntries - all stat entries
+ * @param {string} matchId
+ * @param {number} setNumber
+ * @returns {{ mvpPlayerId, worstRotation, keyStats, servingRuns }}
+ */
+export function generateSetSummary(rallies, statEntries, matchId, setNumber) {
+  const setEntries = statEntries.filter(e => e.matchId === matchId && e.setNumber === setNumber && e.playerId !== '__team__');
+  const setRallies = rallies.filter(r => r.matchId === matchId && r.setNumber === setNumber);
+
+  // Player impact: kills + aces + blocks - errors
+  const playerImpact = {};
+  for (const e of setEntries) {
+    if (!playerImpact[e.playerId]) playerImpact[e.playerId] = 0;
+    if (e.stat === 'kill' || e.stat === 'attackTip' || e.stat === 'attackTooled') playerImpact[e.playerId]++;
+    if (e.stat === 'ace') playerImpact[e.playerId]++;
+    if (e.stat === 'blockSolo' || e.stat === 'blockAssist') playerImpact[e.playerId]++;
+    if (e.stat === 'attackError' || e.stat === 'serviceError' || e.stat === 'passError') playerImpact[e.playerId]--;
+  }
+
+  const mvpPlayerId = Object.entries(playerImpact).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+  // Worst rotation by win rate
+  const rotStats = {};
+  for (const r of setRallies) {
+    if (!rotStats[r.rotation]) rotStats[r.rotation] = { won: 0, lost: 0 };
+    if (r.outcome === 'won') rotStats[r.rotation].won++;
+    else rotStats[r.rotation].lost++;
+  }
+  let worstRotation = null;
+  let worstRate = 1;
+  for (const [rot, stats] of Object.entries(rotStats)) {
+    const total = stats.won + stats.lost;
+    if (total > 0) {
+      const rate = stats.won / total;
+      if (rate < worstRate) { worstRate = rate; worstRotation = parseInt(rot); }
+    }
+  }
+
+  // Serving runs (consecutive points won while serving)
+  const servingRuns = [];
+  let currentRun = 0;
+  for (const r of setRallies) {
+    if (r.servingTeam === 'us' && r.outcome === 'won') {
+      currentRun++;
+    } else {
+      if (currentRun >= 3) servingRuns.push(currentRun);
+      currentRun = 0;
+    }
+  }
+  if (currentRun >= 3) servingRuns.push(currentRun);
+
+  return { mvpPlayerId, worstRotation, worstRate, servingRuns, playerImpact };
+}

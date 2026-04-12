@@ -2,9 +2,13 @@ import { useState, useMemo } from 'react';
 import { POSITIONS } from '../../data/positions';
 import { STATS, PLAYER_STAT_GROUPS } from '../../data/statCategories';
 import { deriveRotation, isBackRow } from '../../utils/rotations';
+import ScoreTracker from './ScoreTracker';
+import RotationMiniDashboard from './RotationMiniDashboard';
+import RotationDashboard from './RotationDashboard';
 
 export default function LiveEntry({ match, players, lineups, statEntries, dispatch, currentRotation, activeSetNumber }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [showRotationDashboard, setShowRotationDashboard] = useState(false);
 
   const lineup = lineups.find(l => l.id === match.lineupId);
 
@@ -43,6 +47,13 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
         rotation: currentRotation,
         stat: statKey,
       });
+      // Auto-update score
+      const curSet = match.sets.find(s => s.number === activeSetNumber);
+      if (statKey === 'rallyWon') {
+        dispatch({ type: 'UPDATE_SET_SCORE', matchId: match.id, setNumber: activeSetNumber, ourScore: (curSet?.ourScore || 0) + 1, theirScore: curSet?.theirScore || 0 });
+      } else {
+        dispatch({ type: 'UPDATE_SET_SCORE', matchId: match.id, setNumber: activeSetNumber, ourScore: curSet?.ourScore || 0, theirScore: (curSet?.theirScore || 0) + 1 });
+      }
       return;
     }
     if (!selectedPlayer) return;
@@ -60,27 +71,15 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
 
   return (
     <div className="flex flex-col h-full">
-      {/* Compact header: opponent + score + set/rotation + controls */}
+      {/* Opponent + controls header */}
       <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
         <div className="text-white font-bold text-sm truncate min-w-0 flex-1">vs {match.opponent}</div>
-        <div className="flex items-center gap-1">
-          <input
-            type="number" min="0"
-            value={currentSet?.ourScore || 0}
-            onChange={e => dispatch({ type: 'UPDATE_SET_SCORE', matchId: match.id, setNumber: activeSetNumber, ourScore: parseInt(e.target.value) || 0, theirScore: currentSet?.theirScore || 0 })}
-            className="w-11 px-1 py-1 rounded bg-[var(--color-surface)] text-white text-sm text-center border border-white/10"
-          />
-          <span className="text-gray-500 text-xs">-</span>
-          <input
-            type="number" min="0"
-            value={currentSet?.theirScore || 0}
-            onChange={e => dispatch({ type: 'UPDATE_SET_SCORE', matchId: match.id, setNumber: activeSetNumber, ourScore: currentSet?.ourScore || 0, theirScore: parseInt(e.target.value) || 0 })}
-            className="w-11 px-1 py-1 rounded bg-[var(--color-surface)] text-white text-sm text-center border border-white/10"
-          />
-        </div>
         <button onClick={() => dispatch({ type: 'ADD_SET', matchId: match.id })} className="px-2 py-1 rounded bg-[var(--color-surface-3)] text-gray-300 text-xs font-bold shrink-0">+Set</button>
         <button onClick={() => { if (window.confirm('End match?')) dispatch({ type: 'END_MATCH', matchId: match.id }); }} className="px-2 py-1 rounded bg-red-900/30 text-red-400 text-xs font-bold shrink-0">End</button>
       </div>
+
+      {/* Score Tracker — large tap targets */}
+      <ScoreTracker match={match} activeSetNumber={activeSetNumber} dispatch={dispatch} />
 
       {/* Set + Rotation bar — single compact row */}
       <div className="flex items-center gap-1 px-2 py-1 bg-[var(--color-surface)] border-b border-white/5 shrink-0 overflow-x-auto">
@@ -108,6 +107,14 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
           </button>
         ))}
       </div>
+
+      {/* Rotation mini-dashboard */}
+      <RotationMiniDashboard
+        statEntries={statEntries}
+        matchId={match.id}
+        currentRotation={currentRotation}
+        onExpandRotation={() => setShowRotationDashboard(true)}
+      />
 
       {/* Player quick-select — horizontal scroll */}
       <div className="flex gap-2 px-2 py-1.5 overflow-x-auto bg-[var(--color-surface)] border-b border-white/5 shrink-0">
@@ -201,6 +208,16 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
             })}
           </div>
         </div>
+      )}
+
+      {/* Rotation Dashboard modal */}
+      {showRotationDashboard && (
+        <RotationDashboard
+          statEntries={statEntries}
+          matchId={match.id}
+          currentRotation={currentRotation}
+          onClose={() => setShowRotationDashboard(false)}
+        />
       )}
     </div>
   );

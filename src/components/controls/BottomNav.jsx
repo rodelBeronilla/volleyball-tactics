@@ -1,7 +1,9 @@
 const tabs = [
   { id: 'court', label: 'Court', icon: '⬡' },
+  { id: 'gameday', label: 'Game Day', icon: '📋' },
   { id: 'stats', label: 'Stats', icon: '▥' },
-  { id: 'team', label: 'Team', icon: '☰' },
+  { id: 'practice', label: 'Practice', icon: '⏱' },
+  { id: 'film', label: 'Film', icon: '▶' },
   { id: 'more', label: 'More', icon: '⚙' },
 ];
 
