@@ -36,6 +36,8 @@ export const FRICTION_PAIRS = [
   { id: 'alistair-rodel', severity: 'low', description: 'Short coverage positioning friction — define zones explicitly' },
 ];
 
+export const BUFFER_PLAYERS = ['jill', 'bryan'];
+
 export const SYNERGY_PAIRS = [
   { id: 'jill-alistair', label: 'Jill + Alistair', description: 'She feeds him + manages his intensity' },
   { id: 'bryan-rodel', label: 'Bryan + Rodel', description: "Bryan's steadiness keeps Rodel loose and confident" },
