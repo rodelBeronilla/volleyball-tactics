@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useAppState } from './hooks/useAppState';
 import Court from './components/court/Court';
 import PlayerStrategyCard from './components/court/PlayerStrategyCard';
@@ -10,138 +10,89 @@ import SettingsPanel from './components/settings/SettingsPanel';
 import GameDayPanel from './components/gameday/GameDayPanel';
 import PracticePanel from './components/practice/PracticePanel';
 import FilmReviewPanel from './components/film/FilmReviewPanel';
-import { deriveRotation as deriveRot } from './utils/rotations';
-import { generateRallySteps } from './data/rallyFlow';
+import { analyzeRotation } from './utils/rotationAnalysis';
+import { OFFENSE_5_1, DEFENSE_5_1 } from './data/responsibilities';
+import { POSITIONS } from './data/positions';
 
 export default function App() {
   const { state, dispatch, activeLineup, activeMatch, placements, playerProfiles } = useAppState();
-  const [stepIdx, setStepIdx] = useState(0);
+  const [courtView, setCourtView] = useState('offense'); // 'offense' | 'defense'
 
   const onSwipeLeft = useCallback(() => dispatch({ type: 'NEXT_ROTATION' }), [dispatch]);
   const onSwipeRight = useCallback(() => dispatch({ type: 'PREV_ROTATION' }), [dispatch]);
   const handleCloseCard = useCallback(() => dispatch({ type: 'DESELECT_PLAYER' }), [dispatch]);
 
-  // Generate rotation-specific rally steps
-  const rallySteps = useMemo(
-    () => generateRallySteps(state.currentRotation),
-    [state.currentRotation]
+  // Sync court phase from the simple offense/defense toggle
+  const courtPhaseForView = courtView === 'offense' ? 'attack' : 'defense';
+  useMemo(() => {
+    if (courtPhaseForView !== state.courtPhase) {
+      dispatch({ type: 'SET_COURT_PHASE', phase: courtPhaseForView });
+    }
+  }, [courtPhaseForView]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Rotation analysis for the summary panel
+  const rotationInfo = useMemo(
+    () => placements.length > 0 ? analyzeRotation(state.currentRotation, placements) : null,
+    [state.currentRotation, placements]
   );
 
-  const safeIdx = Math.min(stepIdx, rallySteps.length - 1);
-  const currentStep = rallySteps[safeIdx >= 0 ? safeIdx : 0];
+  // Get responsibilities for current rotation
+  const responsibilities = useMemo(() => {
+    const data = courtView === 'offense' ? OFFENSE_5_1 : DEFENSE_5_1;
+    return data[state.currentRotation] || {};
+  }, [courtView, state.currentRotation]);
 
-  // Sync court phase to useAppState when step changes
-  const derivedPhase = useMemo(() => {
-    if (!currentStep?.formationId) return 'serve';
-    const map = { 'serve': 'serve', 'sr-5-1': 'receive', 'pass': 'pass', 'offense': 'attack', 'def-perimeter': 'defense', 'transition': 'transition' };
-    return map[currentStep.formationId] || 'serve';
-  }, [currentStep]);
-
-  useEffect(() => {
-    if (derivedPhase !== state.courtPhase) {
-      dispatch({ type: 'SET_COURT_PHASE', phase: derivedPhase });
-    }
-  }, [derivedPhase]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleNextStep = useCallback(() => {
-    if (stepIdx >= rallySteps.length - 1) {
-      // End of rally → next rotation
-      const nextRot = state.currentRotation === 6 ? 1 : state.currentRotation + 1;
-      dispatch({ type: 'SET_ROTATION', rotation: nextRot });
-      setStepIdx(0);
-    } else {
-      setStepIdx(i => i + 1);
-    }
-  }, [stepIdx, rallySteps.length, state.currentRotation, dispatch]);
-
-  const handlePrevStep = useCallback(() => {
-    if (stepIdx <= 0) {
-      // Start of rally → prev rotation, last step
-      const prevRot = state.currentRotation === 1 ? 6 : state.currentRotation - 1;
-      dispatch({ type: 'SET_ROTATION', rotation: prevRot });
-      // Will be set to last step after re-render
-      setStepIdx(999); // Will be clamped
-    } else {
-      setStepIdx(i => i - 1);
-    }
-  }, [stepIdx, state.currentRotation, dispatch]);
-
-  // (stepIdx is clamped via safeIdx above)
-
-  // Heatmap data
-  const heatmapData = useMemo(() => {
-    if (!state.showHeatmap || state.statEntries.length === 0 || !activeLineup) return null;
-    const zones = {};
-    const POSITIVE = new Set(['kill', 'attackTip', 'attackTooled', 'ace', 'blockSolo', 'blockAssist', 'dig', 'passPerfect', 'passGood', 'assist', 'freeBall', 'coverDig']);
-    for (const e of state.statEntries) {
-      if (!e.rotation || e.playerId === '__team__') continue;
-      const slots = deriveRot(activeLineup.slots, e.rotation);
-      let zone = null;
-      for (let pos = 1; pos <= 6; pos++) {
-        if (slots[pos] === e.playerId) { zone = pos; break; }
-      }
-      if (!zone && activeLineup.liberoId === e.playerId) {
-        for (let pos of [1, 5, 6]) {
-          const p = state.players.find(pl => pl.id === slots[pos]);
-          if (p?.position === 'middle') { zone = pos; break; }
-        }
-      }
-      if (!zone) continue;
-      if (!zones[zone]) zones[zone] = { total: 0, positive: 0 };
-      zones[zone].total++;
-      if (POSITIVE.has(e.stat)) zones[zone].positive++;
-    }
-    for (const z of Object.values(zones)) z.positiveRate = z.total > 0 ? z.positive / z.total : 0;
-    return zones;
-  }, [state.showHeatmap, state.statEntries, activeLineup, state.players]);
+  // Libero sub info
+  const liberoSub = useMemo(() => {
+    if (!activeLineup?.liberoId) return null;
+    const libero = state.players.find(p => p.id === activeLineup.liberoId);
+    const subFor = placements.find(p => p.isLiberoIn);
+    if (!subFor || !libero) return null;
+    // Find who the libero replaced (the original middle in that slot)
+    const originalId = activeLineup.slots
+      ? Object.entries(activeLineup.slots).find(([, pid]) => {
+          const player = state.players.find(pl => pl.id === pid);
+          return player?.position === 'middle';
+        })
+      : null;
+    const originalPlayer = originalId ? state.players.find(p => p.id === originalId[1]) : null;
+    return {
+      libero,
+      replacesPlayer: originalPlayer,
+      slot: subFor.rotationalPosition,
+    };
+  }, [activeLineup, placements, state.players]);
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
-        {/* ── Court Tab ── */}
+        {/* ── Court Tab (simplified) ── */}
         {state.activeTab === 'court' && (
           <>
-            {/* Step controls */}
-            <div className="flex items-center px-2 py-1.5 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
-              <button onClick={handlePrevStep}
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-surface-3)] text-white text-lg font-bold active:scale-90 shrink-0">‹</button>
-
-              <div className="flex-1 flex flex-col items-center mx-2 min-w-0">
-                <div className="text-sm font-bold text-white truncate max-w-full">{currentStep?.label || 'Serve'}</div>
-                <div className="flex gap-0.5 mt-0.5">
-                  {rallySteps.map((s, i) => (
-                    <button key={s.id} onClick={() => setStepIdx(i)}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${
-                        i === safeIdx ? 'bg-[var(--color-accent)] scale-150'
-                          : i < safeIdx ? 'bg-[var(--color-accent)]/40'
-                          : 'bg-white/15'
-                      }`} />
-                  ))}
-                </div>
+            {/* Offense / Defense toggle + rotation label */}
+            <div className="flex items-center justify-between px-3 py-2 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
+              <div className="flex bg-[var(--color-surface)] rounded-lg p-0.5">
+                <button
+                  onClick={() => setCourtView('offense')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
+                    courtView === 'offense'
+                      ? 'bg-green-600 text-white'
+                      : 'text-gray-400'
+                  }`}
+                >Offense</button>
+                <button
+                  onClick={() => setCourtView('defense')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
+                    courtView === 'defense'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400'
+                  }`}
+                >Defense</button>
               </div>
-
-              <button onClick={handleNextStep}
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-[var(--color-surface-3)] text-white text-lg font-bold active:scale-90 shrink-0">›</button>
-            </div>
-
-            {/* Step description + toggles */}
-            <div className="flex items-center justify-between px-3 py-1 bg-[var(--color-surface)] border-b border-white/5 shrink-0">
-              <span className="text-xs text-gray-400 flex-1 min-w-0 truncate">{currentStep?.description || ''}</span>
-              <div className="flex gap-1 ml-2 shrink-0">
-                <button onClick={() => dispatch({ type: 'TOGGLE_ROUTES' })}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                    state.showRoutes ? 'bg-amber-500/20 text-amber-400' : 'bg-white/5 text-gray-600'
-                  }`} title="Routes">→</button>
-                <button onClick={() => dispatch({ type: 'TOGGLE_COVERAGE' })}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                    state.showCoverage ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-600'
-                  }`} title="Zones">◇</button>
-                <button onClick={() => dispatch({ type: 'TOGGLE_HEATMAP' })}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                    state.showHeatmap ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-600'
-                  }`} title="Heatmap">▦</button>
-              </div>
+              {rotationInfo && (
+                <span className="text-xs text-gray-400 ml-2 truncate">{rotationInfo.headline}</span>
+              )}
             </div>
 
             {/* Court */}
@@ -151,13 +102,11 @@ export default function App() {
                   placements={placements} dispatch={dispatch}
                   onSwipeLeft={onSwipeLeft} onSwipeRight={onSwipeRight}
                   selectedSlot={state.selectedSlot}
-                  showRoutes={currentStep?.showRoutes || state.showRoutes}
+                  showRoutes={courtView === 'offense'}
                   rotation={state.currentRotation}
-                  heatmapData={state.showHeatmap ? heatmapData : null}
-                  heatmapMode="quality" playerProfiles={playerProfiles}
-                  showCoverage={currentStep?.showCoverage || state.showCoverage}
+                  playerProfiles={playerProfiles}
+                  showCoverage={courtView === 'defense'}
                   courtPhase={state.courtPhase}
-                  rallyStep={currentStep}
                 />
               ) : (
                 <div className="text-gray-500 text-center px-6">
@@ -171,8 +120,62 @@ export default function App() {
               )}
             </div>
 
-            <RotationControls currentRotation={state.currentRotation} dispatch={dispatch}
-              onRotationChange={() => setStepIdx(0)} />
+            {/* Strategy summary below court */}
+            {activeLineup && rotationInfo && (
+              <div className="px-3 py-2 bg-[var(--color-surface-2)] border-t border-white/5 shrink-0 overflow-y-auto" style={{ maxHeight: '30vh' }}>
+                {/* Libero sub callout */}
+                {liberoSub && (
+                  <div className="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: POSITIONS.libero.color }}>L</span>
+                    <span className="text-xs text-orange-300">
+                      <span className="font-bold">{liberoSub.libero.name}</span> subs in for <span className="font-bold">{liberoSub.replacesPlayer?.name || 'MB'}</span> (pos {liberoSub.slot}, back row)
+                    </span>
+                  </div>
+                )}
+
+                {/* Front & back row with responsibilities */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Front Row</div>
+                    {rotationInfo.frontRow.map(p => {
+                      const resp = responsibilities[p.slot];
+                      return (
+                        <div key={p.slot} className="mb-1.5">
+                          <div className="text-xs text-white font-semibold">{p.playerName}</div>
+                          <div className="text-[11px] text-gray-400">{resp || p.roleLabel}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Back Row</div>
+                    {rotationInfo.backRow.map(p => {
+                      const resp = responsibilities[p.slot];
+                      return (
+                        <div key={p.slot} className="mb-1.5">
+                          <div className="text-xs text-white font-semibold">{p.playerName}</div>
+                          <div className="text-[11px] text-gray-400">{resp || p.roleLabel}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Attack / block options */}
+                {rotationInfo.attackOptions.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-white/5">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mr-1 self-center">
+                      {courtView === 'offense' ? 'Attacks' : 'Watch for'}
+                    </span>
+                    {rotationInfo.attackOptions.map((opt, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-full bg-white/5 text-gray-300 text-[11px]">{opt}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <RotationControls currentRotation={state.currentRotation} dispatch={dispatch} />
 
             {state.selectedSlot != null && (
               <PlayerStrategyCard selectedSlot={state.selectedSlot} rotation={state.currentRotation}
