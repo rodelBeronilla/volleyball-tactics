@@ -158,18 +158,29 @@ export default function Court({
       {/* Coverage zones — scenario-aware */}
       {showCoverage && <CoverageOverlay zones={coverageZones} />}
 
-      {/* Attack direction indicator (red arrow from opponent side) */}
+      {/* Attack direction — fan of trajectory lines from hitter position */}
       {attackIndicator && (
         <g style={{ pointerEvents: 'none' }}>
-          <line
-            x1={attackIndicator.x} y1={-4}
-            x2={attackIndicator.x} y2={8}
-            stroke="#ef4444" strokeWidth="1.2" opacity="0.7"
-            markerEnd="url(#arrow-red)"
-          />
-          <text x={attackIndicator.x} y={-3} textAnchor="middle" fill="#ef4444" fontSize="2" fontWeight="600" opacity="0.8">
-            {attackIndicator.label}
+          {/* Hitter position marker above net */}
+          <circle cx={attackIndicator.x} cy={-2} r={2.5} fill="#ef4444" opacity={0.6} />
+          <text x={attackIndicator.x} y={-2} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize="2" fontWeight="700">
+            HIT
           </text>
+          {/* Trajectory fan lines */}
+          {[
+            { tx: attackIndicator.x - 30, ty: 70 },
+            { tx: attackIndicator.x - 15, ty: 55 },
+            { tx: attackIndicator.x, ty: 45 },
+            { tx: attackIndicator.x + 15, ty: 55 },
+            { tx: attackIndicator.x + 30, ty: 70 },
+          ].map((t, i) => (
+            <line key={i}
+              x1={attackIndicator.x} y1={0}
+              x2={Math.max(0, Math.min(90, t.tx))} y2={Math.min(90, t.ty)}
+              stroke="#ef4444" strokeWidth={0.4} strokeDasharray="1.5 1.5"
+              opacity={0.35}
+            />
+          ))}
         </g>
       )}
 
