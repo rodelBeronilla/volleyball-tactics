@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useCallback, useMemo } from 'react';
 import { load, save } from '../utils/storage';
-import { DEFAULT_PLAYERS, DEFAULT_LINEUP } from '../data/defaults';
+import { DEFAULT_PLAYERS, DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW } from '../data/defaults';
 import { deriveRotation, isBackRow } from '../utils/rotations';
 import { getFormation, findDynamicSetterPos } from '../data/formations';
 import { computeFullProfile } from '../utils/playerProfileEngine';
@@ -9,7 +9,7 @@ import { createNightPlanShell, computeFlowSub } from '../data/systems';
 
 const initialState = {
   players: load('players', DEFAULT_PLAYERS),
-  lineups: load('lineups', [DEFAULT_LINEUP]),
+  lineups: load('lineups', [DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW]),
   activeLineupId: load('activeLineupId', 'lineup-1'),
   currentRotation: load('currentRotation', 1),
   activeFormationId: load('activeFormationId', 'sr-5-1'),
@@ -840,17 +840,26 @@ export function useAppState() {
     const rotPlacements = formation.placements[state.currentRotation] || {};
     const overrides = activeLineup.overrides?.[`r${state.currentRotation}`] || {};
 
+    // Pre-determine which ONE middle the libero subs for
+    // (only one libero can be on court — pick the first back-row middle found)
+    let liberoSubPos = null;
+    if (activeLineup.liberoId) {
+      for (const pos of [5, 6, 1]) { // check back row positions
+        const pid = currentSlots[pos];
+        if (!pid) continue;
+        const pl = state.players.find(p => p.id === pid);
+        if (pl?.position === 'middle') { liberoSubPos = pos; break; }
+      }
+    }
+
     for (let pos = 1; pos <= 6; pos++) {
       let playerId = currentSlots[pos];
       let isLiberoIn = false;
 
-      // Libero swap: if this position has a middle blocker and they're in back row
-      if (playerId && activeLineup.liberoId && isBackRow(pos)) {
-        const player = state.players.find(p => p.id === playerId);
-        if (player && player.position === 'middle') {
-          playerId = activeLineup.liberoId;
-          isLiberoIn = true;
-        }
+      // Libero swap: only for the ONE designated back-row middle
+      if (pos === liberoSubPos && activeLineup.liberoId) {
+        playerId = activeLineup.liberoId;
+        isLiberoIn = true;
       }
 
       const player = state.players.find(p => p.id === playerId);
