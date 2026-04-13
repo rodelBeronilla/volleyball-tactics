@@ -33,12 +33,68 @@ export default function App() {
   }, [courtPhaseForView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Generate coverage zones dynamically from current rotation + placements
+  // Compute SCENARIO-AWARE defense placements — players move to correct spots
+  const scenarioPlacements = useMemo(() => {
+    if (courtView !== 'defense' || placements.length === 0) return placements;
+
+    // Defense positions based on attack direction
+    // These are volleyball-correct base positions for perimeter (2-0-4) defense
+    const DEFENSE_POS = {
+      left: {
+        // Attack from opponent zone 4 → our right side
+        // RF+CF block right pin, LF tips, RB line, LB cross, CB deep
+        2: { x: 78, y: 4 },   // RF — blocking at right pin
+        3: { x: 62, y: 4 },   // CF — closing to right pin
+        4: { x: 22, y: 22 },  // LF — off net, tip/roll cover
+        1: { x: 82, y: 55 },  // RB — right sideline, line dig
+        5: { x: 12, y: 48 },  // LB — left side, cross dig
+        6: { x: 45, y: 76 },  // CB — deep center, power angle
+      },
+      right: {
+        // Attack from opponent zone 2 → our left side
+        4: { x: 12, y: 4 },   // LF — blocking at left pin
+        3: { x: 28, y: 4 },   // CF — closing to left pin
+        2: { x: 68, y: 22 },  // RF — off net, tip/roll cover
+        5: { x: 8, y: 55 },   // LB — left sideline, line dig
+        1: { x: 78, y: 48 },  // RB — right side, cross dig
+        6: { x: 45, y: 76 },  // CB — deep center, power angle
+      },
+      middle: {
+        // Attack from zone 3 → center
+        3: { x: 45, y: 4 },   // CF — blocking middle
+        4: { x: 18, y: 4 },   // LF — closing / wing
+        2: { x: 72, y: 4 },   // RF — closing / wing
+        5: { x: 10, y: 58 },  // LB — left back
+        1: { x: 80, y: 58 },  // RB — right back
+        6: { x: 45, y: 78 },  // CB — deep center
+      },
+    };
+
+    const positions = DEFENSE_POS[defenseScenario];
+    if (!positions) return placements;
+
+    // Override positions but keep player/role data
+    return placements.map(p => {
+      const pos = positions[p.rotationalPosition];
+      if (!pos) return p;
+
+      // Setter in back row positions closer to target for transition
+      if (p.player?.position === 'setter' && (p.rotationalPosition === 1 || p.rotationalPosition === 5 || p.rotationalPosition === 6)) {
+        return { ...p, x: 62, y: 42 }; // near right-center, ready to sprint to target
+      }
+      return { ...p, x: pos.x, y: pos.y };
+    });
+  }, [courtView, defenseScenario, placements]);
+
+  // Use scenario placements for zones + court rendering
+  const displayPlacements = courtView === 'defense' ? scenarioPlacements : placements;
+
   const activeCoverageZones = useMemo(() => {
-    if (placements.length === 0) return null;
-    if (courtView === 'receive') return getServeReceiveZones(placements, state.currentRotation);
-    if (courtView === 'defense') return getDefenseZones(placements, defenseScenario);
+    if (displayPlacements.length === 0) return null;
+    if (courtView === 'receive') return getServeReceiveZones(displayPlacements);
+    if (courtView === 'defense') return getDefenseZones(displayPlacements, defenseScenario);
     return null;
-  }, [courtView, defenseScenario, placements, state.currentRotation]);
+  }, [courtView, defenseScenario, displayPlacements]);
 
   // Attack direction indicator for defense scenarios
   const attackIndicator = useMemo(() => {
@@ -46,10 +102,10 @@ export default function App() {
     return ATTACK_INDICATORS[defenseScenario] || null;
   }, [courtView, defenseScenario]);
 
-  // Rotation analysis for the summary panel
+  // Rotation analysis for the summary panel — uses display placements
   const rotationInfo = useMemo(
-    () => placements.length > 0 ? analyzeRotation(state.currentRotation, placements) : null,
-    [state.currentRotation, placements]
+    () => displayPlacements.length > 0 ? analyzeRotation(state.currentRotation, displayPlacements) : null,
+    [state.currentRotation, displayPlacements]
   );
 
   // Get responsibilities for current rotation
@@ -130,7 +186,7 @@ export default function App() {
             <div className="flex-1 flex items-center justify-center p-1 min-h-0 bg-[var(--color-surface)]">
               {activeLineup ? (
                 <Court
-                  placements={placements} dispatch={dispatch}
+                  placements={displayPlacements} dispatch={dispatch}
                   onSwipeLeft={onSwipeLeft} onSwipeRight={onSwipeRight}
                   selectedSlot={state.selectedSlot}
                   showRoutes={courtView === 'offense'}
