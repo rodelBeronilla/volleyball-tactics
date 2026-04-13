@@ -13,7 +13,7 @@ import FilmReviewPanel from './components/film/FilmReviewPanel';
 import { analyzeRotation } from './utils/rotationAnalysis';
 import { OFFENSE_5_1, DEFENSE_5_1 } from './data/responsibilities';
 import { POSITIONS } from './data/positions';
-import { SERVE_RECEIVE_ZONES, DEFENSE_SCENARIOS } from './data/coverageZones';
+import { getServeReceiveZones, getDefenseZones, ATTACK_INDICATORS, DEFENSE_SCENARIOS } from './data/coverageZones';
 
 export default function App() {
   const { state, dispatch, activeLineup, activeMatch, placements, playerProfiles } = useAppState();
@@ -32,25 +32,18 @@ export default function App() {
     }
   }, [courtPhaseForView]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Determine which coverage zones to show
+  // Generate coverage zones dynamically from current rotation + placements
   const activeCoverageZones = useMemo(() => {
-    if (courtView === 'receive') return SERVE_RECEIVE_ZONES;
-    if (courtView === 'defense') {
-      const scenario = DEFENSE_SCENARIOS.find(s => s.id === defenseScenario);
-      return scenario?.zones || null;
-    }
+    if (placements.length === 0) return null;
+    if (courtView === 'receive') return getServeReceiveZones(placements, state.currentRotation);
+    if (courtView === 'defense') return getDefenseZones(placements, defenseScenario);
     return null;
-  }, [courtView, defenseScenario]);
+  }, [courtView, defenseScenario, placements, state.currentRotation]);
 
   // Attack direction indicator for defense scenarios
   const attackIndicator = useMemo(() => {
     if (courtView !== 'defense') return null;
-    switch (defenseScenario) {
-      case 'left': return { x: 75, label: 'ATK' };
-      case 'right': return { x: 15, label: 'ATK' };
-      case 'middle': return { x: 45, label: 'ATK' };
-      default: return null;
-    }
+    return ATTACK_INDICATORS[defenseScenario] || null;
   }, [courtView, defenseScenario]);
 
   // Rotation analysis for the summary panel
