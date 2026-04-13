@@ -13,22 +13,45 @@ import FilmReviewPanel from './components/film/FilmReviewPanel';
 import { analyzeRotation } from './utils/rotationAnalysis';
 import { OFFENSE_5_1, DEFENSE_5_1 } from './data/responsibilities';
 import { POSITIONS } from './data/positions';
+import { SERVE_RECEIVE_ZONES, DEFENSE_SCENARIOS } from './data/coverageZones';
 
 export default function App() {
   const { state, dispatch, activeLineup, activeMatch, placements, playerProfiles } = useAppState();
-  const [courtView, setCourtView] = useState('offense'); // 'offense' | 'defense'
+  const [courtView, setCourtView] = useState('offense'); // 'offense' | 'receive' | 'defense'
+  const [defenseScenario, setDefenseScenario] = useState('left'); // 'left' | 'right' | 'middle'
 
   const onSwipeLeft = useCallback(() => dispatch({ type: 'NEXT_ROTATION' }), [dispatch]);
   const onSwipeRight = useCallback(() => dispatch({ type: 'PREV_ROTATION' }), [dispatch]);
   const handleCloseCard = useCallback(() => dispatch({ type: 'DESELECT_PLAYER' }), [dispatch]);
 
-  // Sync court phase from the simple offense/defense toggle
-  const courtPhaseForView = courtView === 'offense' ? 'attack' : 'defense';
+  // Sync court phase from the view toggle
+  const courtPhaseForView = courtView === 'offense' ? 'attack' : courtView === 'receive' ? 'receive' : 'defense';
   useMemo(() => {
     if (courtPhaseForView !== state.courtPhase) {
       dispatch({ type: 'SET_COURT_PHASE', phase: courtPhaseForView });
     }
   }, [courtPhaseForView]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Determine which coverage zones to show
+  const activeCoverageZones = useMemo(() => {
+    if (courtView === 'receive') return SERVE_RECEIVE_ZONES;
+    if (courtView === 'defense') {
+      const scenario = DEFENSE_SCENARIOS.find(s => s.id === defenseScenario);
+      return scenario?.zones || null;
+    }
+    return null;
+  }, [courtView, defenseScenario]);
+
+  // Attack direction indicator for defense scenarios
+  const attackIndicator = useMemo(() => {
+    if (courtView !== 'defense') return null;
+    switch (defenseScenario) {
+      case 'left': return { x: 75, label: 'ATK' };
+      case 'right': return { x: 15, label: 'ATK' };
+      case 'middle': return { x: 45, label: 'ATK' };
+      default: return null;
+    }
+  }, [courtView, defenseScenario]);
 
   // Rotation analysis for the summary panel
   const rotationInfo = useMemo(
@@ -67,31 +90,46 @@ export default function App() {
     <div className="flex flex-col h-full">
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
-        {/* ── Court Tab (simplified) ── */}
+        {/* ── Court Tab ── */}
         {state.activeTab === 'court' && (
           <>
-            {/* Offense / Defense toggle + rotation label */}
-            <div className="flex items-center justify-between px-3 py-2 bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
-              <div className="flex bg-[var(--color-surface)] rounded-lg p-0.5">
-                <button
-                  onClick={() => setCourtView('offense')}
-                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
-                    courtView === 'offense'
-                      ? 'bg-green-600 text-white'
-                      : 'text-gray-400'
-                  }`}
-                >Offense</button>
-                <button
-                  onClick={() => setCourtView('defense')}
-                  className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
-                    courtView === 'defense'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400'
-                  }`}
-                >Defense</button>
+            {/* View toggle: Offense / Serve Receive / Defense */}
+            <div className="flex flex-col bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <div className="flex bg-[var(--color-surface)] rounded-lg p-0.5">
+                  {[
+                    { id: 'offense', label: 'Offense', color: 'bg-green-600' },
+                    { id: 'receive', label: 'Receive', color: 'bg-amber-600' },
+                    { id: 'defense', label: 'Defense', color: 'bg-blue-600' },
+                  ].map(v => (
+                    <button key={v.id}
+                      onClick={() => setCourtView(v.id)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                        courtView === v.id ? `${v.color} text-white` : 'text-gray-400'
+                      }`}
+                    >{v.label}</button>
+                  ))}
+                </div>
+                {rotationInfo && (
+                  <span className="text-[11px] text-gray-400 ml-2 truncate">{rotationInfo.headline}</span>
+                )}
               </div>
-              {rotationInfo && (
-                <span className="text-xs text-gray-400 ml-2 truncate">{rotationInfo.headline}</span>
+
+              {/* Defense sub-scenario picker */}
+              {courtView === 'defense' && (
+                <div className="flex items-center gap-1 px-3 pb-1.5">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mr-1">Attack from:</span>
+                  {DEFENSE_SCENARIOS.map(s => (
+                    <button key={s.id}
+                      onClick={() => setDefenseScenario(s.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                        defenseScenario === s.id
+                          ? 'bg-red-600/30 text-red-300 border border-red-500/40'
+                          : 'bg-[var(--color-surface)] text-gray-500'
+                      }`}
+                    >{s.icon} {s.label}</button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -105,7 +143,9 @@ export default function App() {
                   showRoutes={courtView === 'offense'}
                   rotation={state.currentRotation}
                   playerProfiles={playerProfiles}
-                  showCoverage={courtView === 'defense'}
+                  showCoverage={courtView !== 'offense'}
+                  coverageZones={activeCoverageZones}
+                  attackIndicator={attackIndicator}
                   courtPhase={state.courtPhase}
                 />
               ) : (
@@ -122,7 +162,7 @@ export default function App() {
 
             {/* Strategy summary below court */}
             {activeLineup && rotationInfo && (
-              <div className="px-3 py-2 bg-[var(--color-surface-2)] border-t border-white/5 shrink-0 overflow-y-auto" style={{ maxHeight: '30vh' }}>
+              <div className="px-3 py-2 bg-[var(--color-surface-2)] border-t border-white/5 shrink-0 overflow-y-auto" style={{ maxHeight: '28vh' }}>
                 {/* Libero sub callout */}
                 {liberoSub && (
                   <div className="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
@@ -161,15 +201,28 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Attack / block options */}
-                {rotationInfo.attackOptions.length > 0 && (
+                {/* Context-specific info */}
+                {courtView === 'offense' && rotationInfo.attackOptions.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-white/5">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mr-1 self-center">
-                      {courtView === 'offense' ? 'Attacks' : 'Watch for'}
-                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mr-1 self-center">Attacks</span>
                     {rotationInfo.attackOptions.map((opt, i) => (
-                      <span key={i} className="px-2 py-0.5 rounded-full bg-white/5 text-gray-300 text-[11px]">{opt}</span>
+                      <span key={i} className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-300 text-[11px] border border-green-500/20">{opt}</span>
                     ))}
+                  </div>
+                )}
+                {courtView === 'receive' && (
+                  <div className="mt-2 pt-2 border-t border-white/5">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Serve Receive</span>
+                    <div className="text-[11px] text-gray-400 mt-0.5">{rotationInfo.serveReceive}</div>
+                    <div className="text-[11px] text-amber-400/70 mt-0.5">Zones show which passer takes which area. Strongest passers get biggest zones.</div>
+                  </div>
+                )}
+                {courtView === 'defense' && (
+                  <div className="mt-2 pt-2 border-t border-white/5">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                      {DEFENSE_SCENARIOS.find(s => s.id === defenseScenario)?.desc}
+                    </span>
+                    <div className="text-[11px] text-blue-400/70 mt-0.5">Zones show coverage responsibilities. Blockers seal, diggers read angle.</div>
                   </div>
                 )}
               </div>

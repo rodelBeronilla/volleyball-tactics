@@ -1,46 +1,45 @@
 /**
- * SVG overlay showing defensive coverage zones.
- * Each player's responsibility area is shown as a semi-transparent polygon.
+ * SVG overlay showing coverage zones for any scenario.
+ * Accepts a `zones` object (keyed by zone name → { points, color, label, desc? }).
  */
 
-import { DEFENSE_ZONES } from '../../data/coverageZones';
+export default function CoverageOverlay({ zones }) {
+  if (!zones) return null;
 
-export default function CoverageOverlay({ selectedSlot }) {
   return (
     <g className="coverage-overlay">
-      {Object.entries(DEFENSE_ZONES).map(([pos, zone]) => {
-        const posNum = parseInt(pos);
-        const isSelected = selectedSlot === posNum;
-        const opacity = selectedSlot != null
-          ? (isSelected ? 0.25 : 0.05)
-          : 0.12;
-
+      {Object.entries(zones).map(([key, zone]) => {
         const points = zone.points.map(p => `${p.x},${p.y}`).join(' ');
+        const cx = zone.points.reduce((s, p) => s + p.x, 0) / zone.points.length;
+        const cy = zone.points.reduce((s, p) => s + p.y, 0) / zone.points.length;
 
         return (
-          <g key={pos}>
+          <g key={key}>
             <polygon
               points={points}
               fill={zone.color}
-              opacity={opacity}
+              opacity={0.16}
               stroke={zone.color}
-              strokeWidth={isSelected ? 0.8 : 0.3}
-              strokeOpacity={isSelected ? 0.6 : 0.15}
-              style={{ pointerEvents: 'none', transition: 'opacity 0.3s' }}
+              strokeWidth={0.6}
+              strokeOpacity={0.5}
+              style={{ pointerEvents: 'none' }}
             />
-            {isSelected && (
+            <text
+              x={cx} y={cy - (zone.desc ? 1.5 : 0)}
+              textAnchor="middle" dominantBaseline="central"
+              fill={zone.color} fontSize="3.2" fontWeight="700" opacity="0.9"
+              style={{ pointerEvents: 'none' }}
+            >
+              {zone.label}
+            </text>
+            {zone.desc && (
               <text
-                x={zone.points.reduce((s, p) => s + p.x, 0) / zone.points.length}
-                y={zone.points.reduce((s, p) => s + p.y, 0) / zone.points.length}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={zone.color}
-                fontSize="3"
-                fontWeight="600"
-                opacity="0.8"
+                x={cx} y={cy + 2.5}
+                textAnchor="middle" dominantBaseline="central"
+                fill={zone.color} fontSize="1.8" fontWeight="400" opacity="0.6"
                 style={{ pointerEvents: 'none' }}
               >
-                {zone.label}
+                {zone.desc}
               </text>
             )}
           </g>

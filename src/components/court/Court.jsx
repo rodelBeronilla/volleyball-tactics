@@ -25,6 +25,7 @@ export default function Court({
   placements, dispatch, onSwipeLeft, onSwipeRight,
   responsibilities, selectedSlot, showRoutes, rotation,
   heatmapData, heatmapMode, playerProfiles, showCoverage, courtPhase, rallyStep,
+  coverageZones, attackIndicator,
 }) {
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
@@ -154,8 +155,23 @@ export default function Court({
       <ArrowDefs />
       <CourtMarkings />
 
-      {/* Coverage zones — defense phase */}
-      {showCoverage && <CoverageOverlay selectedSlot={selectedSlot} />}
+      {/* Coverage zones — scenario-aware */}
+      {showCoverage && <CoverageOverlay zones={coverageZones} />}
+
+      {/* Attack direction indicator (red arrow from opponent side) */}
+      {attackIndicator && (
+        <g style={{ pointerEvents: 'none' }}>
+          <line
+            x1={attackIndicator.x} y1={-4}
+            x2={attackIndicator.x} y2={8}
+            stroke="#ef4444" strokeWidth="1.2" opacity="0.7"
+            markerEnd="url(#arrow-red)"
+          />
+          <text x={attackIndicator.x} y={-3} textAnchor="middle" fill="#ef4444" fontSize="2" fontWeight="600" opacity="0.8">
+            {attackIndicator.label}
+          </text>
+        </g>
+      )}
 
       {/* Heatmap layer */}
       {heatmapData && <ZoneHeatmap data={heatmapData} mode={heatmapMode} />}
