@@ -48,6 +48,10 @@ p{margin:0}
 .chip .sw i{width:9px;height:9px;border-radius:50%;display:block}
 .chip.filter[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
 .chip.note{border-style:dashed;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.filters .chips{flex:1 1 auto}
+.chip .s{display:none}
+.seg.row button[disabled]{opacity:.35}
 .chip.on,.chip[aria-pressed="true"].filter{border-color:var(--accent)}
 .chip.active{background:var(--panel3);border-color:var(--accent)}
 
@@ -246,6 +250,11 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:0 0 auto;min-height:40px;padding:0 12px;font-size:13px;white-space:nowrap}
+  .filters{gap:8px 0}
+  .filters .seg.row{width:100%;display:flex}
+  .filters .seg.row button{flex:1 1 0;min-height:40px;padding:0 6px;font-size:13px}
+  .chip .l{display:none}
+  .chip .s{display:inline}
   .toolbar{gap:6px}
   .toggle{min-height:40px;font-size:13px;padding:0 10px;gap:8px}
   .toggle .sw{width:32px;height:20px}
@@ -325,9 +334,9 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
     <section class="tab" id="tab-3d" data-tab="3d" role="tabpanel">
       <div class="tab-head">
         <h2>Court in 3D</h2>
-        <p>Real court in metres; every ball is a gravity parabola from the setter's hands. Filter by tempo, tap a path or a name below; the hitter's route appears with it.</p>
+        <p>Real court in metres; every ball is a gravity parabola from the setter's hands. Filter by row and tempo, tap a path or a name below; the hitter's route appears with it.</p>
       </div>
-      <div class="chips" id="v3-filters" aria-label="Filter groups"></div>
+      <div class="filters" id="v3-filters"></div>
       <div class="toolbar">
         <button class="toggle" id="v3-bic" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo</span></button>
         <button class="toggle" id="v3-net" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>Women's net</span></button>
@@ -353,7 +362,8 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
         <h2>Net View</h2>
         <p>Side view from the back row: height and landing spot tell the sets apart. Tap a path.</p>
       </div>
-      <div class="chips" id="net-filters" aria-label="Filter groups"></div>
+      <div class="filters" id="net-filters"></div>
+      <p class="hint" id="net-rownote" hidden></p>
       <div class="scene-wrap"><div id="net-scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play ball">▶ Play</button></div></div>
       <div class="strip" id="strip-net" aria-label="Select a set"></div>
       <p class="hint" id="net-note" hidden></p>
@@ -366,6 +376,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
         <h2>Court View</h2>
         <p>Top-down, our half. Select a set to see the hitter's start, route and takeoff. Tap a zone number to see what lands there.</p>
       </div>
+      <div class="filters" id="court-filters"></div>
       <div class="toolbar">
         <button class="toggle" id="bic-toggle" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo (fast &amp; low)</span></button>
         <span class="hint" id="bic-hint">Normal back-row ball: higher and deeper. At high levels every back-row set is assumed to be quick.</span>
@@ -380,6 +391,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
         <h2>Hand Signals</h2>
         <p>Your sets first. Tap a card for the full hitter card, then jump to the 3D court.</p>
       </div>
+      <div class="filters" id="sig-filters"></div>
       <div class="cards" id="cards"></div>
       <div id="cards-more"></div>
     </section>
@@ -395,7 +407,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
           <button data-mode="trajectory" aria-pressed="false">Trajectory → Set</button>
         </div>
       </div>
-      <div class="chips" id="quiz-groups" aria-label="Quiz only this group"></div>
+      <div class="filters" id="quiz-groups"></div>
       <div class="score" id="quiz-score"></div>
       <div class="qbox" id="quiz-box"></div>
     </section>
@@ -579,13 +591,13 @@ const TEMPOS = [
   { id: '2nd',   label: 'Second tempo', short: '2nd',   hint: 'hitter is mid-approach at setter contact' },
   { id: '3rd',   label: 'Third tempo',  short: '3rd',   hint: 'hitter starts the approach on the set' }
 ];
-const GROUPS = [
-  { id: 'quick',     label: 'Quick',      hint: '1st tempo' },
-  { id: 'medium',    label: 'Medium',     hint: '2nd tempo loops' },
-  { id: 'outside',   label: 'Outside',    hint: 'Left antenna' },
-  { id: 'rightside', label: 'Right side', hint: 'Right antenna' },
-  { id: 'backrow',   label: 'Back row',   hint: 'Behind the 3-m line' }
+const ROWS = [
+  { id: 'front', label: 'Front row' },
+  { id: 'back',  label: 'Back row' },
+  { id: 'both',  label: 'Both' }
 ];
+/* `group` is an internal family used by the colour scheme and the data checks; it is never shown as a filter. The UI classifies by tempo and by row. */
+const GROUPS = ['quick', 'medium', 'outside', 'rightside', 'backrow'];
 const SETTER_X = 0.56;
 const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };   // court fraction (net → end line) where a back-row ball is contacted
 
@@ -688,13 +700,14 @@ const state = {
   diag: 'net',
   selected: null,
   hidden: new Set(),
+  row: (function () { try { const r = localStorage.getItem('setterSignals.row'); if (['front', 'back', 'both'].includes(r)) return r; } catch (e) { /* ignore */ } return 'both'; })(),
   bic: false,
   zone: null,
   netH: 2.43,
   slow: false,
   cam: { yaw: 0.2, pitch: 0.58, dist: 18, preset: 'coach' },
   v3drag: false,
-  quiz: { mode: 'signal', group: 'all', queue: [], current: null, choices: [], answered: null, score: loadScore() }
+  quiz: { mode: 'signal', queue: [], current: null, choices: [], answered: null, score: loadScore() }
 };
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const narrow = window.matchMedia('(max-width: 700px)');
@@ -703,7 +716,9 @@ const narrow = window.matchMedia('(max-width: 700px)');
 const $ = (sel, root) => (root || document).querySelector(sel);
 const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 const byId = id => SETS.find(s => s.id === id);
-const groupOf = id => GROUPS.find(g => g.id === id) || { label: id };
+const rowOf = s => s.group === 'backrow' ? 'back' : 'front';
+const rowOk = s => state.row === 'both' || rowOf(s) === state.row;
+const shown = s => rowOk(s) && !state.hidden.has(tempoOf(s));   // passes the row toggle and the tempo chips
 const r1 = n => Math.round(n * 10) / 10;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const isEmoji = g => /\p{Extended_Pictographic}/u.test(g);
@@ -741,6 +756,32 @@ function setRole(r) {
   renderRoleBar(); renderSignals();
   if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'quiz') quizNext();
   renderDetail(); applySelection();
+}
+function setRow(r) {
+  state.row = r;
+  try { localStorage.setItem('setterSignals.row', r); } catch (e) { /* ignore */ }
+  const s = state.selected && byId(state.selected);
+  if (s && !rowOk(s)) select(null, { silent: true });
+  renderTab();
+}
+function renderTab() {
+  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'signals') renderSignals(); else if (state.tab === 'quiz') { state.quiz.queue = []; quizNext(); }
+  renderDetail();
+}
+/* One filter bar for every tab: row toggle + tempo chips. `pool` is the list the tab draws from before filtering. */
+function renderFilters(id, pool) {
+  const el = $('#' + id); if (!el) return;
+  const rowSets = pool.filter(rowOk);
+  const seg = `<div class="seg row" role="group" aria-label="Row">${ROWS.map(r => {
+    const n = r.id === 'both' ? pool.length : pool.filter(s => rowOf(s) === r.id).length;
+    return `<button data-row="${r.id}" aria-pressed="${state.row === r.id}" ${n ? '' : 'disabled'} title="${n} set${n === 1 ? '' : 's'}">${r.label}</button>`;
+  }).join('')}</div>`;
+  const chips = TEMPOS.filter(t => rowSets.some(s => tempoOf(s) === t.id)).map(t => {
+    const on = !state.hidden.has(t.id);
+    const sw = rowSets.filter(s => tempoOf(s) === t.id).map(s => `<i style="background:${s.color}"></i>`).join('');
+    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(t.hint)}"><span class="sw" aria-hidden="true">${sw}</span><span class="l">${t.label}</span><span class="s">${t.short}</span></button>`;
+  }).join('');
+  el.innerHTML = seg + `<div class="chips tempo" aria-label="Tempo">${chips || '<span class="hint">No sets in this row for you.</span>'}</div>`;
 }
 function renderRoleBar() {
   const rot = rotation(state.rotation);
@@ -910,21 +951,24 @@ function netScene(L, sets, opts) {
 }
 function renderNet() {
   const L = netLayout();
-  const visible = roleSets().filter(s => s.netView && !state.hidden.has(tempoOf(s)));
+  const pool = roleSets().filter(s => !s.modifier);
+  const visible = pool.filter(s => s.netView && shown(s));
   $('#net-scene').innerHTML = netScene(L, visible);
   renderStrip('strip-net', visible);
-  // filter chips
-  $('#net-filters').innerHTML = TEMPOS.filter(t => roleSets().some(s => tempoOf(s) === t.id && s.netView)).map(t => {
-    const on = !state.hidden.has(t.id);
-    const sw = roleSets().filter(s => tempoOf(s) === t.id && s.netView).map(s => `<i style="background:${s.color}"></i>`).join('');
-    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(t.hint)}"><span class="sw" aria-hidden="true">${sw}</span>${t.short}</button>`;
-  }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<button class="chip note" data-goto="court" title="Back-row sets are shown on the court">Back row → Court</button>` : '');
+  renderFilters('net-filters', pool);
+  const backOnly = state.row === 'back';
+  const rowNote = $('#net-rownote');
+  rowNote.hidden = !(backOnly || (state.row === 'both' && pool.some(s => rowOf(s) === 'back')));
+  rowNote.innerHTML = backOnly
+    ? `The side view only draws front-row sets — back-row balls are set behind the 3-m line. See them <button class="btn small" data-goto="court">on the Court</button> or <button class="btn small" data-goto="3d">in 3D</button>.`
+    : `Back-row sets (${esc(pool.filter(s => rowOf(s) === 'back').map(s => s.name).join(' · '))}) are drawn <button class="btn small" data-goto="court">on the Court</button> and <button class="btn small" data-goto="3d">in 3D</button>.`;
   // legend, by tempo
-  $('#net-legend').innerHTML = TEMPOS.filter(t => roleSets().some(s => tempoOf(s) === t.id && s.netView)).map(t => {
-    const items = roleSets().filter(s => tempoOf(s) === t.id && s.netView).map(s =>
+  const legendSets = pool.filter(s => s.netView && rowOk(s));
+  $('#net-legend').innerHTML = TEMPOS.filter(t => legendSets.some(s => tempoOf(s) === t.id)).map(t => {
+    const items = legendSets.filter(s => tempoOf(s) === t.id).map(s =>
       `<button class="lg" data-select="${s.id}" data-set="${s.id}" ${state.hidden.has(t.id) ? 'aria-disabled="true"' : ''}><i style="background:${s.color}"></i><span>${esc(s.name)} <small>· ${esc(effectiveHitter(s))}</small></span></button>`).join('');
     return `<h4>${t.label} · ${t.hint}</h4>${items}`;
-  }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<h4>Back row</h4><p class="hint" style="grid-column:1/-1">${esc(roleSets().filter(s => s.group === 'backrow' && !s.modifier).map(s => s.name).join(' · '))} are ${esc(tempoMeta(tempoOf(roleSets().find(s => s.group === 'backrow' && !s.modifier) || SETS[0])).label.toLowerCase())} and are drawn on the <button class="btn small" data-goto="court">Court view</button>. Add "BIC" to run any of them ${esc(tempoMeta(tempoOf(byId('bic') || SETS[0])).label.toLowerCase())}.</p>` : '');
+  }).join('');
   applySelection();
 }
 
@@ -1083,9 +1127,11 @@ function courtScene(sets, opts) {
   return o;
 }
 function renderCourt() {
-  const sets = roleSets().filter(s => s.courtView);
+  const pool = roleSets().filter(s => s.courtView);
+  const sets = pool.filter(shown);
   $('#court-scene').innerHTML = courtScene(sets, { bic: state.bic });
   renderStrip('strip-court', sets);
+  renderFilters('court-filters', pool);
   $('#bic-toggle').setAttribute('aria-pressed', String(state.bic));
   $('#bic-hint').textContent = state.bic
     ? 'BIC: same spots, run fast and low — the hitter is already in the air when the ball is set. At high levels every back-row set is assumed to be quick.'
@@ -1299,14 +1345,11 @@ function v3Scene(L, sets, opts) {
 }
 function render3D() {
   const L = v3Layout();
-  const sets = roleSets().filter(s => !s.modifier && !state.hidden.has(tempoOf(s)));
+  const pool = roleSets().filter(s => !s.modifier);
+  const sets = pool.filter(shown);
   $('#v3-scene').innerHTML = v3Scene(L, sets, { bic: state.bic });
   renderStrip('strip-3d', sets);
-  $('#v3-filters').innerHTML = TEMPOS.filter(t => roleSets().some(s => tempoOf(s) === t.id && !s.modifier)).map(t => {
-    const on = !state.hidden.has(t.id);
-    const sw = roleSets().filter(s => tempoOf(s) === t.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
-    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(t.hint)}"><span class="sw" aria-hidden="true">${sw}</span>${t.label}</button>`;
-  }).join('');
+  renderFilters('v3-filters', pool);
   $$('#v3-presets button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-cam') === state.cam.preset)));
   $('#v3-bic').setAttribute('aria-pressed', String(state.bic));
   $('#v3-net').setAttribute('aria-pressed', String(state.netH === WORLD.netHeights.women));
@@ -1368,7 +1411,7 @@ let v3raf = null;
 /* ============================================================
    CHECKS — verify every set against what it should represent
    ============================================================ */
-const VALID = { groups: GROUPS.map(g => g.id), hitters: ['MB', 'OH', 'OPP', 'Back row'], how: ['signal', 'call', 'both'], pass: ['perfect', 'good', 'any'] };
+const VALID = { groups: GROUPS, hitters: ['MB', 'OH', 'OPP', 'Back row'], how: ['signal', 'call', 'both'], pass: ['perfect', 'good', 'any'] };
 const in01 = v => typeof v === 'number' && v >= 0 && v <= 1;
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
 /* Each rule returns findings: { id, ok, msg, level } — level 'err' or 'warn'. Rules about specific
@@ -1655,10 +1698,10 @@ function renderChecks() {
     const bad = c.results.flatMap(r => r.findings).filter(x => x.id === s.id && !x.ok);
     const st = bad.length ? (bad.some(x => x.level !== 'warn') ? 'err' : 'warn') : 'ok';
     const z = zonesOf(s).join('/') || '–';
-    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td class="m-hide">${esc(groupOf(s.group).label)}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(tempoMeta(tempoOf(s)).short)}</td>` +
+    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td class="m-hide">${rowOf(s) === 'back' ? 'Back row' : 'Front row'}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(tempoMeta(tempoOf(s)).short)}</td>` +
       `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num m-hide">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.peakH.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td class="m-hide">${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
   }).join('');
-  $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th class="m-hide">Group</th><th>Hitter</th><th>Tempo</th><th class="num">Lands</th><th>Zone</th><th class="num m-hide">Off net</th><th class="num">Apex</th><th class="num">Hang</th><th class="m-hide">Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
+  $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th class="m-hide">Row</th><th>Hitter</th><th>Tempo</th><th class="num">Lands</th><th>Zone</th><th class="num m-hide">Off net</th><th class="num">Apex</th><th class="num">Hang</th><th class="m-hide">Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
   applySelection();
 }
 
@@ -1668,7 +1711,7 @@ function renderChecks() {
 function renderStrip(id, sets) {
   const el = $('#' + id); if (!el) return;
   const ids = new Set(sets.map(s => s.id));
-  const all = roleSetsAll().filter(s => !s.modifier && (ids.has(s.id) || !availability(s, state.rotation).ok));
+  const all = roleSetsAll().filter(s => !s.modifier && rowOk(s) && (ids.has(s.id) || (!availability(s, state.rotation).ok && !state.hidden.has(tempoOf(s)))));
   el.innerHTML = all.map(s => { const off = !ids.has(s.id); return `<button class="sc${off ? ' off' : ''}" data-set="${s.id}" data-select="${s.id}" style="color:${s.color}" title="${off ? esc('Not in rotation ' + state.rotation + ': ' + availability(s, state.rotation).why) : ''}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(s.name)}</span></button>`; }).join('');
 }
 function scrollStripsToSelection() {
@@ -1684,7 +1727,6 @@ function scrollStripsToSelection() {
    ============================================================ */
 function renderSignals() {
   const card = s => {
-    const g = groupOf(s.group);
     return `<div class="card" role="button" tabindex="0" data-select="${s.id}" data-set="${s.id}" style="--c:${s.color}" aria-pressed="${state.selected === s.id}">` +
       glyphHtml(s, 'glyph') +
       `<div class="name">${esc(s.name)}</div>` +
@@ -1693,8 +1735,9 @@ function renderSignals() {
       `<div class="actions">${s.courtView ? `<button class="btn small" data-show="3d" data-id="${s.id}">Show in 3D</button>` : ''}${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Court</button>` : ''}</div>` +
       `</div>`;
   };
-  const mine = roleSetsAll(), others = SETS.filter(s => !roleHas(s));
-  $('#cards').innerHTML = mine.map(card).join('');
+  const pool = roleSetsAll(), mine = pool.filter(shown), others = SETS.filter(s => !roleHas(s) && shown(s));
+  renderFilters('sig-filters', pool);
+  $('#cards').innerHTML = mine.map(card).join('') || `<p class="hint">No sets match the filters.</p>`;
   $('#cards-more').innerHTML = others.length ? `<details class="more"><summary>Other sets (${others.length}) — not usually yours as ${esc(roleLabel(state.role))}</summary><div class="cards">${others.map(card).join('')}</div></details>` : '';
   applySelection();
 }
@@ -1706,7 +1749,6 @@ function renderDetail() {
   const el = $('#detail');
   const s = state.selected ? byId(state.selected) : null;
   if (!s) { el.classList.remove('open'); el.classList.remove('peek'); el.style.removeProperty('--c'); $('.content', el).innerHTML = ''; return; }
-  const g = groupOf(s.group);
   el.style.setProperty('--c', s.color);
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
   const onNow = s.modifier || availability(s, state.rotation).ok;
@@ -1738,7 +1780,7 @@ function renderDetail() {
   if (!s.modifier) rows.push(['Rotations', esc(rotationsText(s))]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
-    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(tempoLabel(s, { bic: state.bic && s.group === 'backrow' }))}${s.hitter !== g.label ? ` · ${esc(effectiveHitter(s))}${effectiveHitter(s) !== s.hitter ? ' (this rotation)' : ''}` : ''}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
+    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(tempoLabel(s, { bic: state.bic && s.group === 'backrow' }))}${s.hitter !== 'Back row' ? ` · ${esc(effectiveHitter(s))}${effectiveHitter(s) !== s.hitter ? ' (this rotation)' : ''}` : ''}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
     (!s.modifier && !availability(s, state.rotation).ok ? `<p class="banner">Not run in rotation ${state.rotation}: ${esc(availability(s, state.rotation).why)}.</p>` : '') +
     `<div class="acts">` +
       (canPlay ? `<button class="btn primary" data-play>▶ Play</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
@@ -1768,8 +1810,8 @@ function select(id, opts) {
   if (!(opts && opts.silent)) {
     // keep the selected set visible in the net view if its group is filtered out
     const s = id && byId(id);
-    if (s && state.hidden.has(tempoOf(s)) && state.tab === 'net' && s.netView) { state.hidden.delete(s.group); renderNet(); }
-    if (s && state.hidden.has(tempoOf(s)) && state.tab === '3d') { state.hidden.delete(s.group); render3D(); }
+    if (s && state.hidden.has(tempoOf(s)) && state.tab === 'net' && s.netView) { state.hidden.delete(tempoOf(s)); renderNet(); }
+    if (s && state.hidden.has(tempoOf(s)) && state.tab === '3d') { state.hidden.delete(tempoOf(s)); render3D(); }
   }
 
 }
@@ -1882,7 +1924,7 @@ function play3D(s) {
    ============================================================ */
 function quizPool() {
   const q = state.quiz;
-  return roleSetsAll().filter(s => (q.group === 'all' || tempoOf(s) === q.group) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
+  return roleSetsAll().filter(s => shown(s) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
 }
 function quizNext() {
   const q = state.quiz;
@@ -1920,14 +1962,11 @@ function quizAnswer(id) {
 function renderQuiz() {
   const q = state.quiz;
   $$('#tab-quiz .seg button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === q.mode)));
-  const groupsMine = TEMPOS.filter(t => roleSetsAll().some(s => tempoOf(s) === t.id));
-  if (q.group !== 'all' && !groupsMine.some(g => g.id === q.group)) q.group = 'all';
-  $('#quiz-groups').innerHTML = [{ id: 'all', label: state.role === 'setter' ? 'All sets' : 'All my sets' }].concat(groupsMine).map(g =>
-    `<button class="chip${q.group === g.id ? ' active' : ''}" data-qgroup="${g.id}" aria-pressed="${q.group === g.id}">${g.label}</button>`).join('');
+  renderFilters('quiz-groups', roleSetsAll().filter(s => q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
   const sc = q.score;
   $('#quiz-score').innerHTML = `<span>Score <b>${sc.correct}</b> / ${sc.total}</span><span>Streak <b>${sc.streak}</b></span><span>Best streak <b>${sc.best}</b></span><button class="btn small" data-qreset>Reset</button>`;
   const box = $('#quiz-box');
-  if (!q.current) { box.innerHTML = `<p class="hint">No sets in this group for this mode.</p>`; return; }
+  if (!q.current) { box.innerHTML = `<p class="hint">No sets match the filters for this mode.</p>`; return; }
   const s = byId(q.current);
   let prompt;
   if (q.mode === 'signal') {
@@ -1970,13 +2009,14 @@ function showTab(id) {
   if (id === 'net') renderNet();
   if (id === '3d') render3D();
   if (id === 'checks') renderChecks();
-  if (id === 'quiz' && !state.quiz.current) quizNext();
+  if (id === 'signals') renderSignals();
+  if (id === 'quiz') { const q = state.quiz; if (!q.current || !quizPool().some(s => s.id === q.current)) { q.queue = []; quizNext(); } else renderQuiz(); }
   renderDetail();
   applySelection();
   window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-qgroup],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-diag')) { showTab(t.getAttribute('data-diag')); return; }
@@ -1991,14 +2031,14 @@ document.addEventListener('click', e => {
     const g = t.getAttribute('data-group');
     if (state.hidden.has(g)) state.hidden.delete(g); else state.hidden.add(g);
     const s = state.selected && byId(state.selected);
-    if (s && state.hidden.has(tempoOf(s))) select(null);
-    if (state.tab === '3d') render3D(); else renderNet(); return;
+    if (s && state.hidden.has(tempoOf(s))) select(null, { silent: true });
+    renderTab(); return;
   }
   if (t.hasAttribute('data-show')) {
     e.stopPropagation();
     select(t.getAttribute('data-id'), { silent: true });
     const s = byId(t.getAttribute('data-id'));
-    if (s && state.hidden.has(tempoOf(s))) state.hidden.delete(s.group);
+    if (s) { state.hidden.delete(tempoOf(s)); if (!rowOk(s)) setRow('both'); }
     showTab(t.getAttribute('data-show'));
     return;
   }
@@ -2013,7 +2053,7 @@ document.addEventListener('click', e => {
   if (t.hasAttribute('data-play')) { play(); return; }
   if (t.id === 'bic-toggle') { state.bic = !state.bic; renderCourt(); renderDetail(); return; }
   if (t.hasAttribute('data-mode')) { state.quiz.mode = t.getAttribute('data-mode'); state.quiz.queue = []; quizNext(); return; }
-  if (t.hasAttribute('data-qgroup')) { state.quiz.group = t.getAttribute('data-qgroup'); state.quiz.queue = []; quizNext(); return; }
+  if (t.hasAttribute('data-row')) { setRow(t.getAttribute('data-row')); return; }
   if (t.hasAttribute('data-qanswer')) { quizAnswer(t.getAttribute('data-qanswer')); return; }
   if (t.hasAttribute('data-qnext')) { quizNext(); return; }
   if (t.hasAttribute('data-qreset')) { state.quiz.score = { correct: 0, total: 0, streak: 0, best: 0 }; saveScore(); renderQuiz(); return; }

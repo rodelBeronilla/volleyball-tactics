@@ -34,17 +34,30 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 
 | Tab | What it shows |
 | --- | --- |
-| 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Filter by tempo (minus, first, second, third). Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
+| 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
 | Diagrams | The two flat views. **Net** is the side view: height and landing spot tell sets apart. **Court** is top-down: front-row landing spots along the net, back-row attacks with start point, dotted approach, takeoff behind the 3 m line and set target; tap a zone number to highlight sets landing there. |
 | Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show in 3D" / "Show on net" / "Show on court". |
-| Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), optional group filter. |
+| Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), and the same filters. |
 | Checks | Every set is graded against explicit rules: where it lands, how high, who hits it, how it relates to neighbouring sets, takeoff placement, unique signals and calls, tempo versus physics, pass requirement versus tempo, fallback chains, and — importantly — whether the words in each note match the drawn data (outside the sideline, centre, zone, metres off the net, halfway to the antenna, behind the setter, second step, above the tape…). A spec sheet lists each set's landing spot, contact height, apex and hang time. |
+
+## Filters
+
+Every tab carries the same two controls, and they stay in step as you move between tabs:
+
+- **Front row / Back row / Both** — a row toggle. Back row is the A, B, Pipe, C, D family (plus
+  BIC); everything else is front row. A row with no sets for your role is greyed out. The Net view
+  only draws front-row balls, so with Back row selected it points you to the Court and 3D views.
+- **Tempo chips** — Minus, First, Second, Third. Tap one to hide that tempo, tap again to bring it
+  back. The swatches on each chip are the colours of the sets inside it.
+
+Nothing is filtered by set type (quick, outside, right side and so on). Those words survive only
+as an internal colour family and in the data checks. The row toggle is remembered between visits.
 
 Selection is shared across tabs. Keyboard: Tab to a path, card or spec row, Enter/Space to select, Esc to clear.
 
 ## On a phone
 
-- The diagram sits near the top of every view; filter chips scroll sideways in one row.
+- The diagram sits near the top of every view; the row toggle spans the width and the tempo chips scroll sideways in one row.
 - Under each diagram a scrolling strip of set names selects a set precisely, which is easier than tapping a thin arc.
 - In the 3D view, swipe sideways to orbit, swipe up or down to scroll the page, pinch to zoom, and use the floating camera buttons for the preset angles. The blue ▶ button on the scene plays the selected set.
 - The detail sheet slides up from the bottom. Tap the grey handle to collapse it to a peek (name + actions), swipe down to collapse and then close, swipe up to expand.
@@ -71,8 +84,8 @@ after takeoff, so the card can say where the hitter is when the setter touches t
 **Tempo is derived, not typed.** It is how far through the approach the hitter is at setter contact
 (`WORLD.tempoPhases`): leaving the floor or already up is **minus tempo** (1, Push 1, Back 1);
 planting is **first tempo** (3/Shoot, Slide, any BIC ball); mid-approach is **second tempo** (2,
-Back 2, 32, Go, Red, A, B, Pipe, C, D); starting on the set is **third tempo** (Hut, 4, 5). Filters,
-the legend, the quiz and the cards all classify by tempo. Raise or lower a set's `peak` and its
+Back 2, 32, Go, Red, A, B, Pipe, C, D); starting on the set is **third tempo** (Hut, 4, 5). The
+filters, the legend, the quiz and the cards all classify by tempo and by row, never by set type. Raise or lower a set's `peak` and its
 tempo class moves with it; the Checks tab confirms the named sets land where the game puts them. 
 
 ## Editing the `SETS` array
