@@ -61,9 +61,10 @@ p{margin:0}
 body.has-sel .fab{display:inline-flex}
 .strip{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .strip::-webkit-scrollbar{display:none}
-.strip .sc{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;white-space:nowrap;transition:background .2s,border-color .2s,opacity .2s}
-.strip .sc i{width:9px;height:9px;border-radius:50%;background:currentColor}
-.strip .sc.sel{background:var(--panel3);border-color:currentColor;color:var(--text)}
+.sc{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;white-space:nowrap;transition:background .2s,border-color .2s,opacity .2s}
+.sc i{width:9px;height:9px;border-radius:50%;background:currentColor}
+.sc.sel{background:var(--panel3);border-color:currentColor}
+.strip .sc{flex:0 0 auto}
 .strip .sc.dim{opacity:.55}
 .scene{display:block;width:100%;height:auto;max-width:100%}
 .court-wrap{max-width:560px}
@@ -174,6 +175,36 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 @media (max-width:700px){ .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px} .toolbar .seg button{padding:0 10px;font-size:13px} }
 .ruler text{fill:#6b7390}
 
+/* approach routes appear for the selected set */
+.set .approach-g{opacity:0;transition:opacity .2s}
+.set.sel .approach-g{opacity:1}
+body:not(.has-sel) .set[data-always] .approach-g{opacity:1}
+
+/* role bar */
+.rolebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.rolebar .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.rolebar .seg button{min-height:40px}
+.rolebar .hint{flex-basis:100%;font-size:13px}
+
+/* hitter card */
+.lead{font-size:15px;line-height:1.45;border-left:3px solid var(--c);padding-left:10px;margin:8px 0 4px}
+.kv{display:grid;grid-template-columns:82px minmax(0,1fr);gap:9px 12px;margin:10px 0 0}
+.kv dt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.kv dd{margin:0;font-size:14px;line-height:1.45}
+.kv dd .sigrow{display:flex;align-items:center;gap:10px}
+.kv dd .glyph{font-size:30px;line-height:1;font-weight:800;color:var(--c);min-width:40px;text-align:center}
+.kv dd .glyph.txt{font-size:24px}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--panel3);font-size:12px;font-weight:600;color:var(--text);margin-top:4px}
+.meter{display:inline-flex;gap:3px;margin-right:8px;vertical-align:middle}
+.meter i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.meter i.on{background:var(--c)}
+.tl{width:100%;max-width:340px;height:auto;display:block;margin-top:6px}
+.kv .sc{min-height:34px;padding:0 10px;font-size:13px;background:var(--panel2)}
+.kv .sc.dim{opacity:1}
+details.more{margin-top:14px}
+details.more summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--muted)}
+details.more .cards{margin-top:10px}
+
 /* checks */
 .status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.03em}
 .status.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
@@ -216,6 +247,10 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   .seg button{min-height:40px;font-size:13px;padding:0 11px}
   .scene-wrap{padding:4px;margin:0 -8px;border-radius:12px}
   .overlay{inset:6px}
+  .rolebar{margin-bottom:10px}
+  .rolebar .lab,.rolebar .hint{display:none}
+  .rolebar .seg{display:flex;width:100%}
+  .rolebar .seg button{flex:1;padding:0;min-height:40px}
   #detail{padding-top:10px}
   #detail .handle{display:block}
   #detail.peek .content>:not(.bar):not(.top):not(.acts){display:none}
@@ -277,16 +312,17 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   </nav>
 
   <main class="main">
+    <div class="rolebar" id="rolebar"></div>
     <section class="tab" id="tab-3d" data-tab="3d" role="tabpanel">
       <div class="tab-head">
         <h2>Court in 3D</h2>
-        <p>Real court, real metres. Every ball is a gravity parabola from the setter's hands; the dotted shadow shows where it travels over the floor. Drag to orbit, tap a ball path to select it.</p>
+        <p>Real court in metres; every ball is a gravity parabola from the setter's hands. Tap a path or a name below; the hitter's route appears with it.</p>
       </div>
       <div class="chips" id="v3-filters" aria-label="Filter groups"></div>
       <div class="toolbar">
         <button class="toggle" id="v3-bic" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo</span></button>
         <button class="toggle" id="v3-net" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>Women's net</span></button>
-        <span class="hint">Swipe sideways to orbit · pinch or scroll to zoom</span>
+        <span class="hint">Swipe sideways to orbit · pinch to zoom</span>
       </div>
       <div class="scene-wrap"><div id="v3-scene"></div>
         <div class="overlay">
@@ -300,14 +336,13 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
         </div>
       </div>
       <div class="strip" id="strip-3d" aria-label="Select a set"></div>
-      <div class="v3-readout" id="v3-readout"></div>
     </section>
 
     <section class="tab" id="tab-net" data-tab="net" role="tabpanel" hidden>
       <div class="seg diag-seg" role="group" aria-label="Diagram"><button data-diag="net" aria-pressed="true">Net · side view</button><button data-diag="court" aria-pressed="false">Court · top-down</button></div>
       <div class="tab-head">
         <h2>Net View</h2>
-        <p>Side view from the back row. Every set leaves the setter's hands; height and landing spot tell them apart. Tap a path.</p>
+        <p>Side view from the back row: height and landing spot tell the sets apart. Tap a path.</p>
       </div>
       <div class="chips" id="net-filters" aria-label="Filter groups"></div>
       <div class="scene-wrap"><div id="net-scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play ball">▶ Play</button></div></div>
@@ -319,7 +354,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <div class="seg diag-seg" role="group" aria-label="Diagram"><button data-diag="net" aria-pressed="false">Net · side view</button><button data-diag="court" aria-pressed="true">Court · top-down</button></div>
       <div class="tab-head">
         <h2>Court View</h2>
-        <p>Top-down, our half. Front-row sets land along the net; back-row attacks take off behind the 3-metre line. Tap a set, or tap a zone number.</p>
+        <p>Top-down, our half. Select a set to see the hitter's start, route and takeoff. Tap a zone number to see what lands there.</p>
       </div>
       <div class="toolbar">
         <button class="toggle" id="bic-toggle" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo (fast &amp; low)</span></button>
@@ -333,15 +368,16 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
     <section class="tab" id="tab-signals" data-tab="signals" role="tabpanel" hidden>
       <div class="tab-head">
         <h2>Hand Signals</h2>
-        <p>Standard US system. Tap a card to select the set everywhere, then jump to the net or the court.</p>
+        <p>Your sets first. Tap a card for the full hitter card, then jump to the 3D court.</p>
       </div>
       <div class="cards" id="cards"></div>
+      <div id="cards-more"></div>
     </section>
 
     <section class="tab" id="tab-quiz" data-tab="quiz" role="tabpanel" hidden>
       <div class="tab-head">
         <h2>Quiz</h2>
-        <p>Signal → Set: read the hand signal, name the set. Trajectory → Set: read the ball path, name the set.</p>
+        <p>Quizzes only the sets for your role. Signal → Set reads the hand signal; Trajectory → Set reads the ball path.</p>
       </div>
       <div class="toolbar">
         <div class="seg" role="group" aria-label="Quiz mode">
@@ -402,21 +438,25 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
 const SETS = [
   // ---- Quick (1st tempo) ----
   { id: 'one', name: '1', aliases: ['Quick', 'Front quick'], group: 'quick', color: '#ff4d4d', tempo: '1st', hitter: 'MB',
+    call: 'One', how: 'signal', pass: 'perfect', approach: [{ x: 0.44, y: 0.30 }, { x: 0.48, y: 0.10 }], startNote: 'Centre of the net, a step left of the setter, about 3 m off.', useWhen: 'Tight, in-system pass and you are up early — it freezes their middle.', avoidWhen: 'Pass drifts more than a metre off the net.', fallback: 'two',
     signal: { glyph: '☝️', description: 'Index finger up' },
     coachingNote: 'Middle is already in the air when the ball leaves my hands — a foot above the tape, right in front of me.',
     netView: { landX: 0.50, peak: 0.15, flat: false, label: { dx: 0, dy: -0.15 } },
     courtView: { x: 0.50, y: 0.08, label: { dx: 0.9 } } },
   { id: 'push1', name: 'Push 1', aliases: ['Push', 'Wide 1'], group: 'quick', color: '#ff7a45', tempo: '1st', hitter: 'MB',
+    call: 'Push', how: 'signal', pass: 'perfect', approach: [{ x: 0.46, y: 0.32 }, { x: 0.40, y: 0.10 }], startNote: 'Centre, drifting left as the pass goes up.', useWhen: 'Their middle leans toward the 1 — attack the seam between their middle and left blocker.', avoidWhen: 'Pass off the net.', fallback: 'two',
     signal: { glyph: 'P1', description: 'Index finger up, bent / hooked' },
     coachingNote: 'Same tempo as the 1, but I push it a step further left so the middle attacks moving into the seam.',
     netView: { landX: 0.42, peak: 0.18, flat: false, label: { dx: -1.5, dy: 0 } },
     courtView: { x: 0.42, y: 0.08 } },
   { id: 'back1', name: 'Back 1', aliases: ['Back quick', 'Tight back'], group: 'quick', color: '#ff2d55', tempo: '1st', hitter: 'MB',
+    call: 'Back one', how: 'signal', pass: 'perfect', approach: [{ x: 0.50, y: 0.30 }, { x: 0.64, y: 0.10 }], startNote: 'Centre, just left of the setter; cross behind as the ball arrives.', useWhen: 'Their middle commits to the front quick.', avoidWhen: 'Pass is past the setter.', fallback: 'back2',
     signal: { glyph: 'B1', description: 'Pinky finger up' },
     coachingNote: 'Mirror image of the 1: the middle is up behind me and I put the ball just over the top of my head.',
     netView: { landX: 0.63, peak: 0.15, flat: false, label: { dx: 1.2, dy: 0 } },
     courtView: { x: 0.63, y: 0.08 } },
   { id: 'shoot', name: '3 / Shoot', aliases: ['3', 'Shoot', '31'], group: 'quick', color: '#ffa500', tempo: '1st', hitter: 'MB',
+    call: 'Three', how: 'signal', pass: 'good', approach: [{ x: 0.50, y: 0.34 }, { x: 0.28, y: 0.10 }], startNote: 'Centre, 3 m off the net; run a wide route left along the net.', useWhen: 'Their middle is slow moving left; a medium pass is fine.', avoidWhen: 'Pass tight on the net.', fallback: 'two',
     signal: { glyph: '3', description: 'Three fingers, or an index-finger-and-thumb "gun"' },
     coachingNote: 'Fast and flat halfway to the left antenna — the middle runs a wide route and the ball has to beat their middle blocker.',
     netView: { landX: 0.28, peak: 0.22, flat: true },
@@ -424,16 +464,19 @@ const SETS = [
 
   // ---- Medium (2nd tempo) ----
   { id: 'two', name: '2', aliases: ['Front 2', 'Middle 2'], group: 'medium', color: '#4da3ff', tempo: '2nd', hitter: 'MB',
+    call: 'Two', how: 'both', pass: 'any', approach: [{ x: 0.45, y: 0.32 }, { x: 0.47, y: 0.10 }], startNote: 'Centre, 3 m off the net.', useWhen: 'Any in-system pass; you get a beat to read the block. The safe middle ball.', avoidWhen: '', fallback: null,
     signal: { glyph: '✌️', description: 'Two fingers (peace sign)' },
     coachingNote: 'A loopy ball in the middle of the net for a hitter who needs a beat to see it — my safe option when the pass is off.',
     netView: { landX: 0.47, peak: 0.45, flat: false, label: { dx: -0.6, dy: 0 } },
     courtView: { x: 0.47, y: 0.08, label: { dx: 0.9 } } },
   { id: 'back2', name: 'Back 2', aliases: ['Back set', 'Over-the-head 2'], group: 'medium', color: '#7cc4ff', tempo: '2nd', hitter: 'OPP',
+    call: 'Back two', how: 'both', pass: 'good', approach: [{ x: 0.88, y: 0.36 }, { x: 0.72, y: 0.10 }], startNote: 'Right side, inside the sideline at the 3-m line; come in at an angle.', useWhen: 'Pass is a little behind the setter, or the opposite is hot.', avoidWhen: 'Pass well off the net.', fallback: 'five', note51: 'Setter back row: this is the opposite\'s ball. Setter front row: usually a middle running behind.',
     signal: { glyph: 'B2', description: 'Ring + pinky fingers up' },
     coachingNote: 'Same loop as the 2, set over my shoulder for the opposite or a middle running behind me.',
     netView: { landX: 0.70, peak: 0.45, flat: false, label: { dx: 0.4, dy: 0 } },
     courtView: { x: 0.70, y: 0.08 } },
   { id: 'rip', name: '32 / Rip', aliases: ['32', 'Rip', 'Gap'], group: 'medium', color: '#2f6fff', tempo: '2nd', hitter: 'MB',
+    call: 'Thirty-two', how: 'signal', pass: 'good', approach: [{ x: 0.50, y: 0.34 }, { x: 0.25, y: 0.10 }], startNote: 'Centre, 3 m off; long route left.', useWhen: 'You want to pull their middle blocker away from your outside.', avoidWhen: 'Tight pass.', fallback: 'two',
     signal: { glyph: '⌒', description: 'Hand cupped into an arch' },
     coachingNote: 'Lands halfway between the middle and the left antenna and pulls the opposing middle blocker away from your middle.',
     netView: { landX: 0.25, peak: 0.50, flat: false, label: { dx: -0.3, dy: 0 } },
@@ -441,16 +484,19 @@ const SETS = [
 
   // ---- Outside (left antenna) ----
   { id: 'four', name: '4', aliases: ['High outside', 'Hi-ball'], group: 'outside', color: '#34d399', tempo: '3rd', hitter: 'OH',
+    call: 'Four', how: 'both', pass: 'any', approach: [{ x: 0.03, y: 0.42 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Any pass from anywhere — the out-of-system ball. Watch the set go up, then go.', avoidWhen: '', fallback: null,
     signal: { glyph: '4', description: 'Four fingers' },
     coachingNote: 'Highest, widest ball on the board — all the way to the antenna, giving the outside time for a full approach.',
     netView: { landX: 0.03, peak: 1.00, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
   { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', tempo: '2nd', hitter: 'OH',
+    call: 'Hut', how: 'both', pass: 'good', approach: [{ x: 0.03, y: 0.42 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In-system pass and you want to see the block before you commit.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: '/', description: 'One slash across the chest' },
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
     netView: { landX: 0.03, peak: 0.75, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
   { id: 'go', name: 'Go', aliases: ['Quick outside', 'Shoot 4'], group: 'outside', color: '#a3e635', tempo: '2nd', hitter: 'OH',
+    call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: 0.03, y: 0.42 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
     netView: { landX: 0.03, peak: 0.40, flat: true },
@@ -458,16 +504,19 @@ const SETS = [
 
   // ---- Right side (right antenna) ----
   { id: 'five', name: '5', aliases: ['High right side', 'High back'], group: 'rightside', color: '#a78bfa', tempo: '3rd', hitter: 'OPP',
+    call: 'Five', how: 'both', pass: 'any', approach: [{ x: 0.97, y: 0.42 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Out-of-system ball to the right side.', avoidWhen: '', fallback: null, note51: 'Only when the setter is back row — with the setter front row there is no right-side attacker, so the setter dumps or runs the D.',
     signal: { glyph: '🖐️', description: 'Open hand, five fingers' },
     coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
     netView: { landX: 0.97, peak: 1.00, flat: false },
     courtView: { x: 0.97, y: 0.08 } },
   { id: 'red', name: 'Red', aliases: ['Right-side Go', 'Quick 5'], group: 'rightside', color: '#e879f9', tempo: '2nd', hitter: 'OPP',
+    call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 0.97, y: 0.42 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'Setter back row only.',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
     netView: { landX: 0.97, peak: 0.45, flat: true },
     courtView: { x: 0.97, y: 0.08 } },
   { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '1st', hitter: 'MB',
+    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot just past the setter.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'back2',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
     netView: { landX: 0.90, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 }, run: { from: 0.45, to: 0.92, takeoff: 0.88 } },
@@ -475,27 +524,32 @@ const SETS = [
     approach: [ { x: 0.45, y: 0.25 }, { x: 0.88, y: 0.10 } ] },
 
   // ---- Back row (Part 2) — takeoff behind the 3-metre / 10-foot line ----
-  { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', tempo: '2nd', hitter: 'Back row',
+  { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', tempo: '2nd', hitter: 'OH',
+    call: 'A', how: 'call', pass: 'good', startNote: 'Left back, zone 5, about 5 m off the net.', useWhen: 'Setter front row, you in the back row — it adds a third attacker on the left.', avoidWhen: 'Pass off the net.', fallback: 'four', note51: 'The back-row outside\'s ball when the setter is front row.',
     signal: { glyph: 'A', description: 'Line drawn across the upper chest near one shoulder (the A side)' },
     coachingNote: 'Left-back attack from zone 5 — set deeper and higher than a front-row ball; take off behind the 10-foot line, land in front of it if you like.',
     courtView: { x: 0.15, y: 0.30, takeoff: { x: 0.15, y: 0.36 }, start: { x: 0.15, y: 0.55 }, zones: [5] },
     approach: [ { x: 0.15, y: 0.55 }, { x: 0.15, y: 0.36 } ] },
-  { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', tempo: '2nd', hitter: 'Back row',
+  { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', tempo: '2nd', hitter: 'OH',
+    call: 'B', how: 'call', pass: 'good', startNote: 'Between zones 5 and 6, about 5 m off the net.', useWhen: 'Their middle blocker is drawn to the pin; you come from the seam.', avoidWhen: 'Pass off the net.', fallback: 'four', note51: 'Back-row outside.',
     signal: { glyph: 'B', description: 'Line drawn down the chest between the A spot and centre' },
     coachingNote: 'Splits zones 5 and 6 — a deeper, higher ball for the left-side hitter drifting toward the middle; takeoff stays behind the line.',
     courtView: { x: 0.33, y: 0.30, takeoff: { x: 0.33, y: 0.36 }, start: { x: 0.33, y: 0.55 }, zones: [5, 6] },
     approach: [ { x: 0.33, y: 0.55 }, { x: 0.33, y: 0.36 } ] },
-  { id: 'pipe', name: 'Pipe', aliases: ['Middle back', 'Bic pipe'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'Back row',
+  { id: 'pipe', name: 'Pipe', aliases: ['Middle back', 'Bic pipe'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'OH',
+    call: 'Pipe', how: 'call', pass: 'good', startNote: 'Middle back, zone 6, about 5 m off the net.', useWhen: 'Setter front row: your ball from zone 6, straight over their middle.', avoidWhen: 'Pass off the net.', fallback: 'four', note51: 'The pipe belongs to the outside who has just rotated to the back row.',
     signal: { glyph: '|', description: 'Line drawn straight down the centre of the chest' },
     coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a front-row ball, takeoff behind the 10-foot line.',
     courtView: { x: 0.50, y: 0.30, takeoff: { x: 0.50, y: 0.36 }, start: { x: 0.50, y: 0.55 }, zones: [6] },
     approach: [ { x: 0.50, y: 0.55 }, { x: 0.50, y: 0.36 } ] },
-  { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', tempo: '2nd', hitter: 'Back row',
+  { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', tempo: '2nd', hitter: 'OPP',
+    call: 'C', how: 'call', pass: 'good', startNote: 'Between zones 6 and 1, about 5 m off the net.', useWhen: 'Setter front row, opposite in the back row, their block leaning left.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'Back-row opposite.',
     signal: { glyph: 'C', description: 'Line drawn down the chest between centre and the D spot' },
     coachingNote: 'Between zones 6 and 1, the mirror of the B — deeper and higher than a front-row ball, takeoff behind the line.',
     courtView: { x: 0.67, y: 0.30, takeoff: { x: 0.67, y: 0.36 }, start: { x: 0.67, y: 0.55 }, zones: [6, 1] },
     approach: [ { x: 0.67, y: 0.55 }, { x: 0.67, y: 0.36 } ] },
-  { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', tempo: '2nd', hitter: 'Back row',
+  { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', tempo: '2nd', hitter: 'OPP',
+    call: 'D', how: 'call', pass: 'good', startNote: 'Right back, zone 1, about 5 m off the net.', useWhen: 'Setter front row: the opposite\'s ball from zone 1 — our main back-row attack.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'The opposite hits the D in the three rotations where the setter is front row.',
     signal: { glyph: 'D', description: 'Line drawn across the upper chest near the opposite shoulder' },
     coachingNote: 'Right-back attack from zone 1 — our opposite\'s ball in the back row; same rules, set deeper and higher, takeoff behind the 10-foot line.',
     courtView: { x: 0.85, y: 0.30, takeoff: { x: 0.85, y: 0.36 }, start: { x: 0.85, y: 0.55 }, zones: [1] },
@@ -503,6 +557,7 @@ const SETS = [
 
   // ---- Tempo modifier — not a location ----
   { id: 'bic', name: 'BIC', aliases: ['Bic', 'Quick back row'], group: 'backrow', modifier: true, color: '#a5f3fc', tempo: '1st', hitter: 'Back row',
+    call: 'Bic', how: 'both', pass: 'perfect', useWhen: 'Their block commits early to the front-row quicks; run the back-row ball fast and low.', avoidWhen: 'Any pass off the net.', fallback: null,
     signal: { glyph: 'BIC', description: 'Fist with a thumb flick, like lighting a lighter — shown together with the zone signal (A, B, Pipe, C, D)' },
     coachingNote: 'Not a place, a tempo: flick the lighter with the zone signal and the back-row ball comes fast and low — at high levels every back-row set is assumed to be quick.' }
 ];
@@ -531,10 +586,20 @@ const WORLD = {
   tempoBands: { '1st': [0, 0.85], '2nd': [0.85, 1.45], '3rd': [1.45, 99] }   // hang time in seconds
 };
 const G = 9.81;
+/* Hitter timing model: a full approach takes approachSec from first step to takeoff; the ball is contacted riseSec after takeoff. */
+WORLD.approachSec = 1.1; WORLD.riseSec = 0.35; WORLD.jumpHeight = 0.5;
+const SYSTEM = { name: '5-1', note: 'One setter runs the whole match. With the setter front row there are only two front-row hitters, so the opposite attacks the D from zone 1 and the back-row outside hits the pipe.' };
+const ROLES = [
+  { id: 'setter', label: 'Setter' },
+  { id: 'OH', label: 'Outside' },
+  { id: 'MB', label: 'Middle' },
+  { id: 'OPP', label: 'Opposite' }
+];
 const STORE_KEY = 'setterSignals.quiz.v1';
 
 /* ---------------- state ---------------- */
 const state = {
+  role: (function () { try { const r = localStorage.getItem('setterSignals.role'); if (['setter', 'OH', 'MB', 'OPP'].includes(r)) return r; } catch (e) { /* ignore */ } return 'setter'; })(),
   tab: '3d',
   diag: 'net',
   selected: null,
@@ -566,6 +631,68 @@ function zonesOf(s) {
   if (s.courtView.zones) return s.courtView.zones;
   const x = s.courtView.x;
   return [x < 1 / 3 ? 4 : x < 2 / 3 ? 3 : 2];
+}
+function roleHas(s) {
+  if (state.role === 'setter') return true;
+  if (s.hitter === 'Back row') return state.role === 'OH' || state.role === 'OPP';
+  return s.hitter === state.role;
+}
+function roleSets() { return SETS.filter(roleHas); }
+function roleLabel(id) { return (ROLES.find(r => r.id === id) || {}).label || id; }
+function setRole(r) {
+  state.role = r;
+  try { localStorage.setItem('setterSignals.role', r); } catch (e) { /* ignore */ }
+  const sel = state.selected && byId(state.selected);
+  if (sel && !roleHas(sel)) state.selected = null;
+  state.quiz.queue = []; state.quiz.current = null;
+  renderRoleBar(); renderSignals();
+  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'quiz') quizNext();
+  renderDetail(); applySelection();
+}
+function renderRoleBar() {
+  const mine = roleSets().filter(s => !s.modifier);
+  const front = mine.filter(s => s.group !== 'backrow').map(s => s.name), back = mine.filter(s => s.group === 'backrow').map(s => s.name);
+  const hint = state.role === 'setter' ? `${SYSTEM.name}: ${SYSTEM.note}` : `Your balls — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`;
+  $('#rolebar').innerHTML = `<span class="lab">I am the</span><div class="seg" role="group" aria-label="Role">${ROLES.map(r => `<button data-role="${r.id}" aria-pressed="${state.role === r.id}">${r.label}</button>`).join('')}</div><span class="hint">${esc(hint)}</span>`;
+}
+function howLabel(s) {
+  const c = s.call ? `“${s.call}”` : '';
+  if (s.how === 'signal') return 'Setter signals it';
+  if (s.how === 'call') return `Hitter calls ${c}`;
+  return `Signalled, or called ${c}`;
+}
+function timeline(fl) {
+  const takeoffAt = fl.T - WORLD.riseSec, startAt = takeoffAt - WORLD.approachSec;
+  return { T: fl.T, startAt, takeoffAt, phase: -startAt / WORLD.approachSec };
+}
+function timingText(s, tl) {
+  if (s.timingNote) return s.timingNote;
+  const f = tl.phase;
+  if (f >= 1) return 'Already in the air when the setter touches the ball.';
+  if (f >= 0.65) return 'Planting for takeoff as the setter touches the ball.';
+  if (f >= 0.3) return 'On your second step when the setter touches the ball.';
+  if (f >= 0.05) return 'First step as the setter touches the ball.';
+  return 'Wait: watch the set go up, then start the approach.';
+}
+function hitterPhase(t, tl) {
+  if (t < tl.startAt) return { mode: 'wait', f: 0 };
+  if (t < tl.takeoffAt) return { mode: 'run', f: (t - tl.startAt) / WORLD.approachSec };
+  return { mode: 'jump', f: Math.min(1, (t - tl.takeoffAt) / WORLD.riseSec) };
+}
+function timelineSvg(tl, color) {
+  const W = 320, H = 74, left = 40, right = 310;
+  const tMin = Math.min(tl.startAt, 0) - 0.1, tMax = tl.T + 0.1;
+  const X = t => r1(left + (t - tMin) / (tMax - tMin) * (right - left));
+  const lab = (x, y, text, anchor) => `<text x="${x}" y="${y}" font-size="10.5" fill="#9aa3b8" text-anchor="${anchor || 'middle'}">${text}</text>`;
+  const rowLab = (y, text) => `<text x="0" y="${y}" font-size="9.5" fill="#9aa3b8" font-weight="700" letter-spacing="1">${text}</text>`;
+  return `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img" aria-label="Timing: start at ${tl.startAt.toFixed(2)} s, take off at ${tl.takeoffAt.toFixed(2)} s, hit at ${tl.T.toFixed(2)} s relative to setter contact">` +
+    rowLab(30, 'YOU') + rowLab(56, 'BALL') +
+    `<path d="M${X(0)} 12V66" stroke="#e8ebf5" stroke-width="1.2" stroke-dasharray="3 3"/>` + lab(X(0), 9, 'setter touch') +
+    `<rect x="${X(tl.startAt)}" y="22" width="${r1(X(tl.takeoffAt) - X(tl.startAt))}" height="9" rx="4.5" fill="${color}"/>` +
+    `<rect x="${X(tl.takeoffAt)}" y="22" width="${r1(X(tl.T) - X(tl.takeoffAt))}" height="9" rx="4.5" fill="${color}" opacity=".45"/>` +
+    `<rect x="${X(0)}" y="48" width="${r1(X(tl.T) - X(0))}" height="9" rx="4.5" fill="#e8ebf5"/>` +
+    lab(X(tl.startAt), 42, 'start', 'start') + lab(X(tl.takeoffAt), 42, 'take off', X(tl.takeoffAt) > right - 30 ? 'end' : 'middle') + lab(X(tl.T), 70, `hit · ${tl.T.toFixed(2)} s`, 'end') +
+    `</svg>`;
 }
 function glyphHtml(s, cls) {
   const g = s.signal.glyph;
@@ -615,15 +742,18 @@ function netSetMarkup(L, s, opts) {
             (at === 'band' ? `<circle cx="${r1(g.ex)}" cy="${r1(L.netY + L.fs * 0.55)}" r="${r1(L.fs * 0.22)}" fill="${s.color}"/>` : '');
   }
   let run = '';
-  if (v.run && showLabels) {
-    const x0 = nx(L, v.run.from), x1 = nx(L, v.run.to), xt = nx(L, v.run.takeoff), y = L.groundY;
-    run = `<path class="approach" d="M${r1(x0)} ${y} L${r1(x1)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round" marker-end="url(#arrow-${s.id})"/>` +
+  if (s.approach && showLabels) {
+    const from = v.run ? v.run.from : s.approach[0].x, to = v.run ? v.run.to : s.approach[1].x, tk = v.run ? v.run.takeoff : s.approach[1].x;
+    const x0 = nx(L, from), x1 = nx(L, to), xt = nx(L, tk), y = L.groundY, dir = x1 >= x0 ? 1 : -1;
+    run = `<g class="approach-g">` +
+          `<path class="approach" d="M${r1(x0)} ${y} L${r1(x1)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round" marker-end="url(#arrow-${s.id})"/>` +
           `<circle cx="${r1(x0)}" cy="${y}" r="${r1(L.fs * 0.28)}" fill="${s.color}"/>` +
           `<path d="M${r1(xt)} ${r1(y - L.fs * 0.6)} v${r1(L.fs * 1.2)}" stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"/>` +
-          `<text class="lbl" x="${r1(xt - L.fs * 0.5)}" y="${r1(y + L.fs * 1.55)}" font-size="${r1(L.fs * 0.8)}" text-anchor="end" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">one-foot takeoff</text>` +
-          `<text class="lbl" x="${r1(x0 - L.fs * 0.6)}" y="${r1(y + L.fs * 0.3)}" font-size="${r1(L.fs * 0.8)}" text-anchor="end" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">MB run</text>`;
+          `<text class="lbl" x="${r1(xt - dir * L.fs * 0.5)}" y="${r1(y + L.fs * 1.55)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${dir > 0 ? 'end' : 'start'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.takeoffLabel || 'takeoff')}</text>` +
+          `<text class="lbl" x="${r1(x0 - dir * L.fs * 0.6)}" y="${r1(y + L.fs * 0.3)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${dir > 0 ? 'end' : 'start'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.hitter)} run</text>` +
+          `</g>`;
   }
-  return `<g class="set" data-set="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">` +
+  return `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">` +
          `<path class="hit" d="${g.d}" stroke-width="${L.hit}"/>` +
          run +
          `<path class="traj" d="${g.d}" stroke="${s.color}" stroke-width="${L.sw}"${v.flat ? ` stroke-dasharray="${r1(L.sw * 3.2)} ${r1(L.sw * 1.6)}"` : ''}/>` +
@@ -677,22 +807,21 @@ function netScene(L, sets, opts) {
 }
 function renderNet() {
   const L = netLayout();
-  const visible = SETS.filter(s => s.netView && !state.hidden.has(s.group));
+  const visible = roleSets().filter(s => s.netView && !state.hidden.has(s.group));
   $('#net-scene').innerHTML = netScene(L, visible);
   renderStrip('strip-net', visible);
   // filter chips
-  $('#net-filters').innerHTML = GROUPS.map(g => {
-    if (g.id === 'backrow') return `<button class="chip note" data-goto="court" title="Back-row sets are shown on the court">Back row → Court view</button>`;
+  $('#net-filters').innerHTML = GROUPS.filter(g => roleSets().some(s => s.group === g.id && s.netView)).map(g => {
     const on = !state.hidden.has(g.id);
-    const sw = SETS.filter(s => s.group === g.id).map(s => `<i style="background:${s.color}"></i>`).join('');
+    const sw = roleSets().filter(s => s.group === g.id && s.netView).map(s => `<i style="background:${s.color}"></i>`).join('');
     return `<button class="chip filter" data-group="${g.id}" aria-pressed="${on}"><span class="sw" aria-hidden="true">${sw}</span>${g.label}</button>`;
-  }).join('');
+  }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<button class="chip note" data-goto="court" title="Back-row sets are shown on the court">Back row → Court</button>` : '');
   // legend
-  $('#net-legend').innerHTML = GROUPS.filter(g => g.id !== 'backrow').map(g => {
-    const items = SETS.filter(s => s.group === g.id).map(s =>
+  $('#net-legend').innerHTML = GROUPS.filter(g => g.id !== 'backrow' && roleSets().some(s => s.group === g.id)).map(g => {
+    const items = roleSets().filter(s => s.group === g.id).map(s =>
       `<button class="lg" data-select="${s.id}" data-set="${s.id}" ${state.hidden.has(g.id) ? 'aria-disabled="true"' : ''}><i style="background:${s.color}"></i><span>${esc(s.name)} <small>· ${esc(s.tempo)} · ${esc(s.hitter)}</small></span></button>`).join('');
     return `<h4>${g.label} · ${g.hint}</h4>${items}`;
-  }).join('') + `<h4>Back row</h4><p class="hint" style="grid-column:1/-1">A · B · Pipe · C · D are set deeper and higher than front-row balls and are drawn on the <button class="btn small" data-goto="court">Court view</button>. Add "BIC" to any of them to call it fast and low.</p>`;
+  }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<h4>Back row</h4><p class="hint" style="grid-column:1/-1">${esc(roleSets().filter(s => s.group === 'backrow' && !s.modifier).map(s => s.name).join(' · '))} are set deeper and higher than front-row balls and are drawn on the <button class="btn small" data-goto="court">Court view</button>. Add "BIC" to call any of them fast and low.</p>` : '');
   applySelection();
 }
 
@@ -722,24 +851,19 @@ function courtSetMarkup(s, opts) {
   const p = courtSetPath(s, bic);
   const isBack = s.group === 'backrow';
   const dash = (bic || (s.netView && s.netView.flat)) ? ` stroke-dasharray="${r1(CL.sw * 3)} ${r1(CL.sw * 1.5)}"` : '';
-  let o = `<g class="set" data-set="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.hitter)}" style="color:${s.color}">`;
+  let o = `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.hitter)}" style="color:${s.color}">`;
   o += `<path class="hit" d="${p.d}" stroke-width="${CL.hit}"/>`;
   if (s.approach) {
     const a0 = s.approach[0], a1 = s.approach[1];
-    let ad;
-    if (isBack) ad = `M${r1(cx(a0.x))} ${r1(cy(a0.y))} L${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
-    else ad = `M${r1(cx(a0.x))} ${r1(cy(a0.y))} C${r1(cx(a0.x + 0.2))} ${r1(cy(a0.y + 0.02))} ${r1(cx(a1.x - 0.12))} ${r1(cy(a1.y + 0.1))} ${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
-    o += `<path class="approach" d="${ad}" fill="none" stroke="${s.color}" stroke-width="${r1(CL.sw * 0.8)}" stroke-dasharray="${bic ? '3 5' : '2 7'}" stroke-linecap="round" marker-end="url(#carrow-${s.id})"/>`;
-    // start marker (hitter)
-    o += `<circle cx="${r1(cx(a0.x))}" cy="${r1(cy(a0.y))}" r="${r1(CL.fs * 0.42)}" fill="#0f1117" stroke="${s.color}" stroke-width="2.5"/>`;
-    o += `<text x="${r1(cx(a0.x))}" y="${r1(cy(a0.y) + CL.fs * 0.32)}" font-size="${r1(CL.fs * 0.6)}" font-weight="700" fill="${s.color}" text-anchor="middle">${isBack ? 'H' : 'MB'}</text>`;
-    // takeoff marker
-    if (v.takeoff) {
-      const tx = cx(v.takeoff.x), tyy = cy(v.takeoff.y);
-      o += isBack
-        ? `<path d="M${r1(tx - CL.fs * 0.6)} ${r1(tyy)} h${r1(CL.fs * 1.2)}" stroke="${s.color}" stroke-width="${r1(CL.sw)}" stroke-linecap="round"/>`
-        : `<path d="M${r1(tx)} ${r1(tyy - CL.fs * 0.5)} v${r1(CL.fs)}" stroke="${s.color}" stroke-width="${r1(CL.sw)}" stroke-linecap="round"/>`;
-    }
+    const d = approachCourtPath(s);
+    // takeoff bar always visible for back-row (behind the line is the rule); the rest of the route shows on selection
+    if (isBack) o += `<path d="M${r1(cx(a1.x) - CL.fs * 0.6)} ${r1(cy(a1.y))} h${r1(CL.fs * 1.2)}" stroke="${s.color}" stroke-width="${r1(CL.sw)}" stroke-linecap="round"/>`;
+    o += `<g class="approach-g">`;
+    o += `<path class="approach" d="${d}" fill="none" stroke="${s.color}" stroke-width="${r1(CL.sw * 0.8)}" stroke-dasharray="${bic ? '3 5' : '2 7'}" stroke-linecap="round" marker-end="url(#carrow-${s.id})"/>`;
+    o += `<circle cx="${r1(cx(a0.x))}" cy="${r1(cy(a0.y))}" r="${r1(CL.fs * 0.5)}" fill="#0f1117" stroke="${s.color}" stroke-width="2.5"/>`;
+    o += `<text x="${r1(cx(a0.x))}" y="${r1(cy(a0.y) + CL.fs * 0.28)}" font-size="${r1(CL.fs * 0.5)}" font-weight="800" fill="${s.color}" text-anchor="middle">${esc(s.hitter)}</text>`;
+    if (!isBack) o += `<path d="M${r1(cx(a1.x))} ${r1(cy(a1.y) - CL.fs * 0.5)} v${r1(CL.fs)}" stroke="${s.color}" stroke-width="${r1(CL.sw)}" stroke-linecap="round"/>`;
+    o += `</g>`;
   }
   o += `<path class="traj" d="${p.d}" stroke="${s.color}" stroke-width="${bic ? CL.sw * 0.8 : CL.sw}"${dash}/>`;
   // target dot
@@ -757,6 +881,14 @@ function courtSetMarkup(s, opts) {
   }
   o += `</g>`;
   return o;
+}
+function approachCourtPath(s) {
+  const a0 = s.approach[0], a1 = s.approach[1];
+  if (s.group === 'backrow') return `M${r1(cx(a0.x))} ${r1(cy(a0.y))} L${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
+  const dx = a1.x - a0.x;
+  if (Math.abs(dx) < 0.1) return `M${r1(cx(a0.x))} ${r1(cy(a0.y))} L${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
+  // a running route bends toward the net late
+  return `M${r1(cx(a0.x))} ${r1(cy(a0.y))} C${r1(cx(a0.x + dx * 0.45))} ${r1(cy(a0.y + 0.02))} ${r1(cx(a1.x - dx * 0.25))} ${r1(cy(a1.y + 0.1))} ${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
 }
 function courtLabelPositions(sets) {
   // Stack the labels of sets that land in (almost) the same spot, highest ball first.
@@ -821,7 +953,7 @@ function courtScene(sets, opts) {
   return o;
 }
 function renderCourt() {
-  const sets = SETS.filter(s => s.courtView);
+  const sets = roleSets().filter(s => s.courtView);
   $('#court-scene').innerHTML = courtScene(sets, { bic: state.bic });
   renderStrip('strip-court', sets);
   $('#bic-toggle').setAttribute('aria-pressed', String(state.bic));
@@ -909,7 +1041,7 @@ function approachWorld(s, n) {
     const t = i / n;
     let x, y;
     if (s.group === 'backrow') { x = a0.x + (a1.x - a0.x) * t; y = a0.y + (a1.y - a0.y) * t; }
-    else { // curved run (slide): quadratic through a control point pulled toward the net
+    else { // running route: quadratic through a control point pulled toward the net
       const cxp = a0.x + (a1.x - a0.x) * 0.55, cyp = a0.y + 0.03;
       x = (1 - t) * (1 - t) * a0.x + 2 * (1 - t) * t * cxp + t * t * a1.x;
       y = (1 - t) * (1 - t) * a0.y + 2 * (1 - t) * t * cyp + t * t * a1.y;
@@ -999,16 +1131,21 @@ function v3Scene(L, sets, opts) {
     const d = bezierThrough(pts);
     const isBack = s.group === 'backrow', bic = opts.bic && isBack;
     const flat = s.netView && s.netView.flat;
-    o += `<g class="set" data-set="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">`;
+    o += `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">`;
     o += `<path class="hit" d="${d}" stroke-width="${L.hit}"/>`;
-    // approach on the floor
+    // approach on the floor (shown for the selected set)
     const ap = approachWorld(s, isBack ? 1 : 12);
     if (ap) {
       const pp = ap.map(P);
+      const t = s.approach[1];
+      if (isBack) o += line({ x: (t.x - 0.08) * W, y: t.y * D, z: 0 }, { x: (t.x + 0.08) * W, y: t.y * D, z: 0 }, `stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"`);
+      o += `<g class="approach-g">`;
       o += `<path class="approach" d="${bezierThrough(pp)}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${bic ? '3 5' : '2 7'}" stroke-linecap="round"/>`;
       o += arrowHead(pp[pp.length - 2], pp[pp.length - 1], fs * 0.5, s.color);
-      const q0 = pp[0]; o += `<circle cx="${r1(q0.x)}" cy="${r1(q0.y)}" r="${r1(fs * 0.3)}" fill="#0f1117" stroke="${s.color}" stroke-width="2"/>`;
-      if (s.courtView.takeoff) { const t = s.courtView.takeoff; o += line({ x: (t.x - 0.08) * W, y: t.y * D, z: 0 }, { x: (t.x + 0.08) * W, y: t.y * D, z: 0 }, `stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"`); }
+      const q0 = pp[0]; o += `<circle cx="${r1(q0.x)}" cy="${r1(q0.y)}" r="${r1(fs * 0.36)}" fill="#0f1117" stroke="${s.color}" stroke-width="2"/>`;
+      o += `<text x="${r1(q0.x)}" y="${r1(q0.y + fs * 0.22)}" font-size="${r1(fs * 0.45)}" font-weight="800" fill="${s.color}" text-anchor="middle">${esc(s.hitter)}</text>`;
+      if (!isBack) o += line({ x: t.x * W, y: t.y * D, z: 0 }, { x: t.x * W, y: t.y * D, z: 0.25 }, `stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"`);
+      o += `</g>`;
     }
     // ground shadow + drop line
     o += `<path class="shadow3" d="${bezierThrough(ground)}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.45)}" stroke-dasharray="3 6" stroke-linecap="round"/>`;
@@ -1036,19 +1173,17 @@ function v3Scene(L, sets, opts) {
 }
 function render3D() {
   const L = v3Layout();
-  const sets = SETS.filter(s => !s.modifier && !state.hidden.has(s.group));
+  const sets = roleSets().filter(s => !s.modifier && !state.hidden.has(s.group));
   $('#v3-scene').innerHTML = v3Scene(L, sets, { bic: state.bic });
   renderStrip('strip-3d', sets);
-  $('#v3-filters').innerHTML = GROUPS.map(g => {
+  $('#v3-filters').innerHTML = GROUPS.filter(g => roleSets().some(s => s.group === g.id && !s.modifier)).map(g => {
     const on = !state.hidden.has(g.id);
-    const sw = SETS.filter(s => s.group === g.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
+    const sw = roleSets().filter(s => s.group === g.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
     return `<button class="chip filter" data-group="${g.id}" aria-pressed="${on}"><span class="sw" aria-hidden="true">${sw}</span>${g.label}</button>`;
   }).join('');
   $$('#v3-presets button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-cam') === state.cam.preset)));
   $('#v3-bic').setAttribute('aria-pressed', String(state.bic));
   $('#v3-net').setAttribute('aria-pressed', String(state.netH === WORLD.netHeights.women));
-  const s = state.selected && byId(state.selected);
-  $('#v3-readout').innerHTML = s && flight(s) ? `<span><b>${esc(s.name)}</b></span><span>${flightSummary(s)}</span>` : `<span>Net ${state.netH.toFixed(2)} m · court 9 × 9 m per side · attack line 3 m from the net.</span><span>Select a set for its hang time and contact point.</span>`;
   applySelection();
 }
 function v3Orbit() {
@@ -1107,7 +1242,7 @@ let v3raf = null;
 /* ============================================================
    CHECKS — verify every set against what it should represent
    ============================================================ */
-const VALID = { groups: GROUPS.map(g => g.id), tempos: ['1st', '2nd', '3rd'], hitters: ['MB', 'OH', 'OPP', 'Back row'] };
+const VALID = { groups: GROUPS.map(g => g.id), tempos: ['1st', '2nd', '3rd'], hitters: ['MB', 'OH', 'OPP', 'Back row'], how: ['signal', 'call', 'both'], pass: ['perfect', 'good', 'any'] };
 const in01 = v => typeof v === 'number' && v >= 0 && v <= 1;
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
 /* Each rule returns findings: { id, ok, msg, level } — level 'err' or 'warn'. Rules about specific
@@ -1128,6 +1263,11 @@ const RULES = [
       if (!s.modifier && s.group !== 'backrow' && !s.netView) miss.push('netView');
       if (s.netView && !(in01(s.netView.landX) && in01(s.netView.peak))) miss.push('netView.landX/peak in 0–1');
       if (s.courtView && !(in01(s.courtView.x) && in01(s.courtView.y))) miss.push('courtView.x/y in 0–1');
+      if (!VALID.how.includes(s.how)) miss.push('how (signal | call | both)');
+      if (!VALID.pass.includes(s.pass)) miss.push('pass (perfect | good | any)');
+      if (!s.useWhen) miss.push('useWhen');
+      if (s.fallback && !byId(s.fallback)) miss.push(`fallback "${s.fallback}" is not a set`);
+      if (!s.modifier && !(s.approach && s.approach.length === 2 && s.approach.every(p => in01(p.x) && in01(p.y)))) miss.push('approach [start, takeoff]');
       return { id: s.id, ok: !miss.length, level: 'err', msg: miss.length ? 'missing or invalid: ' + miss.join(', ') : 'complete' };
     }) },
   { name: 'Ids, names and signals are unique', why: 'The quiz and the selection logic key on ids; two sets with the same signal cannot be told apart by a hitter.',
@@ -1172,14 +1312,15 @@ const RULES = [
   { name: 'Back-row attacks take off behind the 3-metre line', why: 'The hitter must leave the floor behind the attack line; the ball is contacted in front of the takeoff and may land anywhere.',
     run: sets => sets.filter(s => s.group === 'backrow' && !s.modifier).map(s => {
       const v = s.courtView, bad = [];
-      if (!v.takeoff || v.takeoff.y <= 1 / 3) bad.push('takeoff is not behind the 3-metre line');
-      if (!v.start || !v.takeoff || v.start.y <= v.takeoff.y) bad.push('start point is not deeper than the takeoff');
-      if (v.takeoff && v.y >= v.takeoff.y) bad.push('ball is contacted behind the takeoff');
-      if (!s.approach) bad.push('no approach path');
-      if (s.hitter !== 'Back row') bad.push(`hitter is ${s.hitter}, expected Back row`);
+      const start = s.approach && s.approach[0], takeoff = s.approach && s.approach[1];
+      if (!takeoff || takeoff.y <= 1 / 3) bad.push('takeoff is not behind the 3-metre line');
+      if (!start || !takeoff || start.y <= takeoff.y) bad.push('start point is not deeper than the takeoff');
+      if (takeoff && v.y >= takeoff.y) bad.push('ball is contacted behind the takeoff');
+      if (s.how !== 'call') bad.push('back-row balls are called by the hitter (how: "call")');
+      if (!['OH', 'OPP', 'MB'].includes(s.hitter)) bad.push(`hitter is ${s.hitter}; in a ${SYSTEM.name} name the back-row hitter (OH or OPP)`);
       const derived = v.x < 1 / 3 ? 5 : v.x < 2 / 3 ? 6 : 1;
       if (v.zones && !v.zones.includes(derived)) bad.push(`declared zones ${v.zones.join('/')} do not include zone ${derived} where x = ${v.x} sits`);
-      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `takeoff at ${(v.takeoff.y * 9).toFixed(1)} m, contact at ${(v.y * 9).toFixed(1)} m` };
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${s.hitter} takes off at ${(takeoff.y * 9).toFixed(1)} m, contact at ${(v.y * 9).toFixed(1)} m` };
     }) },
   { name: 'Back-row spots read A → B → Pipe → C → D left to right', why: 'A is left back (zone 5), Pipe is middle back (zone 6), D is right back (zone 1); B and C split the seams.',
     run: () => {
@@ -1215,7 +1356,16 @@ const RULES = [
       return out;
     } },
   { name: 'Slide has a running approach and a one-foot takeoff', why: 'The middle starts centre, runs behind the setter and takes off on one foot near the right antenna.',
-    run: () => { const s = byId('slide'); if (!s) return [{ id: null, ok: true, msg: 'skipped' }]; const r = s.netView.run, bad = []; if (!r) bad.push('no run in netView'); else { if (!(r.from < SETTER_X && r.to > SETTER_X)) bad.push('run does not cross behind the setter'); if (!(r.takeoff < r.to && r.takeoff > SETTER_X)) bad.push('takeoff is not before the end of the run'); } if (!s.approach || !s.courtView.takeoff) bad.push('no court approach / takeoff'); if (s.hitter !== 'MB') bad.push('hitter is not MB'); return [{ id: 'slide', ok: !bad.length, level: 'err', msg: bad.join('; ') || `runs ${r.from} → ${r.to}, one-foot takeoff at ${r.takeoff}` }]; } },
+    run: () => { const s = byId('slide'); if (!s) return [{ id: null, ok: true, msg: 'skipped' }]; const a = s.approach, bad = []; if (!a) bad.push('no approach'); else { if (!(a[0].x < SETTER_X && a[1].x > SETTER_X)) bad.push('run does not cross behind the setter'); if (!(a[1].x < s.courtView.x + 0.05)) bad.push('takeoff is not before the landing spot'); } if (!/one-foot/i.test(s.takeoffLabel || '')) bad.push('takeoffLabel should say one-foot takeoff'); if (s.hitter !== 'MB') bad.push('hitter is not MB'); return [{ id: 'slide', ok: !bad.length, level: 'err', msg: bad.join('; ') || `runs ${a[0].x} → ${a[1].x}, ${s.takeoffLabel}` }]; } },
+  { name: 'Every approach ends at the ball', why: 'The hitter\'s route must finish next to where the set is contacted: front-row takeoffs just off the net under the ball, back-row takeoffs behind the line.',
+    run: sets => sets.filter(s => !s.modifier && s.approach).map(s => {
+      const t = s.approach[1], v = s.courtView, bad = [];
+      if (s.group !== 'backrow') { if (Math.abs(t.x - v.x) > 0.12) bad.push(`takeoff x ${t.x} is ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball`); if (t.y < v.y) bad.push('takeoff is closer to the net than the ball'); if (t.y > 0.2) bad.push('takeoff is too deep for a front-row attack'); }
+      else if (Math.abs(t.x - v.x) > 0.05) bad.push('takeoff is not in line with the ball');
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `takeoff ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball, ${(t.y * 9).toFixed(1)} m off the net` };
+    }) },
+  { name: 'Hitter timing is derivable', why: 'From hang time we work out where the hitter is at setter contact; a first-tempo ball must have the hitter in the air or planting, a third-tempo ball must let the hitter watch the set.',
+    run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const tl = timeline(f); const bad = []; if (s.tempo === '1st' && tl.phase < 0.5) bad.push('1st tempo but the hitter is barely into the approach at contact'); if (s.tempo === '3rd' && tl.phase > 0.3) bad.push('3rd tempo but the hitter is already running at contact'); return { id: s.id, ok: !bad.length, level: 'warn', msg: bad.join('; ') || timingText(s, tl) }; }) },
   { name: 'BIC is a tempo modifier, not a location', why: 'It is signalled with a zone signal and means "run it fast and low"; it has no spot of its own.',
     run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && b.tempo === '1st'; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry, 1st tempo' : 'should be modifier: true with no netView / courtView, group backrow, tempo 1st' }]; } },
   { name: 'Declared tempo matches the hang time from the flight model', why: 'Height decides how long the ball is in the air; the tempo label should agree with the physics.',
@@ -1275,16 +1425,19 @@ function scrollStripsToSelection() {
    SIGNALS
    ============================================================ */
 function renderSignals() {
-  $('#cards').innerHTML = SETS.map(s => {
+  const card = s => {
     const g = groupOf(s.group);
     return `<div class="card" role="button" tabindex="0" data-select="${s.id}" data-set="${s.id}" style="--c:${s.color}" aria-pressed="${state.selected === s.id}">` +
       glyphHtml(s, 'glyph') +
       `<div class="name">${esc(s.name)}</div>` +
       `<div class="desc">${esc(s.signal.description)}</div>` +
       `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)}</span><span class="tag">${esc(s.hitter)}</span></div>` +
-      `<div class="actions">${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Show on net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Show on court</button>` : ''}</div>` +
+      `<div class="actions">${s.courtView ? `<button class="btn small" data-show="3d" data-id="${s.id}">Show in 3D</button>` : ''}${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Court</button>` : ''}</div>` +
       `</div>`;
-  }).join('');
+  };
+  const mine = roleSets(), others = SETS.filter(s => !roleHas(s));
+  $('#cards').innerHTML = mine.map(card).join('');
+  $('#cards-more').innerHTML = others.length ? `<details class="more"><summary>Other sets (${others.length}) — not usually yours as ${esc(roleLabel(state.role))}</summary><div class="cards">${others.map(card).join('')}</div></details>` : '';
   applySelection();
 }
 
@@ -1300,26 +1453,50 @@ function renderDetail() {
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
   const canPlay = inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(s.group)) || (state.tab === 'court' && s.courtView) || (state.tab === '3d' && !s.modifier && !state.hidden.has(s.group)));
   const fl = s.modifier ? null : flight(s, { bic: state.bic && s.group === 'backrow' });
+  const tl = fl ? timeline(fl) : null;
+  const hitterView = state.role !== 'setter';
+  const you = hitterView ? 'you' : 'the hitter';
+  const passN = { perfect: 3, good: 2, any: 1 }[s.pass] || 0;
+  const passText = { perfect: 'perfect pass, on the net', good: 'good pass, within a metre of the net', any: 'any pass — the out-of-system option' }[s.pass] || '';
+  const fb = s.fallback && byId(s.fallback);
+  let where = '';
+  if (fl) {
+    const z = zonesOf(s).join(' / ');
+    where = s.group === 'backrow'
+      ? `Zone ${z}: contact ${fl.p1.y.toFixed(1)} m off the net, ${fl.p1.x.toFixed(1)} m from the left sideline. Take off behind the 3-m line.`
+      : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net, ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
+    where += ` Hang ${fl.T.toFixed(2)} s · ${s.tempo} tempo${s.netView && s.netView.flat ? ' · flat' : ''}.`;
+  }
+  const rows = [];
+  rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
+  if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(s.startNote)]);
+  if (tl) rows.push([hitterView ? 'Timing' : 'Hitter timing', `${esc(timingText(s, tl))}${timelineSvg(tl, s.color)}`]);
+  if (where) rows.push(['Ball', esc(where)]);
+  if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
+  if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(s.useWhen)]);
+  if (s.avoidWhen) rows.push(['Not when', esc(s.avoidWhen)]);
+  rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>` : 'This is the fallback — always on.']);
+  if (s.note51) rows.push([SYSTEM.name, esc(s.note51)]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
-    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3>${s.aliases && s.aliases.length ? `<div class="aliases">Also: ${esc(s.aliases.join(', '))}</div>` : ''}</div><button class="close" data-close aria-label="Close">✕</button></div>` +
+    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(g.label)} · ${esc(s.hitter)}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
     `<div class="acts">` +
-      (canPlay ? `<button class="btn primary" data-play>▶ Play ball</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
+      (canPlay ? `<button class="btn primary" data-play>▶ Play</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
       (!s.modifier && state.tab !== '3d' ? `<button class="btn" data-show="3d" data-id="${s.id}">Show in 3D</button>` : '') +
-      (s.netView && state.tab !== 'net' ? `<button class="btn" data-show="net" data-id="${s.id}">Show on net</button>` : '') +
-      (s.courtView && state.tab !== 'court' ? `<button class="btn" data-show="court" data-id="${s.id}">Show on court</button>` : '') +
+      (s.netView && state.tab !== 'net' ? `<button class="btn" data-show="net" data-id="${s.id}">Net</button>` : '') +
+      (s.courtView && state.tab !== 'court' ? `<button class="btn" data-show="court" data-id="${s.id}">Court</button>` : '') +
     `</div>` +
-    `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)} tempo</span><span class="tag">${esc(s.hitter)}</span>${s.netView && s.netView.flat ? '<span class="tag">flat / pushed</span>' : ''}</div>` +
-    `<div class="sig">${glyphHtml(s, 'glyph')}<p><small>Hand signal</small>${esc(s.signal.description)}</p></div>` +
-    `<p class="note">${esc(s.coachingNote)}</p>` +
-    (fl ? `<p class="hint">${flightSummary(s)}</p>` : '');
+    `<p class="lead">${esc(s.coachingNote)}</p>` +
+    `<dl class="kv">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`;
   el.classList.add('open');
+  void el.offsetHeight;
 }
 
 /* ============================================================
    SELECTION (shared across tabs)
    ============================================================ */
 function select(id, opts) {
+  if (id && byId(id) && !roleHas(byId(id))) { state.role = 'setter'; try { localStorage.setItem('setterSignals.role', 'setter'); } catch (e) { /* ignore */ } renderRoleBar(); renderSignals(); if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); }
   state.selected = id;
   if (id) state.zone = null;
   applySelection();
@@ -1334,7 +1511,7 @@ function select(id, opts) {
     if (s && state.hidden.has(s.group) && state.tab === 'net' && s.netView) { state.hidden.delete(s.group); renderNet(); }
     if (s && state.hidden.has(s.group) && state.tab === '3d') { state.hidden.delete(s.group); render3D(); }
   }
-  if (state.tab === '3d') { const s3 = id && byId(id); $('#v3-readout').innerHTML = s3 && flight(s3) ? `<span><b>${esc(s3.name)}</b></span><span>${flightSummary(s3)}</span>` : `<span>Net ${state.netH.toFixed(2)} m · court 9 × 9 m per side · attack line 3 m from the net.</span><span>Select a set for its hang time and contact point.</span>`; }
+
 }
 function applySelection() {
   const sel = state.selected;
@@ -1359,6 +1536,25 @@ function applySelection() {
    BALL ANIMATION
    ============================================================ */
 let raf = null, ballTimer = null;
+function stopAnim() { if (raf) cancelAnimationFrame(raf); if (ballTimer) clearTimeout(ballTimer); raf = null; ballTimer = null; }
+/* Runs one sequence in "set time": t = 0 is setter contact, t = T is the hit. The hitter starts at
+   startAt (often before contact), so the clip begins early enough to show the whole approach. */
+function runSequence(s, frame, done) {
+  const fl = flight(s, { bic: state.bic && s.group === 'backrow' });
+  if (!fl) return;
+  const tl = timeline(fl);
+  const t0 = Math.min(tl.startAt, 0) - 0.25, total = tl.T - t0;
+  const dur = total * 1000 * (state.slow ? 2.5 : 1);
+  stopAnim();
+  const begin = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - begin) / dur);
+    frame(t0 + p * total, fl, tl);
+    if (p < 1) raf = requestAnimationFrame(step);
+    else ballTimer = setTimeout(done, 800);
+  }
+  raf = requestAnimationFrame(step);
+}
 function play() {
   const s = state.selected && byId(state.selected);
   if (!s) return;
@@ -1366,53 +1562,50 @@ function play() {
   const scene = state.tab === 'court' ? $('#court-scene') : $('#net-scene');
   const grp = scene && scene.querySelector(`[data-set="${s.id}"]`);
   if (!grp) return;
-  const path = grp.querySelector('.traj');
-  const approach = grp.querySelector('.approach');
-  const ball = scene.querySelector('.ball');
-  const hitter = scene.querySelector('.hitter');
-  if (raf) cancelAnimationFrame(raf);
-  if (ballTimer) clearTimeout(ballTimer);
-  const dur = flightMs(s);
-  const len = path.getTotalLength();
-  const alen = approach ? approach.getTotalLength() : 0;
-  const t0 = performance.now();
-  ball.style.opacity = 1;
-  if (approach) hitter.style.opacity = 1;
-  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-  function step(now) {
-    const p = Math.min(1, (now - t0) / dur);
-    const pt = path.getPointAtLength(len * ease(p));
+  const path = grp.querySelector('.traj'), approach = grp.querySelector('.approach');
+  const ball = scene.querySelector('.ball'), hitter = scene.querySelector('.hitter');
+  const len = path.getTotalLength(), alen = approach ? approach.getTotalLength() : 0;
+  const hands = path.getPointAtLength(0), end = path.getPointAtLength(len);
+  runSequence(s, (t, fl, tl) => {
+    ball.style.opacity = 1;
+    const pt = t <= 0 ? hands : path.getPointAtLength(len * Math.min(1, t / fl.T));
     ball.setAttribute('transform', `translate(${r1(pt.x)} ${r1(pt.y)})`);
     if (approach) {
-      const q = approach.getPointAtLength(alen * Math.min(1, p * 1.1));
+      hitter.style.opacity = 1;
+      const h = hitterPhase(t, tl);
+      let q;
+      if (h.mode === 'wait') q = approach.getPointAtLength(0);
+      else if (h.mode === 'run') q = approach.getPointAtLength(alen * h.f);
+      else { const a = approach.getPointAtLength(alen); const tgt = state.tab === 'court' ? end : { x: end.x, y: a.y }; q = { x: a.x + (tgt.x - a.x) * h.f, y: a.y + (tgt.y - a.y) * h.f }; }
       hitter.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
     }
-    if (p < 1) raf = requestAnimationFrame(step);
-    else ballTimer = setTimeout(() => { ball.style.opacity = 0; hitter.style.opacity = 0; }, 600);
-  }
-  raf = requestAnimationFrame(step);
+  }, () => { ball.style.opacity = 0; hitter.style.opacity = 0; });
 }
 function play3D(s) {
-  const fl = flight(s, { bic: state.bic && s.group === 'backrow' });
-  if (!fl) return;
-  if (raf) cancelAnimationFrame(raf);
-  if (ballTimer) clearTimeout(ballTimer);
-  const dur = fl.T * 1000 * (state.slow ? 2.5 : 1);
   const ap = approachWorld(s, 24);
-  const t0 = performance.now();
   const q = () => ({ ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter') });
-  function step(now) {
+  const lerp = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f });
+  runSequence(s, (t, fl, tl) => {
     const el = q(); if (!el.ball || !v3cam) return;
-    const p = Math.min(1, (now - t0) / dur);
-    const w = fl.at(p), b = v3cam.project(w), sh = v3cam.project({ x: w.x, y: w.y, z: 0 });
+    let w;
+    if (t < 0) { // the pass arriving into the setter's hands
+      const from = { x: fl.p0.x + 0.4, y: fl.p0.y + 2.2, z: fl.p0.z + 1.6 }, tStart = Math.min(tl.startAt, 0) - 0.25;
+      const f = Math.min(1, (t - tStart) / (0 - tStart)); w = lerp(from, fl.p0, f); w.z += 0.5 * Math.sin(Math.PI * f);
+    } else w = fl.at(Math.min(1, t / fl.T));
+    const b = v3cam.project(w), sh = v3cam.project({ x: w.x, y: w.y, z: 0 });
     el.ball.style.opacity = 1; el.shadow.style.opacity = 0.6;
     el.ball.setAttribute('transform', `translate(${r1(b.x)} ${r1(b.y)})`);
     el.shadow.setAttribute('transform', `translate(${r1(sh.x)} ${r1(sh.y)})`);
-    if (ap) { const i = Math.min(ap.length - 1, Math.round(ap.length * Math.min(1, p * 1.1))); const h = v3cam.project(ap[i]); el.hitter.style.opacity = 1; el.hitter.setAttribute('transform', `translate(${r1(h.x)} ${r1(h.y)})`); }
-    if (p < 1) raf = requestAnimationFrame(step);
-    else ballTimer = setTimeout(() => { const e = q(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; } }, 700);
-  }
-  raf = requestAnimationFrame(step);
+    if (ap) {
+      const h = hitterPhase(t, tl);
+      let wp;
+      if (h.mode === 'wait') wp = ap[0];
+      else if (h.mode === 'run') { const i = h.f * (ap.length - 1); const a = ap[Math.floor(i)], b2 = ap[Math.min(ap.length - 1, Math.ceil(i))]; wp = lerp(a, b2, i - Math.floor(i)); }
+      else { wp = lerp(ap[ap.length - 1], { x: fl.p1.x, y: fl.p1.y, z: 0 }, h.f); wp.z = WORLD.jumpHeight * Math.sin(Math.PI / 2 * h.f); }
+      const hp = v3cam.project(wp);
+      el.hitter.style.opacity = 1; el.hitter.setAttribute('transform', `translate(${r1(hp.x)} ${r1(hp.y)})`);
+    }
+  }, () => { const e = q(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; } });
 }
 
 /* ============================================================
@@ -1420,7 +1613,7 @@ function play3D(s) {
    ============================================================ */
 function quizPool() {
   const q = state.quiz;
-  return SETS.filter(s => (q.group === 'all' || s.group === q.group) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
+  return roleSets().filter(s => (q.group === 'all' || s.group === q.group) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
 }
 function quizNext() {
   const q = state.quiz;
@@ -1435,9 +1628,10 @@ function quizNext() {
   const id = q.queue.shift();
   const answer = byId(id);
   const distractorPool = SETS.filter(s => s.id !== id && (q.mode === 'signal' || !s.modifier));
-  const same = shuffle(distractorPool.filter(s => s.group === answer.group));
-  const others = shuffle(distractorPool.filter(s => s.group !== answer.group));
-  const distractors = same.concat(others).slice(0, 3);
+  const same = shuffle(distractorPool.filter(s => s.group === answer.group && roleHas(s)));
+  const mine = shuffle(distractorPool.filter(s => s.group !== answer.group && roleHas(s)));
+  const others = shuffle(distractorPool.filter(s => !roleHas(s)));
+  const distractors = same.concat(mine, others).slice(0, 3);
   q.current = id;
   q.choices = shuffle([answer].concat(distractors).map(s => s.id));
   q.answered = null;
@@ -1457,7 +1651,9 @@ function quizAnswer(id) {
 function renderQuiz() {
   const q = state.quiz;
   $$('#tab-quiz .seg button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === q.mode)));
-  $('#quiz-groups').innerHTML = [{ id: 'all', label: 'All sets' }].concat(GROUPS).map(g =>
+  const groupsMine = GROUPS.filter(g => roleSets().some(s => s.group === g.id));
+  if (q.group !== 'all' && !groupsMine.some(g => g.id === q.group)) q.group = 'all';
+  $('#quiz-groups').innerHTML = [{ id: 'all', label: state.role === 'setter' ? 'All sets' : 'All my sets' }].concat(groupsMine).map(g =>
     `<button class="chip${q.group === g.id ? ' active' : ''}" data-qgroup="${g.id}" aria-pressed="${q.group === g.id}">${g.label}</button>`).join('');
   const sc = q.score;
   $('#quiz-score').innerHTML = `<span>Score <b>${sc.correct}</b> / ${sc.total}</span><span>Streak <b>${sc.streak}</b></span><span>Best streak <b>${sc.best}</b></span><button class="btn small" data-qreset>Reset</button>`;
@@ -1511,10 +1707,11 @@ function showTab(id) {
   window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-qgroup],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],#bic-toggle,#v3-bic,#v3-net');
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-qgroup],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],#bic-toggle,#v3-bic,#v3-net');
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-diag')) { showTab(t.getAttribute('data-diag')); return; }
+  if (t.hasAttribute('data-role')) { setRole(t.getAttribute('data-role')); return; }
   if (t.hasAttribute('data-cam')) { const p = V3.presets[t.getAttribute('data-cam')]; state.cam = Object.assign({}, p, { preset: t.getAttribute('data-cam') }); render3D(); return; }
   if (t.id === 'v3-bic') { state.bic = !state.bic; render3D(); renderDetail(); return; }
   if (t.id === 'v3-net') { state.netH = state.netH === WORLD.netHeights.men ? WORLD.netHeights.women : WORLD.netHeights.men; render3D(); renderDetail(); return; }
@@ -1593,6 +1790,7 @@ document.addEventListener('click', e => { const p = e.target.closest('.tab-head 
 
 /* ---------------- boot ---------------- */
 v3Orbit();
+renderRoleBar();
 renderSignals();
 renderQuiz();
 showTab('3d');
