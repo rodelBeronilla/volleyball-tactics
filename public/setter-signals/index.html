@@ -518,7 +518,7 @@ const SETS = [
     netView: { landX: 0.97, peak: 0.45, flat: true },
     courtView: { x: 0.97, y: 0.08 } },
   { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '1st', hitter: 'MB',
-    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, routeShape: 'j', takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot just past the setter.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
+    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, routeShape: 'j', takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot near the right antenna.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
     netView: { landX: 0.90, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 }, run: { from: 0.45, to: 0.92, takeoff: 0.88 } },
@@ -671,7 +671,7 @@ function timingText(s, tl) {
   if (s.timingNote) return s.timingNote;
   const f = tl.phase;
   if (f >= 1) return 'Already in the air when the setter touches the ball.';
-  if (f >= 0.8) return 'Leaving the floor as the setter touches the ball — a true quick: be up before the set is.';
+  if (f >= 0.78) return 'Leaving the floor as the setter touches the ball — a true quick: be up before the set is.';
   if (f >= 0.65) return 'Planting for takeoff as the setter touches the ball.';
   if (f >= 0.3) return 'On your second step when the setter touches the ball.';
   if (f >= 0.05) return 'First step as the setter touches the ball.';
@@ -1389,6 +1389,10 @@ const RULES = [
       if (m(/cross behind|run behind|runs behind/i, startText + ' ' + ballText)) claim(a1.x > SETTER_X, 'runs behind the setter', `takeoff at ${(a1.x * 9).toFixed(1)} m, setter at ${(SETTER_X * 9).toFixed(1)} m`);
       if (m(/in front of the setter/i, startText)) claim(a0.x < SETTER_X, 'starts in front of the setter', `start x = ${startM.toFixed(1)} m`);
       if (m(/at an angle/i, startText)) claim(Math.abs(a1.x - a0.x) > 0.08, 'comes in at an angle', `run moves ${(Math.abs(a1.x - a0.x) * 9).toFixed(1)} m sideways`);
+      const tk = (s.timingNote || '');
+      if (m(/just past the setter/i, tk)) claim(a1.x > SETTER_X && a1.x - SETTER_X < 0.17, 'takes off just past the setter', `takeoff ${((a1.x - SETTER_X) * 9).toFixed(1)} m past the setter`);
+      if (m(/near the right antenna/i, tk)) claim(a1.x > 0.8, 'takes off near the right antenna', `takeoff ${((1 - a1.x) * 9).toFixed(1)} m from the right antenna`);
+      if (m(/near the left antenna/i, tk)) claim(a1.x < 0.2, 'takes off near the left antenna', `takeoff ${(a1.x * 9).toFixed(1)} m from the left antenna`);
       if (s.netView) {
         if (m(/halfway to the left antenna/i, ballText)) claim(Math.abs(nv.landX - SETTER_X / 2) < 0.06, 'halfway to the left antenna', `lands at ${(nv.landX * 9).toFixed(1)} m, halfway is ${(SETTER_X / 2 * 9).toFixed(1)} m`);
         if (m(/halfway between the middle and the left antenna/i, ballText)) claim(Math.abs(nv.landX - 0.25) < 0.06, 'halfway between the middle and the left antenna', `lands at ${(nv.landX * 9).toFixed(1)} m`);
@@ -1554,7 +1558,7 @@ function renderDetail() {
   if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
   if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(s.useWhen)]);
   if (s.avoidWhen) rows.push(['Not when', esc(s.avoidWhen)]);
-  rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>` : 'This is the fallback — always on.']);
+  rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${s.group === 'backrow' && fb.group !== 'backrow' ? ` <span class="hint">to the front-row ${esc(fb.hitter)} — ${hitterView ? 'not you' : 'not the back-row hitter'}</span>` : ''}` : 'This is the fallback — always on.']);
   if (s.note51) rows.push([SYSTEM.name, esc(s.note51)]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
