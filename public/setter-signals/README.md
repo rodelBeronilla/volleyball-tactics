@@ -24,6 +24,14 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 
 Selection is shared across tabs. Keyboard: Tab to a path, card or spec row, Enter/Space to select, Esc to clear.
 
+## On a phone
+
+- The diagram sits near the top of every view; filter chips scroll sideways in one row.
+- Under each diagram a scrolling strip of set names selects a set precisely, which is easier than tapping a thin arc.
+- In the 3D view, swipe sideways to orbit, swipe up or down to scroll the page, pinch to zoom, and use the floating camera buttons for the preset angles. The blue ▶ button on the scene plays the selected set.
+- The detail sheet slides up from the bottom. Tap the grey handle to collapse it to a peek (name + actions), swipe down to collapse and then close, swipe up to expand.
+- Add it to the home screen (Share → Add to Home Screen on iOS, Install on Android) and it opens full-screen like an app.
+
 ## The flight model
 
 Heights in the side view are relative (`peak` 0 → 1). The 3D view and the Checks tab turn them into
