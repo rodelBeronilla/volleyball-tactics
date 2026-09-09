@@ -518,7 +518,7 @@ const SETS = [
     netView: { landX: 0.97, peak: 0.45, flat: true },
     courtView: { x: 0.97, y: 0.08 } },
   { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '1st', hitter: 'MB',
-    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot just past the setter.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
+    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, routeShape: 'j', takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot just past the setter.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
     netView: { landX: 0.90, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 }, run: { from: 0.45, to: 0.92, takeoff: 0.88 } },
@@ -844,12 +844,9 @@ function courtSetPath(s, bic) {
   const fl = isBack ? null : flight(s);
   const ty = isBack ? (bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) : (fl ? fl.p1.y / WORLD.courtD : v.y);
   const ex = cx(v.x), ey = cy(ty);
-  let bow;
-  if (isBack) bow = bic ? 0.02 : 0.06; else bow = 0.02 + (s.netView ? s.netView.peak : 0.5) * 0.06;
+  // seen from above a set is a straight line: the ball moves in one vertical plane
   const bx = (ex - sx), by = (ey - sy);
-  // perpendicular-ish bow: push control points deeper into the court
-  const c1x = sx + bx * 0.3, c1y = sy + by * 0.3 + bow * CL.ch;
-  const c2x = sx + bx * 0.7, c2y = sy + by * 0.7 + bow * CL.ch;
+  const c1x = sx + bx / 3, c1y = sy + by / 3, c2x = sx + 2 * bx / 3, c2y = sy + 2 * by / 3;
   return { d: `M${r1(sx)} ${r1(sy)} C${r1(c1x)} ${r1(c1y)} ${r1(c2x)} ${r1(c2y)} ${r1(ex)} ${r1(ey)}`, ex, ey, ty };
 }
 function courtSetMarkup(s, opts) {
@@ -889,13 +886,21 @@ function courtSetMarkup(s, opts) {
   o += `</g>`;
   return o;
 }
+function routePoints(s, n) {   // court fractions along the hitter's route, start → takeoff
+  const a0 = s.approach[0], a1 = s.approach[1], pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    if (s.routeShape === 'j') {
+      // J route: first toward the net, then along it — the control point sits at the takeoff depth under the start
+      const cxp = a0.x + (a1.x - a0.x) * 0.2, cyp = a1.y + 0.02;
+      pts.push({ x: (1 - t) * (1 - t) * a0.x + 2 * (1 - t) * t * cxp + t * t * a1.x, y: (1 - t) * (1 - t) * a0.y + 2 * (1 - t) * t * cyp + t * t * a1.y });
+    } else pts.push({ x: a0.x + (a1.x - a0.x) * t, y: a0.y + (a1.y - a0.y) * t });
+  }
+  return pts;
+}
 function approachCourtPath(s) {
-  const a0 = s.approach[0], a1 = s.approach[1];
-  if (s.group === 'backrow') return `M${r1(cx(a0.x))} ${r1(cy(a0.y))} L${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
-  const dx = a1.x - a0.x;
-  if (Math.abs(dx) < 0.1) return `M${r1(cx(a0.x))} ${r1(cy(a0.y))} L${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
-  // a running route bends toward the net late
-  return `M${r1(cx(a0.x))} ${r1(cy(a0.y))} C${r1(cx(a0.x + dx * 0.45))} ${r1(cy(a0.y + 0.02))} ${r1(cx(a1.x - dx * 0.25))} ${r1(cy(a1.y + 0.1))} ${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
+  const pts = routePoints(s, s.routeShape === 'j' ? 12 : 1).map(p => ({ x: cx(p.x), y: cy(p.y) }));
+  return pts.length === 2 ? `M${r1(pts[0].x)} ${r1(pts[0].y)} L${r1(pts[1].x)} ${r1(pts[1].y)}` : bezierThrough(pts);
 }
 function courtLabelPositions(sets) {
   // Stack the labels of sets that land in (almost) the same spot, highest ball first.
@@ -1042,20 +1047,7 @@ function bezierThrough(pts) {   // Catmull-Rom → cubic Bézier segments (C com
 function polyline(cam, world) { return bezierThrough(world.map(p => cam.project(p))); }
 function approachWorld(s, n) {
   if (!s.approach) return null;
-  const a0 = s.approach[0], a1 = s.approach[1];
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    let x, y;
-    if (s.group === 'backrow') { x = a0.x + (a1.x - a0.x) * t; y = a0.y + (a1.y - a0.y) * t; }
-    else { // running route: quadratic through a control point pulled toward the net
-      const cxp = a0.x + (a1.x - a0.x) * 0.55, cyp = a0.y + 0.03;
-      x = (1 - t) * (1 - t) * a0.x + 2 * (1 - t) * t * cxp + t * t * a1.x;
-      y = (1 - t) * (1 - t) * a0.y + 2 * (1 - t) * t * cyp + t * t * a1.y;
-    }
-    pts.push({ x: x * WORLD.courtW, y: y * WORLD.courtD, z: 0 });
-  }
-  return pts;
+  return routePoints(s, n).map(p => ({ x: p.x * WORLD.courtW, y: p.y * WORLD.courtD, z: 0 }));
 }
 function arrowHead(a, b, size, color) {
   const ang = Math.atan2(b.y - a.y, b.x - a.x);
@@ -1141,7 +1133,7 @@ function v3Scene(L, sets, opts) {
     o += `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">`;
     o += `<path class="hit" d="${d}" stroke-width="${L.hit}"/>`;
     // approach on the floor (shown for the selected set)
-    const ap = approachWorld(s, isBack ? 1 : 12);
+    const ap = approachWorld(s, s.routeShape === 'j' ? 12 : 1);
     if (ap) {
       const pp = ap.map(P);
       const t = s.approach[1];
