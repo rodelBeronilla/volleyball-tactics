@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Setter Signals">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f1117'/%3E%3Cpath d='M12 44h40M14 44V30M50 44V30' stroke='%23e8ebf5' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Cpath d='M36 40c-2-18-14-18-24-8' stroke='%2334d399' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='38' cy='40' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230f1117'/%3E%3Cpath d='M12 44h40M14 44V30M50 44V30' stroke='%23e8ebf5' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Cpath d='M36 40c-2-18-14-18-24-8' stroke='%2334d399' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='38' cy='40' r='3.5' fill='%23fff'/%3E%3C/svg%3E">
 <meta name="description" content="Interactive guide to setter hand signals and set trajectories — front-row sets and back-row attacks.">
 <title>Setter Signals &amp; Set Map</title>
 <style>
@@ -16,7 +22,8 @@
 html{background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4;overflow-x:hidden;-webkit-text-size-adjust:100%}
 [hidden]{display:none!important}
-button{font:inherit;color:inherit;cursor:pointer}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.chip,.sc,.nav button,.card{user-select:none;-webkit-user-select:none}
 button:focus-visible,[tabindex]:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 h1,h2,h3{margin:0;line-height:1.2}
 p{margin:0}
@@ -45,7 +52,19 @@ p{margin:0}
 .chip.active{background:var(--panel3);border-color:var(--accent)}
 
 /* scenes */
-.scene-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px;overflow:hidden}
+.scene-wrap{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px;overflow:hidden}
+.overlay{position:absolute;inset:8px;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end}
+.overlay>*{pointer-events:auto}
+.overlay .seg{align-self:flex-start;margin-top:auto;background:rgba(15,17,23,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.overlay .seg button{min-height:40px;padding:0 11px;font-size:13px}
+.fab{display:none;align-items:center;justify-content:center;gap:6px;min-width:48px;height:48px;padding:0 16px;border-radius:999px;border:0;background:var(--accent);color:#06101f;font-weight:800;font-size:15px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+body.has-sel .fab{display:inline-flex}
+.strip{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{display:none}
+.strip .sc{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;white-space:nowrap;transition:background .2s,border-color .2s,opacity .2s}
+.strip .sc i{width:9px;height:9px;border-radius:50%;background:currentColor}
+.strip .sc.sel{background:var(--panel3);border-color:currentColor;color:var(--text)}
+.strip .sc.dim{opacity:.55}
 .scene{display:block;width:100%;height:auto;max-width:100%}
 .court-wrap{max-width:560px}
 svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;user-select:none;-webkit-user-select:none}
@@ -102,6 +121,8 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 /* detail */
 #detail{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b));z-index:25;transform:translateY(110%);transition:transform .25s ease;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;max-height:46vh;overflow:auto;padding:12px 16px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.45)}
 #detail.open{transform:none}
+#detail .handle{display:none;position:relative;width:44px;height:5px;border-radius:3px;background:#3a4157;margin:0 auto 10px;cursor:grab;touch-action:none}
+#detail .handle::before{content:"";position:absolute;left:-40px;right:-40px;top:-12px;height:30px}
 #detail .bar{height:5px;border-radius:999px;background:var(--c);margin-bottom:12px}
 #detail .top{display:flex;align-items:flex-start;gap:12px}
 #detail .title{flex:1}
@@ -115,7 +136,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 #detail .sig p{font-size:14px}
 #detail .sig small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
 #detail .note{font-size:15px;line-height:1.45;border-left:3px solid var(--c);padding-left:10px;margin:10px 0}
-#detail .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#detail .acts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
 #detail .placeholder{color:var(--muted);font-size:14px;display:none}
 
 /* quiz */
@@ -141,7 +162,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 .qfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 
 /* 3D view */
-#v3-scene svg{cursor:grab;touch-action:none}
+#v3-scene svg{cursor:grab;touch-action:pan-y}
 #v3-scene svg.dragging{cursor:grabbing}
 .v3-readout{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
 .v3-readout b{color:var(--text);font-variant-numeric:tabular-nums}
@@ -179,6 +200,37 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
 .tab-head .status{vertical-align:middle;margin-left:8px}
 .diag-seg{margin-bottom:-2px}
 
+@media (max-width:899px){
+  .tab{gap:12px}
+  .tab-head h2{font-size:20px}
+  .tab-head p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  .tab-head p.expanded{-webkit-line-clamp:unset;display:block}
+  .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;min-height:40px;padding:0 12px;font-size:13px;white-space:nowrap}
+  .toolbar{gap:6px}
+  .toggle{min-height:40px;font-size:13px;padding:0 10px;gap:8px}
+  .toggle .sw{width:32px;height:20px}
+  .toggle .sw::after{width:14px;height:14px}
+  .toggle[aria-pressed="true"] .sw::after{transform:translateX(12px)}
+  .seg button{min-height:40px;font-size:13px;padding:0 11px}
+  .scene-wrap{padding:4px;margin:0 -8px;border-radius:12px}
+  .overlay{inset:6px}
+  #detail{padding-top:10px}
+  #detail .handle{display:block}
+  #detail.peek .content>:not(.bar):not(.top):not(.acts){display:none}
+  #detail h3{font-size:20px}
+  .legend{grid-template-columns:1fr 1fr}
+  .cards{grid-template-columns:1fr 1fr;gap:8px}
+  .card .glyph{font-size:34px}
+  .card .glyph.txt{font-size:28px}
+  .card .desc{font-size:12px}
+  table.spec{min-width:520px}
+  table.spec .m-hide{display:none}
+  .qbox{padding:12px}
+  .qbox .qglyph{font-size:56px}
+  .qbox .qdesc{font-size:16px}
+}
 @media (min-width:900px){
   .app{display:grid;grid-template-columns:200px minmax(0,1fr) 340px;align-items:start;min-height:100vh}
   .nav{position:sticky;top:0;bottom:auto;height:100vh;flex-direction:column;padding:18px 12px;gap:4px;border-top:0;border-right:1px solid var(--line);background:var(--bg);backdrop-filter:none}
@@ -232,16 +284,22 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       </div>
       <div class="chips" id="v3-filters" aria-label="Filter groups"></div>
       <div class="toolbar">
-        <div class="seg cam" role="group" aria-label="Camera" id="v3-presets">
-          <button data-cam="coach" aria-pressed="true">Coach</button>
-          <button data-cam="corner" aria-pressed="false">Corner</button>
-          <button data-cam="blocker" aria-pressed="false">Blockers</button>
-          <button data-cam="top" aria-pressed="false">Top</button>
-        </div>
         <button class="toggle" id="v3-bic" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo</span></button>
         <button class="toggle" id="v3-net" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>Women's net</span></button>
+        <span class="hint">Swipe sideways to orbit · pinch or scroll to zoom</span>
       </div>
-      <div class="scene-wrap"><div id="v3-scene"></div></div>
+      <div class="scene-wrap"><div id="v3-scene"></div>
+        <div class="overlay">
+          <button class="fab" data-play aria-label="Play ball">▶ Play</button>
+          <div class="seg cam" role="group" aria-label="Camera" id="v3-presets">
+            <button data-cam="coach" aria-pressed="true">Coach</button>
+            <button data-cam="corner" aria-pressed="false">Corner</button>
+            <button data-cam="blocker" aria-pressed="false">Blockers</button>
+            <button data-cam="top" aria-pressed="false">Top</button>
+          </div>
+        </div>
+      </div>
+      <div class="strip" id="strip-3d" aria-label="Select a set"></div>
       <div class="v3-readout" id="v3-readout"></div>
     </section>
 
@@ -252,7 +310,8 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
         <p>Side view from the back row. Every set leaves the setter's hands; height and landing spot tell them apart. Tap a path.</p>
       </div>
       <div class="chips" id="net-filters" aria-label="Filter groups"></div>
-      <div class="scene-wrap"><div id="net-scene"></div></div>
+      <div class="scene-wrap"><div id="net-scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play ball">▶ Play</button></div></div>
+      <div class="strip" id="strip-net" aria-label="Select a set"></div>
       <div class="legend" id="net-legend"></div>
     </section>
 
@@ -266,7 +325,8 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
         <button class="toggle" id="bic-toggle" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo (fast &amp; low)</span></button>
         <span class="hint" id="bic-hint">Normal back-row ball: higher and deeper. At high levels every back-row set is assumed to be quick.</span>
       </div>
-      <div class="scene-wrap court-wrap"><div id="court-scene"></div></div>
+      <div class="scene-wrap court-wrap"><div id="court-scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play ball">▶ Play</button></div></div>
+      <div class="strip" id="strip-court" aria-label="Select a set"></div>
       <div class="chips" id="court-zonechips"></div>
     </section>
 
@@ -305,6 +365,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   </main>
 
   <aside id="detail" aria-live="polite">
+    <div class="handle" data-handle role="button" tabindex="0" aria-label="Collapse or expand details"></div>
     <p class="placeholder">Select a set in any view to see its signal, tempo, hitter and coaching note here.</p>
     <div class="content"></div>
   </aside>
@@ -618,6 +679,7 @@ function renderNet() {
   const L = netLayout();
   const visible = SETS.filter(s => s.netView && !state.hidden.has(s.group));
   $('#net-scene').innerHTML = netScene(L, visible);
+  renderStrip('strip-net', visible);
   // filter chips
   $('#net-filters').innerHTML = GROUPS.map(g => {
     if (g.id === 'backrow') return `<button class="chip note" data-goto="court" title="Back-row sets are shown on the court">Back row → Court view</button>`;
@@ -761,6 +823,7 @@ function courtScene(sets, opts) {
 function renderCourt() {
   const sets = SETS.filter(s => s.courtView);
   $('#court-scene').innerHTML = courtScene(sets, { bic: state.bic });
+  renderStrip('strip-court', sets);
   $('#bic-toggle').setAttribute('aria-pressed', String(state.bic));
   $('#bic-hint').textContent = state.bic
     ? 'BIC: same spots, run fast and low — the hitter is already in the air when the ball is set. At high levels every back-row set is assumed to be quick.'
@@ -975,6 +1038,7 @@ function render3D() {
   const L = v3Layout();
   const sets = SETS.filter(s => !s.modifier && !state.hidden.has(s.group));
   $('#v3-scene').innerHTML = v3Scene(L, sets, { bic: state.bic });
+  renderStrip('strip-3d', sets);
   $('#v3-filters').innerHTML = GROUPS.map(g => {
     const on = !state.hidden.has(g.id);
     const sw = SETS.filter(s => s.group === g.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
@@ -989,22 +1053,54 @@ function render3D() {
 }
 function v3Orbit() {
   const wrap = $('#v3-scene');
-  let drag = null;
-  wrap.addEventListener('pointerdown', e => { if (e.button !== 0 && e.pointerType === 'mouse') return; drag = { x: e.clientX, y: e.clientY, yaw: state.cam.yaw, pitch: state.cam.pitch, moved: false, id: e.pointerId }; });
+  const pointers = new Map();
+  let drag = null, pinch = null;
+  const rerender = () => { if (!v3raf) v3raf = requestAnimationFrame(() => { v3raf = null; render3D(); }); };
+  wrap.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y), dist: state.cam.dist };
+      drag = null; state.v3drag = true;
+      try { wrap.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    } else if (pointers.size === 1) {
+      drag = { x: e.clientX, y: e.clientY, yaw: state.cam.yaw, pitch: state.cam.pitch, moved: false, id: e.pointerId };
+    }
+  });
   wrap.addEventListener('pointermove', e => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      state.cam.dist = Math.min(32, Math.max(9, pinch.dist * pinch.d0 / d));
+      state.cam.preset = null; rerender(); return;
+    }
     if (!drag) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (!drag.moved && Math.hypot(dx, dy) < 6) return;
-    if (!drag.moved && wrap.setPointerCapture) { try { wrap.setPointerCapture(drag.id); } catch (err) { /* ignore */ } }
-    drag.moved = true; state.v3drag = true;
-    const svg = wrap.querySelector('svg'); if (svg) svg.classList.add('dragging');
+    if (!drag.moved) {
+      if (Math.hypot(dx, dy) < 8) return;
+      // on touch, a mostly-vertical swipe is a page scroll — leave it to the browser
+      if (e.pointerType !== 'mouse' && Math.abs(dy) > Math.abs(dx) * 1.2) { drag = null; return; }
+      try { wrap.setPointerCapture(drag.id); } catch (err) { /* ignore */ }
+      drag.moved = true; state.v3drag = true;
+      const svg = wrap.querySelector('svg'); if (svg) svg.classList.add('dragging');
+    }
     state.cam.yaw = drag.yaw - dx * 0.008;
     state.cam.pitch = Math.min(1.5, Math.max(0.08, drag.pitch + dy * 0.008));
     state.cam.preset = null;
-    if (!v3raf) v3raf = requestAnimationFrame(() => { v3raf = null; render3D(); });
+    rerender();
   });
-  const end = () => { if (!drag) return; drag = null; setTimeout(() => { state.v3drag = false; }, 0); };
+  const end = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (drag && e.pointerId === drag.id) drag = null;
+    if (!pointers.size) setTimeout(() => { state.v3drag = false; }, 0);
+  };
   wrap.addEventListener('pointerup', end); wrap.addEventListener('pointercancel', end);
+  v3Orbit.debug = () => ({ pointers: pointers.size, drag: !!drag, moved: drag && drag.moved, pinch: !!pinch, v3drag: state.v3drag, cam: Object.assign({}, state.cam) });
+  wrap.addEventListener('wheel', e => { e.preventDefault(); state.cam.dist = Math.min(32, Math.max(9, state.cam.dist * (1 + Math.sign(e.deltaY) * 0.08))); state.cam.preset = null; rerender(); }, { passive: false });
 }
 let v3raf = null;
 
@@ -1153,11 +1249,26 @@ function renderChecks() {
     const bad = c.results.flatMap(r => r.findings).filter(x => x.id === s.id && !x.ok);
     const st = bad.length ? (bad.some(x => x.level !== 'warn') ? 'err' : 'warn') : 'ok';
     const z = zonesOf(s).join('/') || '–';
-    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td>${esc(groupOf(s.group).label)}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(s.tempo)}${f ? ` <span class="hint">(${tempoFor(f.T)})</span>` : ''}</td>` +
-      `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.peakH.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td>${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
+    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td class="m-hide">${esc(groupOf(s.group).label)}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(s.tempo)}${f ? ` <span class="hint">(${tempoFor(f.T)})</span>` : ''}</td>` +
+      `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num m-hide">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.peakH.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td class="m-hide">${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
   }).join('');
-  $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th>Group</th><th>Hitter</th><th>Tempo</th><th class="num">Lands from L antenna</th><th>Zone</th><th class="num">Off net</th><th class="num">Apex over tape</th><th class="num">Hang</th><th>Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
+  $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th class="m-hide">Group</th><th>Hitter</th><th>Tempo</th><th class="num">Lands</th><th>Zone</th><th class="num m-hide">Off net</th><th class="num">Apex</th><th class="num">Hang</th><th class="m-hide">Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
   applySelection();
+}
+
+/* ============================================================
+   SET STRIP — scrollable quick-select under each scene
+   ============================================================ */
+function renderStrip(id, sets) {
+  const el = $('#' + id); if (!el) return;
+  el.innerHTML = sets.map(s => `<button class="sc" data-set="${s.id}" data-select="${s.id}" style="color:${s.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(s.name)}</span></button>`).join('');
+}
+function scrollStripsToSelection() {
+  if (!state.selected) return;
+  $$('.strip').forEach(strip => {
+    const el = strip.querySelector(`.sc[data-set="${state.selected}"]`);
+    if (el) strip.scrollTo({ left: el.offsetLeft - strip.clientWidth / 2 + el.clientWidth / 2, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+  });
 }
 
 /* ============================================================
@@ -1183,7 +1294,7 @@ function renderSignals() {
 function renderDetail() {
   const el = $('#detail');
   const s = state.selected ? byId(state.selected) : null;
-  if (!s) { el.classList.remove('open'); el.style.removeProperty('--c'); $('.content', el).innerHTML = ''; return; }
+  if (!s) { el.classList.remove('open'); el.classList.remove('peek'); el.style.removeProperty('--c'); $('.content', el).innerHTML = ''; return; }
   const g = groupOf(s.group);
   el.style.setProperty('--c', s.color);
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
@@ -1192,16 +1303,16 @@ function renderDetail() {
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
     `<div class="top"><div class="title"><h3>${esc(s.name)}</h3>${s.aliases && s.aliases.length ? `<div class="aliases">Also: ${esc(s.aliases.join(', '))}</div>` : ''}</div><button class="close" data-close aria-label="Close">✕</button></div>` +
-    `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)} tempo</span><span class="tag">${esc(s.hitter)}</span>${s.netView && s.netView.flat ? '<span class="tag">flat / pushed</span>' : ''}</div>` +
-    `<div class="sig">${glyphHtml(s, 'glyph')}<p><small>Hand signal</small>${esc(s.signal.description)}</p></div>` +
-    `<p class="note">${esc(s.coachingNote)}</p>` +
-    (fl ? `<p class="hint">${flightSummary(s)}</p>` : '') +
     `<div class="acts">` +
       (canPlay ? `<button class="btn primary" data-play>▶ Play ball</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
       (!s.modifier && state.tab !== '3d' ? `<button class="btn" data-show="3d" data-id="${s.id}">Show in 3D</button>` : '') +
       (s.netView && state.tab !== 'net' ? `<button class="btn" data-show="net" data-id="${s.id}">Show on net</button>` : '') +
       (s.courtView && state.tab !== 'court' ? `<button class="btn" data-show="court" data-id="${s.id}">Show on court</button>` : '') +
-    `</div>`;
+    `</div>` +
+    `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)} tempo</span><span class="tag">${esc(s.hitter)}</span>${s.netView && s.netView.flat ? '<span class="tag">flat / pushed</span>' : ''}</div>` +
+    `<div class="sig">${glyphHtml(s, 'glyph')}<p><small>Hand signal</small>${esc(s.signal.description)}</p></div>` +
+    `<p class="note">${esc(s.coachingNote)}</p>` +
+    (fl ? `<p class="hint">${flightSummary(s)}</p>` : '');
   el.classList.add('open');
 }
 
@@ -1227,6 +1338,7 @@ function select(id, opts) {
 }
 function applySelection() {
   const sel = state.selected;
+  document.body.classList.toggle('has-sel', !!sel && !(byId(sel) || {}).modifier);
   $$('[data-set]').forEach(el => {
     const id = el.getAttribute('data-set');
     const s = byId(id);
@@ -1240,6 +1352,7 @@ function applySelection() {
   $$('#court-scene .zone').forEach(z => z.classList.toggle('active', !sel && state.zone === Number(z.getAttribute('data-zone'))));
   $$('#checks-spec tr[data-set]').forEach(tr => tr.classList.toggle('sel', tr.getAttribute('data-set') === sel));
   $$('#court-zonechips [data-zone]').forEach(c => { const on = !sel && state.zone === Number(c.getAttribute('data-zone')); c.classList.toggle('active', on); c.setAttribute('aria-pressed', String(on)); });
+  scrollStripsToSelection();
 }
 
 /* ============================================================
@@ -1453,6 +1566,28 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selected) select(null); });
 
+// a swipe must never double as a tap: the click the browser synthesises after a swipe is dropped
+let swallowClicks = false;
+document.addEventListener('click', e => { if (swallowClicks || state.v3drag) { e.stopPropagation(); e.preventDefault(); } }, true);
+// bottom-sheet handle: tap toggles peek, swipe down collapses then closes, swipe up expands
+(function () {
+  const sheet = $('#detail'), handle = $('#detail .handle');
+  let start = null;
+  handle.addEventListener('pointerdown', e => { start = { y: e.clientY }; try { handle.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } });
+  handle.addEventListener('pointerup', e => {
+    if (!start) return;
+    const dy = e.clientY - start.y; start = null;
+    // the sheet resizes under the finger, so the click the browser fires next would hit whatever moved there
+    swallowClicks = true; setTimeout(() => { swallowClicks = false; }, 500);
+    if (dy > 40) { if (sheet.classList.contains('peek')) select(null); else sheet.classList.add('peek'); }
+    else if (dy < -40) sheet.classList.remove('peek');
+    else sheet.classList.toggle('peek');
+  });
+  handle.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sheet.classList.toggle('peek'); } });
+})();
+// tab descriptions are clamped on phones; tap to expand
+document.addEventListener('click', e => { const p = e.target.closest('.tab-head p'); if (p && narrow.matches) p.classList.toggle('expanded'); });
+
 // re-layout the net view when crossing the phone/desktop breakpoint
 (narrow.addEventListener ? narrow.addEventListener.bind(narrow, 'change') : narrow.addListener.bind(narrow))(() => { if (state.tab === 'net') renderNet(); if (state.tab === '3d') render3D(); });
 
@@ -1462,7 +1597,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { SETS, WORLD, flight, runChecks };
+window.SetterSignals = { SETS, WORLD, flight, runChecks, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>
