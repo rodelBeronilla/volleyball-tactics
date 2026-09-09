@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="description" content="Interactive guide to setter hand signals and set trajectories — front-row sets and back-row attacks.">
+<title>Setter Signals &amp; Set Map</title>
+<style>
+:root{
+  --bg:#0f1117; --panel:#161a25; --panel2:#1e2332; --panel3:#262c3d; --line:#2b3144;
+  --text:#f5f6fa; --muted:#9aa3b8; --accent:#4da3ff; --good:#34d399; --bad:#ff4d4d;
+  --nav-h:64px; --radius:14px; --safe-b:env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4;overflow-x:hidden;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;line-height:1.2}
+p{margin:0}
+.app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+.main{flex:1;width:100%;max-width:100%;padding:14px 16px calc(var(--nav-h) + 24px + var(--safe-b))}
+.tab{display:flex;flex-direction:column;gap:14px}
+.tab-head h2{font-size:22px;font-weight:700}
+.tab-head p{color:var(--muted);font-size:14px;margin-top:4px}
+.brand{display:none}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(15,17,23,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.nav button{flex:1;min-height:44px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;letter-spacing:.02em;border-radius:10px;transition:color .2s}
+.nav button[aria-selected="true"]{color:var(--text)}
+.nav button .ico{width:22px;height:22px;display:block}
+.nav button .ico *{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:14px;font-weight:600;transition:background .2s,border-color .2s,opacity .2s}
+.chip .sw{display:inline-flex;gap:3px}
+.chip .sw i{width:9px;height:9px;border-radius:50%;display:block}
+.chip.filter[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.chip.note{border-style:dashed;color:var(--muted)}
+.chip.on,.chip[aria-pressed="true"].filter{border-color:var(--accent)}
+.chip.active{background:var(--panel3);border-color:var(--accent)}
+
+/* scenes */
+.scene-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px;overflow:hidden}
+.scene{display:block;width:100%;height:auto;max-width:100%}
+.court-wrap{max-width:560px}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;user-select:none;-webkit-user-select:none}
+.lbl{paint-order:stroke;stroke:#0f1117;stroke-linejoin:round;fill:#fff;font-weight:700}
+.set{cursor:pointer;outline:none;transition:opacity .2s}
+.set .traj{fill:none;stroke-linecap:round;transition:stroke-width .2s}
+.set .hit{fill:none;stroke:transparent;pointer-events:stroke}
+.set.dim{opacity:.25}
+.set.sel .traj{filter:drop-shadow(0 0 4px currentColor)}
+.set:focus-visible .traj{stroke:#fff}
+.zone{cursor:pointer;outline:none}
+.zone text{fill:#ffffff;opacity:.18;font-weight:800;transition:opacity .2s}
+.zone.active text{opacity:.7}
+.zone:focus-visible text{opacity:.9}
+.zone .hitz{fill:transparent}
+.ball{opacity:0;transition:opacity .25s}
+.hitter{opacity:0;transition:opacity .25s}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px}
+.legend .lg{display:flex;align-items:center;gap:8px;min-height:44px;background:none;border:0;padding:0 4px;border-radius:8px;text-align:left;font-size:14px;transition:opacity .2s}
+.legend .lg i{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
+.legend .lg small{color:var(--muted);font-size:12px}
+.legend .lg.sel{background:var(--panel2)}
+.legend .lg.dim{opacity:.35}
+.legend h4{grid-column:1/-1;margin:8px 0 0;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-weight:600;font-size:14px}
+.toggle .sw{width:38px;height:22px;border-radius:999px;background:var(--panel3);position:relative;transition:background .2s;flex:0 0 auto}
+.toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-pressed="true"] .sw{background:#22d3ee}
+.toggle[aria-pressed="true"] .sw::after{transform:translateX(16px)}
+.hint{color:var(--muted);font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);font-weight:600;font-size:14px;transition:background .2s,border-color .2s}
+.btn:hover{background:var(--panel3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06101f}
+.btn.small{min-height:40px;padding:0 12px;font-size:13px}
+
+/* signal cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{position:relative;display:flex;flex-direction:column;gap:6px;min-height:44px;padding:14px 12px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel);text-align:left;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;right:0;height:5px;background:var(--c)}
+.card:hover{border-color:var(--c)}
+.card.sel{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset}
+.card .glyph{font-size:40px;line-height:1;min-height:44px;display:flex;align-items:center;font-weight:800;color:var(--c)}
+.card .glyph.txt{font-size:34px}
+.card .name{font-size:18px;font-weight:700}
+.card .desc{font-size:13px;color:var(--muted);min-height:2.6em}
+.card .meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.03em;background:var(--panel3);color:var(--text)}
+.tag.grp{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c)}
+.card .actions{display:none;gap:6px;flex-wrap:wrap;margin-top:6px}
+.card.sel .actions{display:flex}
+.card .actions .btn{flex:1 1 auto}
+
+/* detail */
+#detail{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b));z-index:25;transform:translateY(110%);transition:transform .25s ease;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;max-height:46vh;overflow:auto;padding:12px 16px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.45)}
+#detail.open{transform:none}
+#detail .bar{height:5px;border-radius:999px;background:var(--c);margin-bottom:12px}
+#detail .top{display:flex;align-items:flex-start;gap:12px}
+#detail .title{flex:1}
+#detail h3{font-size:24px;font-weight:800}
+#detail .aliases{color:var(--muted);font-size:13px;margin-top:2px}
+#detail .close{min-width:44px;min-height:44px;border:0;background:var(--panel2);border-radius:12px;font-size:18px}
+#detail .meta{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+#detail .sig{display:flex;align-items:center;gap:14px;background:var(--panel2);border-radius:12px;padding:10px 12px;margin:8px 0}
+#detail .sig .glyph{font-size:38px;line-height:1;font-weight:800;color:var(--c);min-width:48px;text-align:center}
+#detail .sig .glyph.txt{font-size:30px}
+#detail .sig p{font-size:14px}
+#detail .sig small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+#detail .note{font-size:15px;line-height:1.45;border-left:3px solid var(--c);padding-left:10px;margin:10px 0}
+#detail .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#detail .placeholder{color:var(--muted);font-size:14px;display:none}
+
+/* quiz */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.seg button{min-height:44px;padding:0 14px;border:0;background:none;color:var(--muted);font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--panel3);color:var(--text)}
+.qbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.qbox .prompt{font-size:14px;color:var(--muted);margin-bottom:8px}
+.qbox .qglyph{font-size:64px;line-height:1;font-weight:800;text-align:center;padding:10px 0}
+.qbox .qglyph.txt{font-size:56px;color:#fff}
+.qbox .qdesc{text-align:center;font-size:18px;font-weight:600;padding-bottom:8px}
+.qbox .mini{max-width:520px;margin:0 auto}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.choices .btn{min-height:52px;font-size:16px;border-width:2px}
+.choices .btn.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--panel2))}
+.choices .btn.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--panel2))}
+.choices .btn:disabled{cursor:default}
+.feedback{min-height:24px;margin-top:10px;font-weight:600}
+.feedback.good{color:var(--good)}
+.feedback.bad{color:var(--bad)}
+.score{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.score b{color:var(--text);font-size:16px}
+.qfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+
+@media (min-width:900px){
+  .app{display:grid;grid-template-columns:200px minmax(0,1fr) 340px;align-items:start;min-height:100vh}
+  .nav{position:sticky;top:0;bottom:auto;height:100vh;flex-direction:column;padding:18px 12px;gap:4px;border-top:0;border-right:1px solid var(--line);background:var(--bg);backdrop-filter:none}
+  .nav button{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 12px;font-size:15px;font-weight:600;transition:background .2s,color .2s}
+  .nav button[aria-selected="true"]{background:var(--panel2)}
+  .brand{display:block;padding:6px 12px 14px;font-size:15px;font-weight:800;letter-spacing:-.01em}
+  .brand small{display:block;font-weight:500;color:var(--muted);font-size:12px;margin-top:2px}
+  .main{padding:26px 28px 40px;min-width:0}
+  #detail{position:sticky;top:0;bottom:auto;transform:none;height:100vh;max-height:100vh;border-radius:0;border-top:0;border-left:1px solid var(--line);box-shadow:none;padding:26px 20px}
+  #detail:not(.open) .content{display:none}
+  #detail:not(.open) .placeholder{display:block}
+  #detail .close{display:inline-flex}
+  .choices{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="nav" role="tablist" aria-label="Views">
+    <div class="brand">Setter Signals<small>&amp; Set Map</small></div>
+    <button role="tab" data-tab="net" aria-selected="true" aria-controls="tab-net">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18M4 15V9M20 15V9"/><path d="M13 12c-1-6-6-6-9-2"/></svg>
+      <span>Net View</span>
+    </button>
+    <button role="tab" data-tab="court" aria-selected="false" aria-controls="tab-court">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 9h16"/></svg>
+      <span>Court View</span>
+    </button>
+    <button role="tab" data-tab="signals" aria-selected="false" aria-controls="tab-signals">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 12V4a1.5 1.5 0 0 1 3 0v8M14 12V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-2-2a1.4 1.4 0 0 0-2 2l4 6a5 5 0 0 0 4 2h2a5 5 0 0 0 5-5v-3"/></svg>
+      <span>Signals</span>
+    </button>
+    <button role="tab" data-tab="quiz" aria-selected="false" aria-controls="tab-quiz">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>
+      <span>Quiz</span>
+    </button>
+  </nav>
+
+  <main class="main">
+    <section class="tab" id="tab-net" data-tab="net" role="tabpanel">
+      <div class="tab-head">
+        <h2>Net View</h2>
+        <p>Side view from the back row. Every set leaves the setter's hands; height and landing spot tell them apart. Tap a path.</p>
+      </div>
+      <div class="chips" id="net-filters" aria-label="Filter groups"></div>
+      <div class="scene-wrap"><div id="net-scene"></div></div>
+      <div class="legend" id="net-legend"></div>
+    </section>
+
+    <section class="tab" id="tab-court" data-tab="court" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>Court View</h2>
+        <p>Top-down, our half. Front-row sets land along the net; back-row attacks take off behind the 3-metre line. Tap a set, or tap a zone number.</p>
+      </div>
+      <div class="toolbar">
+        <button class="toggle" id="bic-toggle" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo (fast &amp; low)</span></button>
+        <span class="hint" id="bic-hint">Normal back-row ball: higher and deeper. At high levels every back-row set is assumed to be quick.</span>
+      </div>
+      <div class="scene-wrap court-wrap"><div id="court-scene"></div></div>
+      <div class="chips" id="court-zonechips"></div>
+    </section>
+
+    <section class="tab" id="tab-signals" data-tab="signals" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>Hand Signals</h2>
+        <p>Standard US system. Tap a card to select the set everywhere, then jump to the net or the court.</p>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section class="tab" id="tab-quiz" data-tab="quiz" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>Quiz</h2>
+        <p>Signal → Set: read the hand signal, name the set. Trajectory → Set: read the ball path, name the set.</p>
+      </div>
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Quiz mode">
+          <button data-mode="signal" aria-pressed="true">Signal → Set</button>
+          <button data-mode="trajectory" aria-pressed="false">Trajectory → Set</button>
+        </div>
+      </div>
+      <div class="chips" id="quiz-groups" aria-label="Quiz only this group"></div>
+      <div class="score" id="quiz-score"></div>
+      <div class="qbox" id="quiz-box"></div>
+    </section>
+  </main>
+
+  <aside id="detail" aria-live="polite">
+    <p class="placeholder">Select a set in any view to see its signal, tempo, hitter and coaching note here.</p>
+    <div class="content"></div>
+  </aside>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ============================================================
+   SETS — the single source of truth. Every view renders from this.
+   Edit names / aliases / signals / notes here to match your team.
+
+   id            unique key (letters/numbers only)
+   name          label shown everywhere
+   aliases[]     other names your team uses
+   group         "quick" | "medium" | "outside" | "rightside" | "backrow"
+   color         hex colour for the path, dot, card bar
+   tempo         "1st" | "2nd" | "3rd"
+   hitter        "MB" | "OH" | "OPP" | "Back row"
+   signal        { glyph, description }  glyph = emoji or short text shown large
+   coachingNote  one sentence, coach's voice
+   netView       { landX, peak, flat, label?, run? }   side view (omit for back row)
+                   landX 0→1 left antenna → right antenna
+                   peak  0→1 apex height (1 = a 4 / 5)
+                   flat  true = pushed, low, fast ball
+                   label { at:"apex"|"band", dx, dy }  nudge in font-size units
+                   run   { from, to, takeoff }  dotted ground path for a running hitter
+   courtView     { x, y, takeoff?, start?, zones?, label? }  top-down, 0→1 of our half
+                   x: left sideline → right sideline, y: net → end line
+   approach      [ {x,y}, {x,y} ]  dotted ground path (start → takeoff) on the court
+   modifier      true for tempo modifiers like BIC (no geometry, signal card + quiz only)
+   ============================================================ */
+const SETS = [
+  // ---- Quick (1st tempo) ----
+  { id: 'one', name: '1', aliases: ['Quick', 'Front quick'], group: 'quick', color: '#ff4d4d', tempo: '1st', hitter: 'MB',
+    signal: { glyph: '☝️', description: 'Index finger up' },
+    coachingNote: 'Middle is already in the air when the ball leaves my hands — a foot above the tape, right in front of me.',
+    netView: { landX: 0.50, peak: 0.15, flat: false, label: { dx: 0, dy: -0.15 } },
+    courtView: { x: 0.50, y: 0.08, label: { dx: 0.9 } } },
+  { id: 'push1', name: 'Push 1', aliases: ['Push', 'Wide 1'], group: 'quick', color: '#ff7a45', tempo: '1st', hitter: 'MB',
+    signal: { glyph: 'P1', description: 'Index finger up, bent / hooked' },
+    coachingNote: 'Same tempo as the 1, but I push it a step further left so the middle attacks moving into the seam.',
+    netView: { landX: 0.42, peak: 0.18, flat: false, label: { dx: -1.5, dy: 0 } },
+    courtView: { x: 0.42, y: 0.08 } },
+  { id: 'back1', name: 'Back 1', aliases: ['Back quick', 'Tight back'], group: 'quick', color: '#ff2d55', tempo: '1st', hitter: 'MB',
+    signal: { glyph: 'B1', description: 'Pinky finger up' },
+    coachingNote: 'Mirror image of the 1: the middle is up behind me and I put the ball just over the top of my head.',
+    netView: { landX: 0.63, peak: 0.15, flat: false, label: { dx: 1.2, dy: 0 } },
+    courtView: { x: 0.63, y: 0.08 } },
+  { id: 'shoot', name: '3 / Shoot', aliases: ['3', 'Shoot', '31'], group: 'quick', color: '#ffa500', tempo: '1st', hitter: 'MB',
+    signal: { glyph: '3', description: 'Three fingers, or an index-finger-and-thumb "gun"' },
+    coachingNote: 'Fast and flat halfway to the left antenna — the middle runs a wide route and the ball has to beat their middle blocker.',
+    netView: { landX: 0.28, peak: 0.22, flat: true },
+    courtView: { x: 0.28, y: 0.08 } },
+
+  // ---- Medium (2nd tempo) ----
+  { id: 'two', name: '2', aliases: ['Front 2', 'Middle 2'], group: 'medium', color: '#4da3ff', tempo: '2nd', hitter: 'MB',
+    signal: { glyph: '✌️', description: 'Two fingers (peace sign)' },
+    coachingNote: 'A loopy ball in the middle of the net for a hitter who needs a beat to see it — my safe option when the pass is off.',
+    netView: { landX: 0.47, peak: 0.45, flat: false, label: { dx: -0.6, dy: 0 } },
+    courtView: { x: 0.47, y: 0.08, label: { dx: 0.9 } } },
+  { id: 'back2', name: 'Back 2', aliases: ['Back set', 'Over-the-head 2'], group: 'medium', color: '#7cc4ff', tempo: '2nd', hitter: 'OPP',
+    signal: { glyph: 'B2', description: 'Ring + pinky fingers up' },
+    coachingNote: 'Same loop as the 2, set over my shoulder for the opposite or a middle running behind me.',
+    netView: { landX: 0.70, peak: 0.45, flat: false, label: { dx: 0.4, dy: 0 } },
+    courtView: { x: 0.70, y: 0.08 } },
+  { id: 'rip', name: '32 / Rip', aliases: ['32', 'Rip', 'Gap'], group: 'medium', color: '#2f6fff', tempo: '2nd', hitter: 'MB',
+    signal: { glyph: '⌒', description: 'Hand cupped into an arch' },
+    coachingNote: 'Lands halfway between the middle and the left antenna and pulls the opposing middle blocker away from your middle.',
+    netView: { landX: 0.25, peak: 0.50, flat: false, label: { dx: -0.3, dy: 0 } },
+    courtView: { x: 0.25, y: 0.08 } },
+
+  // ---- Outside (left antenna) ----
+  { id: 'four', name: '4', aliases: ['High outside', 'Hi-ball'], group: 'outside', color: '#34d399', tempo: '3rd', hitter: 'OH',
+    signal: { glyph: '4', description: 'Four fingers' },
+    coachingNote: 'Highest, widest ball on the board — all the way to the antenna, giving the outside time for a full approach.',
+    netView: { landX: 0.03, peak: 1.00, flat: false },
+    courtView: { x: 0.03, y: 0.08 } },
+  { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', tempo: '2nd', hitter: 'OH',
+    signal: { glyph: '/', description: 'One slash across the chest' },
+    coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
+    netView: { landX: 0.03, peak: 0.75, flat: false },
+    courtView: { x: 0.03, y: 0.08 } },
+  { id: 'go', name: 'Go', aliases: ['Quick outside', 'Shoot 4'], group: 'outside', color: '#a3e635', tempo: '1st', hitter: 'OH',
+    signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
+    coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
+    netView: { landX: 0.03, peak: 0.40, flat: true },
+    courtView: { x: 0.03, y: 0.08 } },
+
+  // ---- Right side (right antenna) ----
+  { id: 'five', name: '5', aliases: ['High right side', 'High back'], group: 'rightside', color: '#a78bfa', tempo: '3rd', hitter: 'OPP',
+    signal: { glyph: '🖐️', description: 'Open hand, five fingers' },
+    coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
+    netView: { landX: 0.97, peak: 1.00, flat: false },
+    courtView: { x: 0.97, y: 0.08 } },
+  { id: 'red', name: 'Red', aliases: ['Right-side Go', 'Quick 5'], group: 'rightside', color: '#e879f9', tempo: '1st', hitter: 'OPP',
+    signal: { glyph: '✊', description: 'Closed fist' },
+    coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
+    netView: { landX: 0.97, peak: 0.45, flat: true },
+    courtView: { x: 0.97, y: 0.08 } },
+  { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '2nd', hitter: 'MB',
+    signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
+    coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
+    netView: { landX: 0.90, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 }, run: { from: 0.45, to: 0.92, takeoff: 0.88 } },
+    courtView: { x: 0.90, y: 0.08, takeoff: { x: 0.88, y: 0.10 }, start: { x: 0.45, y: 0.25 } },
+    approach: [ { x: 0.45, y: 0.25 }, { x: 0.88, y: 0.10 } ] },
+
+  // ---- Back row (Part 2) — takeoff behind the 3-metre / 10-foot line ----
+  { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', tempo: '2nd', hitter: 'Back row',
+    signal: { glyph: 'A', description: 'Line drawn across the upper chest near one shoulder (the A side)' },
+    coachingNote: 'Left-back attack from zone 5 — set deeper and higher than a front-row ball; take off behind the 10-foot line, land in front of it if you like.',
+    courtView: { x: 0.15, y: 0.30, takeoff: { x: 0.15, y: 0.36 }, start: { x: 0.15, y: 0.55 }, zones: [5] },
+    approach: [ { x: 0.15, y: 0.55 }, { x: 0.15, y: 0.36 } ] },
+  { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', tempo: '2nd', hitter: 'Back row',
+    signal: { glyph: 'B', description: 'Line drawn down the chest between the A spot and centre' },
+    coachingNote: 'Splits zones 5 and 6 — a deeper, higher ball for the left-side hitter drifting toward the middle; takeoff stays behind the line.',
+    courtView: { x: 0.33, y: 0.30, takeoff: { x: 0.33, y: 0.36 }, start: { x: 0.33, y: 0.55 }, zones: [5, 6] },
+    approach: [ { x: 0.33, y: 0.55 }, { x: 0.33, y: 0.36 } ] },
+  { id: 'pipe', name: 'Pipe', aliases: ['Middle back', 'Bic pipe'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'Back row',
+    signal: { glyph: '|', description: 'Line drawn straight down the centre of the chest' },
+    coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a front-row ball, takeoff behind the 10-foot line.',
+    courtView: { x: 0.50, y: 0.30, takeoff: { x: 0.50, y: 0.36 }, start: { x: 0.50, y: 0.55 }, zones: [6] },
+    approach: [ { x: 0.50, y: 0.55 }, { x: 0.50, y: 0.36 } ] },
+  { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', tempo: '2nd', hitter: 'Back row',
+    signal: { glyph: 'C', description: 'Line drawn down the chest between centre and the D spot' },
+    coachingNote: 'Between zones 6 and 1, the mirror of the B — deeper and higher than a front-row ball, takeoff behind the line.',
+    courtView: { x: 0.67, y: 0.30, takeoff: { x: 0.67, y: 0.36 }, start: { x: 0.67, y: 0.55 }, zones: [6, 1] },
+    approach: [ { x: 0.67, y: 0.55 }, { x: 0.67, y: 0.36 } ] },
+  { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', tempo: '2nd', hitter: 'Back row',
+    signal: { glyph: 'D', description: 'Line drawn across the upper chest near the opposite shoulder' },
+    coachingNote: 'Right-back attack from zone 1 — our opposite\'s ball in the back row; same rules, set deeper and higher, takeoff behind the 10-foot line.',
+    courtView: { x: 0.85, y: 0.30, takeoff: { x: 0.85, y: 0.36 }, start: { x: 0.85, y: 0.55 }, zones: [1] },
+    approach: [ { x: 0.85, y: 0.55 }, { x: 0.85, y: 0.36 } ] },
+
+  // ---- Tempo modifier — not a location ----
+  { id: 'bic', name: 'BIC', aliases: ['Bic', 'Quick back row'], group: 'backrow', modifier: true, color: '#22d3ee', tempo: '1st', hitter: 'Back row',
+    signal: { glyph: 'BIC', description: 'Fist with a thumb flick, like lighting a lighter — shown together with the zone signal (A, B, Pipe, C, D)' },
+    coachingNote: 'Not a place, a tempo: flick the lighter with the zone signal and the back-row ball comes fast and low — at high levels every back-row set is assumed to be quick.' }
+];
+
+const GROUPS = [
+  { id: 'quick',     label: 'Quick',      hint: '1st tempo' },
+  { id: 'medium',    label: 'Medium',     hint: '2nd tempo loops' },
+  { id: 'outside',   label: 'Outside',    hint: 'Left antenna' },
+  { id: 'rightside', label: 'Right side', hint: 'Right antenna' },
+  { id: 'backrow',   label: 'Back row',   hint: 'Behind the 3-m line' }
+];
+const SETTER_X = 0.56;
+const TEMPO_MS = { '1st': 700, '2nd': 1100, '3rd': 1600 };
+const STORE_KEY = 'setterSignals.quiz.v1';
+
+/* ---------------- state ---------------- */
+const state = {
+  tab: 'net',
+  selected: null,
+  hidden: new Set(),
+  bic: false,
+  zone: null,
+  quiz: { mode: 'signal', group: 'all', queue: [], current: null, choices: [], answered: null, score: loadScore() }
+};
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const narrow = window.matchMedia('(max-width: 700px)');
+
+/* ---------------- helpers ---------------- */
+const $ = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const byId = id => SETS.find(s => s.id === id);
+const groupOf = id => GROUPS.find(g => g.id === id) || { label: id };
+const r1 = n => Math.round(n * 10) / 10;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isEmoji = g => /\p{Extended_Pictographic}/u.test(g);
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function loadScore() { try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if (s && typeof s.total === 'number') return s; } catch (e) { /* no storage on this origin */ } return { correct: 0, total: 0, streak: 0, best: 0 }; }
+function saveScore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state.quiz.score)); } catch (e) { /* ignore */ } }
+function zonesOf(s) {
+  if (!s.courtView) return [];
+  if (s.courtView.zones) return s.courtView.zones;
+  const x = s.courtView.x;
+  return [x < 1 / 3 ? 4 : x < 2 / 3 ? 3 : 2];
+}
+function glyphHtml(s, cls) {
+  const g = s.signal.glyph;
+  return `<span class="${cls}${isEmoji(g) ? '' : ' txt'}" aria-hidden="true">${esc(g)}</span>`;
+}
+
+/* ============================================================
+   NET VIEW (side view)
+   ============================================================ */
+function netLayout(opts) {
+  const mobile = opts && opts.forceDesktop ? false : narrow.matches;
+  return mobile
+    ? { W: 1000, H: 900, ax0: 50, ax1: 950, netY: 620, netH: 90, topY: 90, floorY: 735, groundY: 810, fs: 32, sw: 7, hit: 70, mobile: true }
+    : { W: 1000, H: 570, ax0: 40, ax1: 960, netY: 380, netH: 60, topY: 40, floorY: 470, groundY: 520, fs: 20, sw: 4.5, hit: 30, mobile: false };
+}
+const nx = (L, x) => L.ax0 + x * (L.ax1 - L.ax0);
+function netGeom(L, s) {
+  const v = s.netView;
+  const handsY = L.netY - L.fs * 1.1;
+  const sx = nx(L, SETTER_X), sy = handsY;
+  const ex = nx(L, v.landX), ey = handsY - L.fs * 0.35;
+  const apexY = handsY - v.peak * (handsY - L.topY);
+  const c = (apexY - (sy + ey) / 8) / 0.75;          // both control points at this y ⇒ apex exactly at apexY
+  const dx = ex - sx;
+  const f1 = v.flat ? 0.12 : 0.28, f2 = v.flat ? 0.52 : 0.72;
+  const c1x = sx + dx * f1, c2x = sx + dx * f2;
+  const d = `M${r1(sx)} ${r1(sy)} C${r1(c1x)} ${r1(c)} ${r1(c2x)} ${r1(c)} ${r1(ex)} ${r1(ey)}`;
+  return { sx, sy, ex, ey, d, apex: { x: (sx + 3 * c1x + 3 * c2x + ex) / 8, y: apexY }, handsY };
+}
+function netSetMarkup(L, s, opts) {
+  const g = netGeom(L, s);
+  const v = s.netView;
+  const showLabels = !(opts && opts.noLabels);
+  let label = '';
+  if (showLabels) {
+    const lab = v.label || {};
+    const at = lab.at || (v.flat ? 'band' : 'apex');
+    let x, y, anchor = 'middle';
+    if (at === 'band') {
+      x = g.ex; y = L.netY + L.fs * 1.55;
+      if (v.landX < 0.08) anchor = 'start'; else if (v.landX > 0.92) anchor = 'end';
+    } else {
+      x = g.apex.x; y = g.apex.y - L.fs * 0.55;
+    }
+    x += (lab.dx || 0) * L.fs; y += (lab.dy || 0) * L.fs;
+    label = `<text class="lbl" x="${r1(x)}" y="${r1(y)}" font-size="${L.fs}" text-anchor="${anchor}" stroke-width="${r1(L.fs * 0.32)}">${esc(s.name)}</text>` +
+            (at === 'band' ? `<circle cx="${r1(g.ex)}" cy="${r1(L.netY + L.fs * 0.55)}" r="${r1(L.fs * 0.22)}" fill="${s.color}"/>` : '');
+  }
+  let run = '';
+  if (v.run && showLabels) {
+    const x0 = nx(L, v.run.from), x1 = nx(L, v.run.to), xt = nx(L, v.run.takeoff), y = L.groundY;
+    run = `<path class="approach" d="M${r1(x0)} ${y} L${r1(x1)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round" marker-end="url(#arrow-${s.id})"/>` +
+          `<circle cx="${r1(x0)}" cy="${y}" r="${r1(L.fs * 0.28)}" fill="${s.color}"/>` +
+          `<path d="M${r1(xt)} ${r1(y - L.fs * 0.6)} v${r1(L.fs * 1.2)}" stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"/>` +
+          `<text class="lbl" x="${r1(xt - L.fs * 0.5)}" y="${r1(y + L.fs * 1.55)}" font-size="${r1(L.fs * 0.8)}" text-anchor="end" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">one-foot takeoff</text>` +
+          `<text class="lbl" x="${r1(x0 - L.fs * 0.6)}" y="${r1(y + L.fs * 0.3)}" font-size="${r1(L.fs * 0.8)}" text-anchor="end" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">MB run</text>`;
+  }
+  return `<g class="set" data-set="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">` +
+         `<path class="hit" d="${g.d}" stroke-width="${L.hit}"/>` +
+         run +
+         `<path class="traj" d="${g.d}" stroke="${s.color}" stroke-width="${L.sw}"${v.flat ? ` stroke-dasharray="${r1(L.sw * 3.2)} ${r1(L.sw * 1.6)}"` : ''}/>` +
+         label + `</g>`;
+}
+function netScene(L, sets, opts) {
+  const handsY = L.netY - L.fs * 1.1;
+  const span = handsY - L.topY;
+  const setterX = nx(L, SETTER_X);
+  let o = `<svg class="scene" viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="Side view of the net with set trajectories">`;
+  o += `<defs><pattern id="mesh" width="${L.fs * 0.5}" height="${L.fs * 0.5}" patternUnits="userSpaceOnUse"><path d="M0 0H${L.fs * 0.5}V${L.fs * 0.5}" fill="none" stroke="#3a4157" stroke-width="1"/></pattern>`;
+  sets.forEach(s => { o += `<marker id="arrow-${s.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="${s.color}"/></marker>`; });
+  o += `</defs>`;
+  // height guides
+  if (!(opts && opts.noLabels)) {
+    [0.25, 0.5, 0.75, 1].forEach(p => {
+      const y = r1(handsY - p * span);
+      o += `<path d="M${L.ax0} ${y}H${L.ax1}" stroke="#2b3144" stroke-width="1" stroke-dasharray="4 6"/>`;
+    });
+    o += `<text x="${L.ax0 + 4}" y="${r1(L.topY - L.fs * 0.5)}" font-size="${r1(L.fs * 0.7)}" fill="#6b7390">↑ higher</text>`;
+  }
+  // net band + tape + antennas
+  o += `<rect x="${L.ax0}" y="${L.netY}" width="${L.ax1 - L.ax0}" height="${L.netH}" fill="url(#mesh)" stroke="#3a4157"/>`;
+  o += `<rect x="${L.ax0}" y="${L.netY - L.fs * 0.2}" width="${L.ax1 - L.ax0}" height="${r1(L.fs * 0.4)}" fill="#e8ebf5"/>`;
+  [L.ax0, L.ax1].forEach(ax => {
+    const top = L.netY - L.fs * 2.4, h = L.netH + L.fs * 2.6;
+    o += `<rect x="${ax - 4}" y="${r1(top)}" width="8" height="${r1(h)}" fill="#ff4d4d"/>`;
+    for (let i = 0; i < 4; i++) o += `<rect x="${ax - 4}" y="${r1(top + i * h / 4)}" width="8" height="${r1(h / 8)}" fill="#fff"/>`;
+  });
+  // floor
+  o += `<path d="M0 ${L.floorY}H${L.W}" stroke="#3a4157" stroke-width="2"/>`;
+  if (!(opts && opts.noLabels)) {
+    o += `<text x="${L.ax0}" y="${r1(L.floorY + L.fs * 1.1)}" font-size="${r1(L.fs * 0.75)}" fill="#8b93ab">Left antenna · zone 4</text>`;
+    o += `<text x="${L.ax1}" y="${r1(L.floorY + L.fs * 1.1)}" font-size="${r1(L.fs * 0.75)}" fill="#8b93ab" text-anchor="end">Right antenna · zone 2</text>`;
+  }
+  // setter (in front of the net, hands above the tape)
+  const headR = L.fs * 0.42, headY = L.netY + L.fs * 0.45;
+  o += `<g aria-label="Setter">` +
+       `<path d="M${r1(setterX - L.fs * 0.55)} ${r1(handsY + L.fs * 0.15)} L${r1(setterX - L.fs * 0.25)} ${r1(headY + headR + L.fs * 0.35)} L${r1(setterX + L.fs * 0.25)} ${r1(headY + headR + L.fs * 0.35)} L${r1(setterX + L.fs * 0.55)} ${r1(handsY + L.fs * 0.15)}" fill="none" stroke="#e8ebf5" stroke-width="${r1(L.sw * 0.9)}" stroke-linecap="round" stroke-linejoin="round"/>` +
+       `<circle cx="${r1(setterX)}" cy="${r1(headY)}" r="${r1(headR)}" fill="#e8ebf5"/>` +
+       `<path d="M${r1(setterX)} ${r1(headY + headR)} V${r1(L.netY + L.netH + L.fs * 0.9)} M${r1(setterX)} ${r1(L.netY + L.netH + L.fs * 0.9)} L${r1(setterX - L.fs * 0.5)} ${r1(L.floorY)} M${r1(setterX)} ${r1(L.netY + L.netH + L.fs * 0.9)} L${r1(setterX + L.fs * 0.5)} ${r1(L.floorY)}" fill="none" stroke="#e8ebf5" stroke-width="${r1(L.sw * 0.9)}" stroke-linecap="round"/>` +
+       (opts && opts.noLabels ? '' : `<text x="${r1(setterX)}" y="${r1(L.floorY + L.fs * 1.1)}" font-size="${r1(L.fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter</text>`) +
+       `</g>`;
+  // sets: draw the highest first so low ones sit on top
+  sets.slice().sort((a, b) => b.netView.peak - a.netView.peak).forEach(s => { o += netSetMarkup(L, s, opts); });
+  // animated markers
+  o += `<circle class="hitter" r="${r1(L.fs * 0.42)}" fill="#fbbf24" stroke="#0f1117" stroke-width="2"/>`;
+  o += `<circle class="ball" r="${r1(L.fs * 0.38)}" fill="#fff" stroke="#0f1117" stroke-width="2"/>`;
+  o += `</svg>`;
+  return o;
+}
+function renderNet() {
+  const L = netLayout();
+  const visible = SETS.filter(s => s.netView && !state.hidden.has(s.group));
+  $('#net-scene').innerHTML = netScene(L, visible);
+  // filter chips
+  $('#net-filters').innerHTML = GROUPS.map(g => {
+    if (g.id === 'backrow') return `<button class="chip note" data-goto="court" title="Back-row sets are shown on the court">Back row → Court view</button>`;
+    const on = !state.hidden.has(g.id);
+    const sw = SETS.filter(s => s.group === g.id).map(s => `<i style="background:${s.color}"></i>`).join('');
+    return `<button class="chip filter" data-group="${g.id}" aria-pressed="${on}"><span class="sw" aria-hidden="true">${sw}</span>${g.label}</button>`;
+  }).join('');
+  // legend
+  $('#net-legend').innerHTML = GROUPS.filter(g => g.id !== 'backrow').map(g => {
+    const items = SETS.filter(s => s.group === g.id).map(s =>
+      `<button class="lg" data-select="${s.id}" data-set="${s.id}" ${state.hidden.has(g.id) ? 'aria-disabled="true"' : ''}><i style="background:${s.color}"></i><span>${esc(s.name)} <small>· ${esc(s.tempo)} · ${esc(s.hitter)}</small></span></button>`).join('');
+    return `<h4>${g.label} · ${g.hint}</h4>${items}`;
+  }).join('') + `<h4>Back row</h4><p class="hint" style="grid-column:1/-1">A · B · Pipe · C · D are set deeper and higher than front-row balls and are drawn on the <button class="btn small" data-goto="court">Court view</button>. Add "BIC" to any of them to call it fast and low.</p>`;
+  applySelection();
+}
+
+/* ============================================================
+   COURT VIEW (top-down, our half)
+   ============================================================ */
+const CL = { W: 620, H: 600, x0: 40, y0: 50, cw: 540, ch: 520, fs: 20, sw: 3.5, hit: 30 };
+const cx = x => CL.x0 + x * CL.cw;
+const cy = y => CL.y0 + y * CL.ch;
+function courtSetPath(s, bic) {
+  const v = s.courtView;
+  const sx = cx(SETTER_X), sy = cy(0.05);
+  const isBack = s.group === 'backrow';
+  const ty = isBack ? (bic ? 0.28 : 0.30) : v.y;
+  const ex = cx(v.x), ey = cy(ty);
+  let bow;
+  if (isBack) bow = bic ? 0.02 : 0.06; else bow = 0.02 + (s.netView ? s.netView.peak : 0.5) * 0.06;
+  const bx = (ex - sx), by = (ey - sy);
+  // perpendicular-ish bow: push control points deeper into the court
+  const c1x = sx + bx * 0.3, c1y = sy + by * 0.3 + bow * CL.ch;
+  const c2x = sx + bx * 0.7, c2y = sy + by * 0.7 + bow * CL.ch;
+  return { d: `M${r1(sx)} ${r1(sy)} C${r1(c1x)} ${r1(c1y)} ${r1(c2x)} ${r1(c2y)} ${r1(ex)} ${r1(ey)}`, ex, ey, ty };
+}
+function courtSetMarkup(s, opts) {
+  const v = s.courtView;
+  const bic = opts.bic && s.group === 'backrow';
+  const p = courtSetPath(s, bic);
+  const isBack = s.group === 'backrow';
+  const dash = (bic || (s.netView && s.netView.flat)) ? ` stroke-dasharray="${r1(CL.sw * 3)} ${r1(CL.sw * 1.5)}"` : '';
+  let o = `<g class="set" data-set="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.hitter)}" style="color:${s.color}">`;
+  o += `<path class="hit" d="${p.d}" stroke-width="${CL.hit}"/>`;
+  if (s.approach) {
+    const a0 = s.approach[0], a1 = s.approach[1];
+    let ad;
+    if (isBack) ad = `M${r1(cx(a0.x))} ${r1(cy(a0.y))} L${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
+    else ad = `M${r1(cx(a0.x))} ${r1(cy(a0.y))} C${r1(cx(a0.x + 0.2))} ${r1(cy(a0.y + 0.02))} ${r1(cx(a1.x - 0.12))} ${r1(cy(a1.y + 0.1))} ${r1(cx(a1.x))} ${r1(cy(a1.y))}`;
+    o += `<path class="approach" d="${ad}" fill="none" stroke="${s.color}" stroke-width="${r1(CL.sw * 0.8)}" stroke-dasharray="${bic ? '3 5' : '2 7'}" stroke-linecap="round" marker-end="url(#carrow-${s.id})"/>`;
+    // start marker (hitter)
+    o += `<circle cx="${r1(cx(a0.x))}" cy="${r1(cy(a0.y))}" r="${r1(CL.fs * 0.42)}" fill="#0f1117" stroke="${s.color}" stroke-width="2.5"/>`;
+    o += `<text x="${r1(cx(a0.x))}" y="${r1(cy(a0.y) + CL.fs * 0.32)}" font-size="${r1(CL.fs * 0.6)}" font-weight="700" fill="${s.color}" text-anchor="middle">${isBack ? 'H' : 'MB'}</text>`;
+    // takeoff marker
+    if (v.takeoff) {
+      const tx = cx(v.takeoff.x), tyy = cy(v.takeoff.y);
+      o += isBack
+        ? `<path d="M${r1(tx - CL.fs * 0.6)} ${r1(tyy)} h${r1(CL.fs * 1.2)}" stroke="${s.color}" stroke-width="${r1(CL.sw)}" stroke-linecap="round"/>`
+        : `<path d="M${r1(tx)} ${r1(tyy - CL.fs * 0.5)} v${r1(CL.fs)}" stroke="${s.color}" stroke-width="${r1(CL.sw)}" stroke-linecap="round"/>`;
+    }
+  }
+  o += `<path class="traj" d="${p.d}" stroke="${s.color}" stroke-width="${bic ? CL.sw * 0.8 : CL.sw}"${dash}/>`;
+  // target dot
+  const dr = isBack ? (bic ? CL.fs * 0.3 : CL.fs * 0.42) : CL.fs * 0.3;
+  if (isBack && !bic) o += `<circle cx="${r1(p.ex)}" cy="${r1(p.ey)}" r="${r1(dr * 1.9)}" fill="${s.color}" opacity=".18"/>`;
+  o += `<circle cx="${r1(p.ex)}" cy="${r1(p.ey)}" r="${r1(dr)}" fill="${s.color}" stroke="#0f1117" stroke-width="2"/>`;
+  if (!opts.noLabels) {
+    if (isBack) {
+      o += `<text class="lbl" x="${r1(cx(v.start.x))}" y="${r1(cy(v.start.y) + CL.fs * 1.6)}" font-size="${CL.fs}" text-anchor="middle" stroke-width="${r1(CL.fs * 0.3)}">${esc(s.name)}</text>`;
+      if (bic) o += `<text class="lbl" x="${r1(cx(v.start.x))}" y="${r1(cy(v.start.y) + CL.fs * 2.35)}" font-size="${r1(CL.fs * 0.6)}" text-anchor="middle" stroke-width="${r1(CL.fs * 0.2)}" fill="${s.color}" letter-spacing="1">BIC ⚡</text>`;
+    } else if (opts.labelPos && opts.labelPos[s.id]) {
+      const lp = opts.labelPos[s.id];
+      o += `<text class="lbl" x="${r1(lp.x)}" y="${r1(lp.y)}" font-size="${r1(CL.fs * 0.85)}" text-anchor="${lp.anchor}" stroke-width="${r1(CL.fs * 0.28)}" fill="${s.color}">${esc(s.name)}</text>`;
+    }
+  }
+  o += `</g>`;
+  return o;
+}
+function courtLabelPositions(sets) {
+  // Stack the labels of sets that land in (almost) the same spot, highest ball first.
+  // Neighbouring stacks alternate between an upper and a lower band so nothing collides.
+  const front = sets.filter(s => s.group !== 'backrow').sort((a, b) => a.courtView.x - b.courtView.x);
+  const clusters = [];
+  front.forEach(s => {
+    const c = clusters.find(k => Math.abs(k.x - s.courtView.x) <= 0.035);
+    if (c) { c.items.push(s); c.x = c.items.reduce((t, i) => t + i.courtView.x, 0) / c.items.length; }
+    else clusters.push({ x: s.courtView.x, items: [s] });
+  });
+  const pos = {}, leaders = [];
+  const rowH = CL.fs * 1.05, top = cy(0.08) + CL.fs * 1.3;
+  clusters.forEach((c, ci) => {
+    c.items.sort((a, b) => (b.netView ? b.netView.peak : 0) - (a.netView ? a.netView.peak : 0));
+    let anchor = 'middle', x = cx(c.x);
+    if (c.x < 0.12) { anchor = 'start'; x = cx(c.x) + CL.fs * 0.5; } else if (c.x > 0.88) { anchor = 'end'; x = cx(c.x) - CL.fs * 0.5; }
+    const startRow = ci % 2 === 0 ? 0 : 2;
+    if (startRow > 0) leaders.push({ x: cx(c.x), y0: cy(0.08) + CL.fs * 0.45, y1: top + rowH * startRow - CL.fs * 0.9, color: c.items[0].color });
+    c.items.forEach((s, i) => {
+      const lab = (s.courtView.label || {});
+      pos[s.id] = { x: x + (lab.dx || 0) * CL.fs, y: top + rowH * (startRow + i) + (lab.dy || 0) * CL.fs, anchor };
+    });
+  });
+  pos._leaders = leaders;
+  return pos;
+}
+function courtScene(sets, opts) {
+  opts = opts || {};
+  let o = `<svg class="scene" viewBox="0 0 ${CL.W} ${CL.H}" role="img" aria-label="Top-down view of our half of the court">`;
+  o += `<defs>`;
+  sets.forEach(s => { o += `<marker id="carrow-${s.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="${s.color}"/></marker>`; });
+  o += `</defs>`;
+  // court
+  o += `<rect x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${CL.ch}" fill="#1a2233" stroke="#e8ebf5" stroke-width="3"/>`;
+  o += `<rect x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${r1(CL.ch / 3)}" fill="#22304a"/>`;
+  o += `<path d="M${CL.x0} ${r1(cy(1 / 3))}H${CL.x0 + CL.cw}" stroke="#e8ebf5" stroke-width="3"/>`;
+  o += `<path d="M${CL.x0 - 8} ${CL.y0}H${CL.x0 + CL.cw + 8}" stroke="#fff" stroke-width="8" stroke-linecap="round"/>`;
+  [CL.x0 - 8, CL.x0 + CL.cw + 8].forEach(ax => { o += `<rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="40" fill="#ff4d4d"/><rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="10" fill="#fff"/><rect x="${ax - 3}" y="${CL.y0 - 6}" width="6" height="10" fill="#fff"/>`; });
+  o += `<text x="${r1(cx(0.5))}" y="${CL.y0 - 14}" font-size="${r1(CL.fs * 0.75)}" fill="#8b93ab" text-anchor="middle">NET</text>`;
+  o += `<text transform="rotate(-90)" x="${r1(-cy(1 / 3))}" y="${CL.x0 - 10}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab" text-anchor="middle">3 m / 10 ft line</text>`;
+  o += `<text x="${r1(cx(0.5))}" y="${r1(cy(1) + CL.fs * 1.1)}" font-size="${r1(CL.fs * 0.7)}" fill="#8b93ab" text-anchor="middle">END LINE</text>`;
+  // zones
+  const zones = [[4, 0, 0], [3, 1, 0], [2, 2, 0], [5, 0, 1], [6, 1, 1], [1, 2, 1]];
+  zones.forEach(([z, col, row]) => {
+    const zx = cx((col + 0.5) / 3), zy = row === 0 ? cy(0.2) : cy(0.74);
+    const rx = cx(col / 3), ry = row === 0 ? CL.y0 : cy(1 / 3), rh = row === 0 ? CL.ch / 3 : CL.ch * 2 / 3;
+    const on = state.zone === z && state.tab === 'court';
+    o += `<g class="zone${on ? ' active' : ''}" data-zone="${z}" ${opts.noLabels ? '' : 'tabindex="0" role="button"'} aria-label="Zone ${z}${on ? ' (highlighted)' : ''}">` +
+         `<rect class="hitz" x="${r1(rx)}" y="${r1(ry)}" width="${r1(CL.cw / 3)}" height="${r1(rh)}"/>` +
+         `<text x="${r1(zx)}" y="${r1(zy)}" font-size="${row === 0 ? 40 : 64}" text-anchor="middle" dominant-baseline="middle">${z}</text></g>`;
+  });
+  // setter
+  const sx = cx(SETTER_X), sy = cy(0.05);
+  o += `<g aria-label="Setter"><circle cx="${r1(sx)}" cy="${r1(sy)}" r="${r1(CL.fs * 0.5)}" fill="#e8ebf5"/><text x="${r1(sx)}" y="${r1(sy + CL.fs * 0.28)}" font-size="${r1(CL.fs * 0.65)}" font-weight="800" fill="#0f1117" text-anchor="middle">S</text></g>`;
+  const labelPos = courtLabelPositions(sets);
+  if (!opts.noLabels) labelPos._leaders.forEach(l => { o += `<path d="M${r1(l.x)} ${r1(l.y0)}V${r1(l.y1)}" stroke="${l.color}" stroke-width="1.5" stroke-dasharray="2 3" opacity=".6"/>`; });
+  sets.forEach(s => { o += courtSetMarkup(s, { bic: opts.bic, noLabels: opts.noLabels, labelPos }); });
+  o += `<circle class="hitter" r="${r1(CL.fs * 0.42)}" fill="#fbbf24" stroke="#0f1117" stroke-width="2"/>`;
+  o += `<circle class="ball" r="${r1(CL.fs * 0.36)}" fill="#fff" stroke="#0f1117" stroke-width="2"/>`;
+  o += `</svg>`;
+  return o;
+}
+function renderCourt() {
+  const sets = SETS.filter(s => s.courtView);
+  $('#court-scene').innerHTML = courtScene(sets, { bic: state.bic });
+  $('#bic-toggle').setAttribute('aria-pressed', String(state.bic));
+  $('#bic-hint').textContent = state.bic
+    ? 'BIC: same spots, run fast and low — the hitter is already in the air when the ball is set. At high levels every back-row set is assumed to be quick.'
+    : 'Normal back-row ball: set deeper and higher than a front-row ball. At high levels every back-row set is assumed to be quick.';
+  $('#court-zonechips').innerHTML = [4, 3, 2, 5, 6, 1].map(z =>
+    `<button class="chip${state.zone === z ? ' active' : ''}" data-zone="${z}" aria-pressed="${state.zone === z}">Zone ${z}</button>`).join('') +
+    (state.zone ? `<span class="hint">Showing sets that land in zone ${state.zone}. Tap again to clear.</span>` : `<span class="hint">Tap a zone to highlight every set that lands there.</span>`);
+  applySelection();
+}
+
+/* ============================================================
+   SIGNALS
+   ============================================================ */
+function renderSignals() {
+  $('#cards').innerHTML = SETS.map(s => {
+    const g = groupOf(s.group);
+    return `<div class="card" role="button" tabindex="0" data-select="${s.id}" data-set="${s.id}" style="--c:${s.color}" aria-pressed="${state.selected === s.id}">` +
+      glyphHtml(s, 'glyph') +
+      `<div class="name">${esc(s.name)}</div>` +
+      `<div class="desc">${esc(s.signal.description)}</div>` +
+      `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)}</span><span class="tag">${esc(s.hitter)}</span></div>` +
+      `<div class="actions">${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Show on net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Show on court</button>` : ''}</div>` +
+      `</div>`;
+  }).join('');
+  applySelection();
+}
+
+/* ============================================================
+   DETAIL CARD (shared)
+   ============================================================ */
+function renderDetail() {
+  const el = $('#detail');
+  const s = state.selected ? byId(state.selected) : null;
+  if (!s) { el.classList.remove('open'); el.style.removeProperty('--c'); $('.content', el).innerHTML = ''; return; }
+  const g = groupOf(s.group);
+  el.style.setProperty('--c', s.color);
+  const inScene = state.tab === 'net' || state.tab === 'court';
+  const canPlay = inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(s.group)) || (state.tab === 'court' && s.courtView));
+  $('.content', el).innerHTML =
+    `<div class="bar"></div>` +
+    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3>${s.aliases && s.aliases.length ? `<div class="aliases">Also: ${esc(s.aliases.join(', '))}</div>` : ''}</div><button class="close" data-close aria-label="Close">✕</button></div>` +
+    `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)} tempo</span><span class="tag">${esc(s.hitter)}</span>${s.netView && s.netView.flat ? '<span class="tag">flat / pushed</span>' : ''}</div>` +
+    `<div class="sig">${glyphHtml(s, 'glyph')}<p><small>Hand signal</small>${esc(s.signal.description)}</p></div>` +
+    `<p class="note">${esc(s.coachingNote)}</p>` +
+    `<div class="acts">` +
+      (canPlay ? `<button class="btn primary" data-play>▶ Play ball</button>` : '') +
+      (s.netView && state.tab !== 'net' ? `<button class="btn" data-show="net" data-id="${s.id}">Show on net</button>` : '') +
+      (s.courtView && state.tab !== 'court' ? `<button class="btn" data-show="court" data-id="${s.id}">Show on court</button>` : '') +
+    `</div>`;
+  el.classList.add('open');
+}
+
+/* ============================================================
+   SELECTION (shared across tabs)
+   ============================================================ */
+function select(id, opts) {
+  state.selected = id;
+  if (id) state.zone = null;
+  applySelection();
+  renderDetail();
+  if (id && narrow.matches && (state.tab === 'net' || state.tab === 'court')) {
+    const wrap = $(`#tab-${state.tab} .scene-wrap`);
+    if (wrap) wrap.scrollIntoView({ block: 'start', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+  }
+  if (!(opts && opts.silent)) {
+    // keep the selected set visible in the net view if its group is filtered out
+    const s = id && byId(id);
+    if (s && state.hidden.has(s.group) && state.tab === 'net' && s.netView) { state.hidden.delete(s.group); renderNet(); }
+  }
+}
+function applySelection() {
+  const sel = state.selected;
+  $$('[data-set]').forEach(el => {
+    const id = el.getAttribute('data-set');
+    const s = byId(id);
+    let dim = false, on = false;
+    if (sel) { on = id === sel; dim = !on; }
+    else if (state.zone && el.closest('#tab-court')) { dim = !zonesOf(s).includes(state.zone); }
+    el.classList.toggle('dim', dim);
+    el.classList.toggle('sel', on);
+    if (el.hasAttribute('aria-pressed')) el.setAttribute('aria-pressed', String(on));
+  });
+  $$('#court-scene .zone').forEach(z => z.classList.toggle('active', !sel && state.zone === Number(z.getAttribute('data-zone'))));
+  $$('#court-zonechips [data-zone]').forEach(c => { const on = !sel && state.zone === Number(c.getAttribute('data-zone')); c.classList.toggle('active', on); c.setAttribute('aria-pressed', String(on)); });
+}
+
+/* ============================================================
+   BALL ANIMATION
+   ============================================================ */
+let raf = null, ballTimer = null;
+function play() {
+  const s = state.selected && byId(state.selected);
+  if (!s) return;
+  const scene = state.tab === 'court' ? $('#court-scene') : $('#net-scene');
+  const grp = scene && scene.querySelector(`[data-set="${s.id}"]`);
+  if (!grp) return;
+  const path = grp.querySelector('.traj');
+  const approach = grp.querySelector('.approach');
+  const ball = scene.querySelector('.ball');
+  const hitter = scene.querySelector('.hitter');
+  if (raf) cancelAnimationFrame(raf);
+  if (ballTimer) clearTimeout(ballTimer);
+  const fast = state.tab === 'court' && state.bic && s.group === 'backrow';
+  const dur = (TEMPO_MS[s.tempo] || 1000) * (fast ? 0.6 : 1);
+  const len = path.getTotalLength();
+  const alen = approach ? approach.getTotalLength() : 0;
+  const t0 = performance.now();
+  ball.style.opacity = 1;
+  if (approach) hitter.style.opacity = 1;
+  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  function step(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    const pt = path.getPointAtLength(len * ease(p));
+    ball.setAttribute('transform', `translate(${r1(pt.x)} ${r1(pt.y)})`);
+    if (approach) {
+      const q = approach.getPointAtLength(alen * Math.min(1, p * 1.1));
+      hitter.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
+    }
+    if (p < 1) raf = requestAnimationFrame(step);
+    else ballTimer = setTimeout(() => { ball.style.opacity = 0; hitter.style.opacity = 0; }, 600);
+  }
+  raf = requestAnimationFrame(step);
+}
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
+function quizPool() {
+  const q = state.quiz;
+  return SETS.filter(s => (q.group === 'all' || s.group === q.group) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
+}
+function quizNext() {
+  const q = state.quiz;
+  const pool = quizPool();
+  if (!pool.length) { q.current = null; renderQuiz(); return; }
+  q.queue = q.queue.filter(id => pool.some(s => s.id === id));
+  if (!q.queue.length) {
+    let ids = shuffle(pool.map(s => s.id));
+    if (q.current && ids.length > 1 && ids[0] === q.current) ids.push(ids.shift());
+    q.queue = ids;
+  }
+  const id = q.queue.shift();
+  const answer = byId(id);
+  const distractorPool = SETS.filter(s => s.id !== id && (q.mode === 'signal' || !s.modifier));
+  const same = shuffle(distractorPool.filter(s => s.group === answer.group));
+  const others = shuffle(distractorPool.filter(s => s.group !== answer.group));
+  const distractors = same.concat(others).slice(0, 3);
+  q.current = id;
+  q.choices = shuffle([answer].concat(distractors).map(s => s.id));
+  q.answered = null;
+  renderQuiz();
+}
+function quizAnswer(id) {
+  const q = state.quiz;
+  if (q.answered || !q.current) return;
+  q.answered = id;
+  const ok = id === q.current;
+  q.score.total += 1;
+  if (ok) { q.score.correct += 1; q.score.streak += 1; q.score.best = Math.max(q.score.best, q.score.streak); }
+  else q.score.streak = 0;
+  saveScore();
+  renderQuiz();
+}
+function renderQuiz() {
+  const q = state.quiz;
+  $$('#tab-quiz .seg button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === q.mode)));
+  $('#quiz-groups').innerHTML = [{ id: 'all', label: 'All sets' }].concat(GROUPS).map(g =>
+    `<button class="chip${q.group === g.id ? ' active' : ''}" data-qgroup="${g.id}" aria-pressed="${q.group === g.id}">${g.label}</button>`).join('');
+  const sc = q.score;
+  $('#quiz-score').innerHTML = `<span>Score <b>${sc.correct}</b> / ${sc.total}</span><span>Streak <b>${sc.streak}</b></span><span>Best streak <b>${sc.best}</b></span><button class="btn small" data-qreset>Reset</button>`;
+  const box = $('#quiz-box');
+  if (!q.current) { box.innerHTML = `<p class="hint">No sets in this group for this mode.</p>`; return; }
+  const s = byId(q.current);
+  let prompt;
+  if (q.mode === 'signal') {
+    prompt = `<p class="prompt">The setter shows this signal. Which set is it?</p>${glyphHtml(s, 'qglyph')}<p class="qdesc">${esc(s.signal.description)}</p>`;
+  } else if (s.netView) {
+    prompt = `<p class="prompt">Which set is this? (side view — watch the height and where it lands)</p><div class="mini">${netScene(netLayout(), [s], { noLabels: true })}</div>`;
+  } else {
+    prompt = `<p class="prompt">Which back-row set is this? (top-down)</p><div class="mini">${courtScene([s], { noLabels: true, bic: false })}</div>`;
+  }
+  const choices = q.choices.map(id => {
+    const c = byId(id);
+    let cls = 'btn';
+    if (q.answered) { if (id === q.current) cls += ' right'; else if (id === q.answered) cls += ' wrong'; }
+    return `<button class="${cls}" data-qanswer="${id}" ${q.answered ? 'disabled' : ''}>${esc(c.name)}</button>`;
+  }).join('');
+  let fb = '';
+  if (q.answered) {
+    const ok = q.answered === q.current;
+    fb = `<div class="feedback ${ok ? 'good' : 'bad'}">${ok ? '✓ Correct.' : `✗ That was ${esc(byId(q.answered).name)}. It's the ${esc(s.name)}.`} <span class="hint">${esc(s.signal.description)} — ${esc(s.coachingNote)}</span></div>`;
+  } else fb = `<div class="feedback"></div>`;
+  box.innerHTML = prompt + `<div class="choices">${choices}</div>` + fb +
+    `<div class="qfoot"><button class="btn primary" data-qnext ${q.answered ? '' : 'disabled'}>Next →</button>${q.answered ? `<button class="btn" data-select="${s.id}" data-show="${s.netView ? 'net' : 'court'}" data-id="${s.id}">Show me</button>` : ''}</div>`;
+  // trajectory mini scenes should not dim/highlight
+  $$('#quiz-box .set').forEach(el => { el.removeAttribute('data-set'); el.removeAttribute('tabindex'); el.classList.remove('dim'); });
+  $$('#quiz-box .zone').forEach(el => el.removeAttribute('data-zone'));
+}
+
+/* ============================================================
+   TABS + EVENTS
+   ============================================================ */
+function showTab(id) {
+  state.tab = id;
+  $$('.nav [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === id)));
+  $$('.tab').forEach(t => { t.hidden = t.getAttribute('data-tab') !== id; });
+  if (id === 'court') renderCourt();
+  if (id === 'net') renderNet();
+  if (id === 'quiz' && !state.quiz.current) quizNext();
+  renderDetail();
+  applySelection();
+  window.scrollTo({ top: 0 });
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-mode],[data-qgroup],[data-qanswer],[data-qnext],[data-qreset],#bic-toggle');
+  if (!t) return;
+  if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
+  if (t.hasAttribute('data-goto')) { showTab(t.getAttribute('data-goto')); return; }
+  if (t.hasAttribute('data-group')) {
+    const g = t.getAttribute('data-group');
+    if (state.hidden.has(g)) state.hidden.delete(g); else state.hidden.add(g);
+    const s = state.selected && byId(state.selected);
+    if (s && state.hidden.has(s.group)) select(null);
+    renderNet(); return;
+  }
+  if (t.hasAttribute('data-show')) {
+    e.stopPropagation();
+    select(t.getAttribute('data-id'), { silent: true });
+    const s = byId(t.getAttribute('data-id'));
+    if (s && state.hidden.has(s.group)) state.hidden.delete(s.group);
+    showTab(t.getAttribute('data-show'));
+    return;
+  }
+  if (t.hasAttribute('data-select')) { const id = t.getAttribute('data-select'); select(state.selected === id ? null : id); return; }
+  if (t.hasAttribute('data-zone') && !t.closest('#quiz-box')) {
+    const z = Number(t.getAttribute('data-zone'));
+    state.zone = state.zone === z ? null : z;
+    state.selected = null;
+    renderDetail(); renderCourt(); return;
+  }
+  if (t.hasAttribute('data-close')) { select(null); return; }
+  if (t.hasAttribute('data-play')) { play(); return; }
+  if (t.id === 'bic-toggle') { state.bic = !state.bic; renderCourt(); return; }
+  if (t.hasAttribute('data-mode')) { state.quiz.mode = t.getAttribute('data-mode'); state.quiz.queue = []; quizNext(); return; }
+  if (t.hasAttribute('data-qgroup')) { state.quiz.group = t.getAttribute('data-qgroup'); state.quiz.queue = []; quizNext(); return; }
+  if (t.hasAttribute('data-qanswer')) { quizAnswer(t.getAttribute('data-qanswer')); return; }
+  if (t.hasAttribute('data-qnext')) { quizNext(); return; }
+  if (t.hasAttribute('data-qreset')) { state.quiz.score = { correct: 0, total: 0, streak: 0, best: 0 }; saveScore(); renderQuiz(); return; }
+});
+// SVG set paths + zones (click and keyboard)
+document.addEventListener('click', e => {
+  const g = e.target.closest('#net-scene .set, #court-scene .set');
+  if (g) { const id = g.getAttribute('data-set'); select(state.selected === id ? null : id); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('.set[data-set], .card[data-select], .zone[data-zone]');
+  if (!el) return;
+  e.preventDefault();
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selected) select(null); });
+
+// re-layout the net view when crossing the phone/desktop breakpoint
+(narrow.addEventListener ? narrow.addEventListener.bind(narrow, 'change') : narrow.addListener.bind(narrow))(() => { if (state.tab === 'net') renderNet(); });
+
+/* ---------------- boot ---------------- */
+renderSignals();
+renderQuiz();
+showTab('net');
+})();
+</script>
+</body>
+</html>
