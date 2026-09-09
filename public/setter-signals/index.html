@@ -193,7 +193,7 @@ body:not(.has-sel) .set[data-always] .approach-g{opacity:1}
 .kv dt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
 .kv dd{margin:0;font-size:14px;line-height:1.45}
 .kv dd .sigrow{display:flex;align-items:center;gap:10px}
-.kv dd .glyph{font-size:30px;line-height:1;font-weight:800;color:var(--c);min-width:40px;text-align:center}
+.kv dd .glyph{flex:0 0 auto;font-size:30px;line-height:1;font-weight:800;color:var(--c);min-width:40px;text-align:center}
 .kv dd .glyph.txt{font-size:24px}
 .badge{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--panel3);font-size:12px;font-weight:600;color:var(--text);margin-top:4px}
 .meter{display:inline-flex;gap:3px;margin-right:8px;vertical-align:middle}
@@ -452,7 +452,7 @@ const SETS = [
     netView: { landX: 0.42, peak: 0.18, flat: false, label: { dx: -1.5, dy: 0 } },
     courtView: { x: 0.42, y: 0.08 } },
   { id: 'back1', name: 'Back 1', aliases: ['Back quick', 'Tight back'], group: 'quick', color: '#ff2d55', tempo: '1st', hitter: 'MB',
-    call: 'Back one', how: 'signal', pass: 'perfect', approach: [{ x: 0.50, y: 0.30 }, { x: 0.64, y: 0.10 }], startNote: 'Centre, just left of the setter; cross behind as the ball arrives.', useWhen: 'Their middle commits to the front quick.', avoidWhen: 'Pass is past the setter.', fallback: 'back2',
+    call: 'Back one', how: 'signal', pass: 'perfect', approach: [{ x: 0.50, y: 0.30 }, { x: 0.64, y: 0.10 }], startNote: 'Centre, just left of the setter; cross behind as the ball arrives.', useWhen: 'Their middle commits to the front quick.', avoidWhen: 'Pass is past the setter.', fallback: 'two',
     signal: { glyph: 'B1', description: 'Pinky finger up' },
     coachingNote: 'Mirror image of the 1: the middle is up behind me and I put the ball just over the top of my head.',
     netView: { landX: 0.63, peak: 0.15, flat: false, label: { dx: 1.2, dy: 0 } },
@@ -497,7 +497,7 @@ const SETS = [
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
     netView: { landX: 0.03, peak: 0.75, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
-  { id: 'go', name: 'Go', aliases: ['Quick outside', 'Shoot 4'], group: 'outside', color: '#a3e635', tempo: '2nd', hitter: 'OH',
+  { id: 'go', name: 'Go', aliases: ['Quick outside'], group: 'outside', color: '#a3e635', tempo: '2nd', hitter: 'OH',
     call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: -0.05, y: 0.36 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
@@ -511,14 +511,14 @@ const SETS = [
     coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
     netView: { landX: 0.97, peak: 1.00, flat: false },
     courtView: { x: 0.97, y: 0.08 } },
-  { id: 'red', name: 'Red', aliases: ['Right-side Go', 'Quick 5'], group: 'rightside', color: '#e879f9', tempo: '2nd', hitter: 'OPP',
+  { id: 'red', name: 'Red', aliases: ['Right-side Go'], group: 'rightside', color: '#e879f9', tempo: '2nd', hitter: 'OPP',
     call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 1.05, y: 0.36 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'Setter back row only.',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
     netView: { landX: 0.97, peak: 0.45, flat: true },
     courtView: { x: 0.97, y: 0.08 } },
   { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '1st', hitter: 'MB',
-    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot just past the setter.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'back2',
+    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot just past the setter.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
     netView: { landX: 0.90, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 }, run: { from: 0.45, to: 0.92, takeoff: 0.88 } },
@@ -538,7 +538,7 @@ const SETS = [
     coachingNote: 'Splits zones 5 and 6 — a deeper, higher ball for the left-side hitter drifting toward the middle; takeoff stays behind the line.',
     courtView: { x: 0.33, y: 0.30, takeoff: { x: 0.33, y: 0.36 }, start: { x: 0.33, y: 0.55 }, zones: [5, 6] },
     approach: [ { x: 0.33, y: 0.55 }, { x: 0.33, y: 0.36 } ] },
-  { id: 'pipe', name: 'Pipe', aliases: ['Middle back', 'Bic pipe'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'OH',
+  { id: 'pipe', name: 'Pipe', aliases: ['Middle back'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'OH',
     call: 'Pipe', how: 'call', pass: 'good', startNote: 'Middle back, zone 6, about 5 m off the net.', useWhen: 'Setter front row: your ball from zone 6, straight over their middle.', avoidWhen: 'Pass off the net.', fallback: 'four', note51: 'The pipe belongs to the outside who has just rotated to the back row.',
     signal: { glyph: '|', description: 'Line drawn straight down the centre of the chest' },
     coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a quick, takeoff behind the 10-foot line.',
@@ -558,7 +558,7 @@ const SETS = [
     approach: [ { x: 0.85, y: 0.55 }, { x: 0.85, y: 0.36 } ] },
 
   // ---- Tempo modifier — not a location ----
-  { id: 'bic', name: 'BIC', aliases: ['Bic', 'Quick back row'], group: 'backrow', modifier: true, color: '#a5f3fc', tempo: '1st', hitter: 'Back row',
+  { id: 'bic', name: 'BIC', aliases: ['Quick back row'], group: 'backrow', modifier: true, color: '#a5f3fc', tempo: '1st', hitter: 'Back row',
     call: 'Bic', how: 'both', pass: 'perfect', useWhen: 'Their block commits early to the front-row quicks; run the back-row ball fast and low.', avoidWhen: 'Any pass off the net.', fallback: null,
     signal: { glyph: 'BIC', description: 'Fist with a thumb flick, like lighting a lighter — shown together with the zone signal (A, B, Pipe, C, D)' },
     coachingNote: 'Not a place, a tempo: flick the lighter with the zone signal and the back-row ball comes fast and low — at high levels every back-row set is assumed to be quick.' }
@@ -841,7 +841,8 @@ function courtSetPath(s, bic) {
   const v = s.courtView;
   const sx = cx(SETTER_X), sy = cy(0.05);
   const isBack = s.group === 'backrow';
-  const ty = isBack ? (bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) : v.y;
+  const fl = isBack ? null : flight(s);
+  const ty = isBack ? (bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) : (fl ? fl.p1.y / WORLD.courtD : v.y);
   const ex = cx(v.x), ey = cy(ty);
   let bow;
   if (isBack) bow = bic ? 0.02 : 0.06; else bow = 0.02 + (s.netView ? s.netView.peak : 0.5) * 0.06;
@@ -1366,7 +1367,7 @@ const RULES = [
   { name: 'Every approach ends at the ball', why: 'The hitter\'s route must finish next to where the set is contacted: front-row takeoffs just off the net under the ball, back-row takeoffs behind the line.',
     run: sets => sets.filter(s => !s.modifier && s.approach).map(s => {
       const t = s.approach[1], v = s.courtView, bad = [];
-      if (s.group !== 'backrow') { if (Math.abs(t.x - v.x) > 0.12) bad.push(`takeoff x ${t.x} is ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball`); if (t.y < v.y) bad.push('takeoff is closer to the net than the ball'); if (t.y > 0.2) bad.push('takeoff is too deep for a front-row attack'); }
+      if (s.group !== 'backrow') { const f = flight(s, { netH: WORLD.netHeights.men }); const ballY = f ? f.p1.y / WORLD.courtD : v.y; if (Math.abs(t.x - v.x) > 0.12) bad.push(`takeoff x ${t.x} is ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball`); if (t.y < ballY - 0.02) bad.push(`takeoff (${(t.y * 9).toFixed(1)} m) is closer to the net than the ball (${(ballY * 9).toFixed(1)} m)`); if (t.y > 0.2) bad.push('takeoff is too deep for a front-row attack'); }
       else if (Math.abs(t.x - v.x) > 0.05) bad.push('takeoff is not in line with the ball');
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `takeoff ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball, ${(t.y * 9).toFixed(1)} m off the net` };
     }) },
@@ -1422,6 +1423,34 @@ const RULES = [
       }
       return out.length ? out : [{ id: s.id, ok: true, msg: 'no checkable phrases' }];
     }) },
+  { name: 'Side view and top view agree on where a set lands', why: 'landX in the side view and x in the top view describe the same spot along the net.',
+    run: sets => sets.filter(s => s.netView && s.courtView).map(s => { const d = Math.abs(s.netView.landX - s.courtView.x); return { id: s.id, ok: d <= 0.01, level: 'err', msg: d <= 0.01 ? `${(s.netView.landX * 9).toFixed(1)} m from the left antenna in both views` : `side view ${s.netView.landX} vs top view ${s.courtView.x}` }; }) },
+  { name: 'Fallbacks are real options for the same hitter', why: 'When the pass is off, the fallback must be a set the same hitter runs, must need no better a pass, and the chain must end at an always-on ball.',
+    run: sets => sets.filter(s => !s.modifier).map(s => {
+      const P = { any: 1, good: 2, perfect: 3 }, bad = [];
+      let cur = s, hops = 0, seen = new Set([s.id]);
+      while (cur.fallback) {
+        const fb = byId(cur.fallback);
+        if (!fb) { bad.push(`fallback "${cur.fallback}" does not exist`); break; }
+        if (fb.id === s.id || seen.has(fb.id)) { bad.push('fallback chain loops'); break; }
+        if (fb.hitter !== s.hitter) bad.push(`${fb.name} is a ${fb.hitter} ball, not ${s.hitter}`);
+        if (P[fb.pass] > P[cur.pass]) bad.push(`${fb.name} needs a better pass (${fb.pass}) than ${cur.name} (${cur.pass})`);
+        seen.add(fb.id); cur = fb; if (++hops > 5) { bad.push('fallback chain too long'); break; }
+      }
+      if (!bad.length && cur.pass !== 'any') bad.push(`chain ends at ${cur.name}, which still needs a ${cur.pass} pass`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || (s.fallback ? `→ ${[...seen].slice(1).map(i => byId(i).name).join(' → ')}` : 'always-on ball') };
+    }) },
+  { name: 'Pass requirement fits the tempo', why: 'A first-tempo ball cannot be run off a bad pass; the high balls must be runnable off anything.',
+    run: sets => sets.filter(s => !s.modifier).map(s => { const P = { any: 1, good: 2, perfect: 3 }, bad = []; if (s.tempo === '1st' && P[s.pass] < 2) bad.push('1st tempo off any pass'); if (s.tempo === '3rd' && s.pass !== 'any') bad.push(`3rd tempo should be runnable off any pass, needs ${s.pass}`); return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${s.tempo} tempo, ${s.pass} pass` }; }) },
+  { name: 'Every hitter has an always-on ball and unique calls', why: 'Each role needs one set that works off any pass; calls shouted in a rally must not be confusable.',
+    run: sets => {
+      const out = [];
+      ['OH', 'MB', 'OPP'].forEach(r => { const mine = sets.filter(s => s.hitter === r && !s.modifier); const anyBall = mine.filter(s => s.pass === 'any'); out.push({ id: null, ok: mine.length > 0 && anyBall.length > 0, level: 'err', msg: `${r}: ${mine.length} sets, always-on: ${anyBall.map(s => s.name).join(', ') || 'none'}` }); });
+      const calls = {}; sets.forEach(s => { const k = (s.call || '').trim().toLowerCase(); if (k) (calls[k] = calls[k] || []).push(s.name); });
+      Object.keys(calls).forEach(k => { if (calls[k].length > 1) out.push({ id: null, ok: false, level: 'err', msg: `call “${k}” is used by ${calls[k].join(' and ')}` }); });
+      const noCall = sets.filter(s => !s.call); if (noCall.length) out.push({ id: null, ok: false, level: 'err', msg: `no call: ${noCall.map(s => s.name).join(', ')}` });
+      return out;
+    } },
   { name: 'Hitter timing is derivable', why: 'From hang time we work out where the hitter is at setter contact; a first-tempo ball must have the hitter in the air or planting, a third-tempo ball must let the hitter watch the set.',
     run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const tl = timeline(f); const bad = []; if (s.tempo === '1st' && tl.phase < 0.5) bad.push('1st tempo but the hitter is barely into the approach at contact'); if (s.tempo === '3rd' && tl.phase > 0.3) bad.push('3rd tempo but the hitter is already running at contact'); return { id: s.id, ok: !bad.length, level: 'warn', msg: bad.join('; ') || timingText(s, tl) }; }) },
   { name: 'BIC is a tempo modifier, not a location', why: 'It is signalled with a zone signal and means "run it fast and low"; it has no spot of its own.',
@@ -1537,7 +1566,7 @@ function renderDetail() {
   if (s.note51) rows.push([SYSTEM.name, esc(s.note51)]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
-    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(g.label)} · ${esc(s.hitter)}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
+    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(g.label)}${s.hitter !== g.label ? ` · ${esc(s.hitter)}` : ''}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
     `<div class="acts">` +
       (canPlay ? `<button class="btn primary" data-play>▶ Play</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
       (!s.modifier && state.tab !== '3d' ? `<button class="btn" data-show="3d" data-id="${s.id}">Show in 3D</button>` : '') +

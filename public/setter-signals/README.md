@@ -28,7 +28,7 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 | Diagrams | The two flat views. **Net** is the side view: height and landing spot tell sets apart. **Court** is top-down: front-row landing spots along the net, back-row attacks with start point, dotted approach, takeoff behind the 3 m line and set target; tap a zone number to highlight sets landing there. |
 | Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show in 3D" / "Show on net" / "Show on court". |
 | Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), optional group filter. |
-| Checks | Every set is graded against explicit rules (where it lands, how high, who hits it, how it relates to neighbouring sets, takeoff behind the line, unique signals, tempo vs. physics). A spec sheet lists each set's landing spot, contact height, apex and hang time in metres and seconds. |
+| Checks | Every set is graded against explicit rules: where it lands, how high, who hits it, how it relates to neighbouring sets, takeoff placement, unique signals and calls, tempo versus physics, pass requirement versus tempo, fallback chains, and — importantly — whether the words in each note match the drawn data (outside the sideline, centre, zone, metres off the net, halfway to the antenna, behind the setter, second step, above the tape…). A spec sheet lists each set's landing spot, contact height, apex and hang time. |
 
 Selection is shared across tabs. Keyboard: Tab to a path, card or spec row, Enter/Space to select, Esc to clear.
 
@@ -81,7 +81,8 @@ Every view (net, court, cards, quiz) renders from this one array. Each set is on
   startNote: 'Outside the left sideline, level with the 3-m line.',
   useWhen: 'Perfect pass and their left-side blocker is late.',
   avoidWhen: 'Any pass off the net.',
-  fallback: 'hut',                    // id of the set to go to when the pass is off (or null)
+  fallback: 'hut',                    // the set the SAME hitter runs when the pass is off (or null = always on);
+                                      // it may not need a better pass, and the chain must end at an always-on ball
   note51: '…',                        // optional: what changes with the setter front / back row
   timingNote: '…',                    // optional: overrides the derived timing sentence
   netView: { landX: 0.03, peak: 0.40, flat: true },     // side view
@@ -98,7 +99,8 @@ Every view (net, court, cards, quiz) renders from this one array. Each set is on
 - Group labels and hints live in the small `GROUPS` array just below `SETS`.
 
 Save the file and reload the page, then open the **Checks** tab: it re-grades the data and names
-exactly which set broke which rule. Rules about specific named sets (4 above Hut, Back 1 mirrors the 1,
+exactly which set broke which rule. If you reword a note, the "Notes agree with the geometry" rule
+re-reads it: write "outside the left sideline" and the route had better start there. Rules about specific named sets (4 above Hut, Back 1 mirrors the 1,
 Slide has a run, and so on) look sets up by `id` and simply pass when that id is gone, so renaming or
 removing a set never breaks the page. To add a rule, append an object to the `RULES` array.
 If the browser console shows an error after editing, it is almost always a missing comma or quote in
