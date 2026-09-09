@@ -637,7 +637,11 @@ function effectiveFallback(s, r) {
   const fb = s.fallback && byId(s.fallback);
   if (fb) { const fa = availability(fb, r); if (fa.ok && fa.hitter === a.hitter) return { set: fb, changed: false }; }
   const alt = SETS.find(x => !x.modifier && x.id !== s.id && x.pass === 'any' && availability(x, r).ok && availability(x, r).hitter === a.hitter);
-  return alt ? { set: alt, changed: alt.id !== s.fallback } : (s.pass === 'any' ? null : { set: null, changed: true });
+  if (alt) return { set: alt, changed: alt.id !== s.fallback };
+  if (s.pass === 'any') return null;
+  // no always-on ball for this hitter in this rotation (a back-row opposite): the setter goes to another hitter's high ball
+  const any = SETS.find(x => !x.modifier && x.id !== s.id && x.pass === 'any' && availability(x, r).ok && x.group !== 'backrow');
+  return any ? { set: any, changed: any.id !== s.fallback, other: true } : { set: null, changed: true };
 }
 function rotationsText(s) {
   const groups = [];
@@ -1556,7 +1560,7 @@ const RULES = [
   { name: 'A fallback exists in every rotation a set runs', why: 'When the hitter of a set changes with the rotation (the Back 2 becomes a middle ball), its fallback must change with it.',
     run: sets => sets.filter(s => !s.modifier).map(s => {
       const bad = [], notes = [];
-      for (let r = 1; r <= 6; r++) { const a = availability(s, r); if (!a.ok) continue; const e = effectiveFallback(s, r); if (s.pass !== 'any' && (!e || !e.set)) bad.push(`R${r}: no fallback for the ${a.hitter}`); else if (e && e.set && e.changed) notes.push(`R${r}: ${e.set.name}`); }
+      for (let r = 1; r <= 6; r++) { const a = availability(s, r); if (!a.ok) continue; const e = effectiveFallback(s, r); if (s.pass !== 'any' && (!e || !e.set)) bad.push(`R${r}: no fallback for the ${a.hitter}`); else if (e && e.set && e.changed) notes.push(`R${r}: ${e.set.name}${e.other ? ' (another hitter)' : ''}`); }
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || (notes.length ? `fallback follows the hitter — ${notes.join(', ')}` : (s.fallback ? `${byId(s.fallback).name} in every rotation` : 'always on')) };
     }) },
   { name: 'Pass requirement fits the tempo', why: 'A first-tempo ball cannot be run off a bad pass; the high balls must be runnable off anything.',
@@ -1715,7 +1719,7 @@ function renderDetail() {
   if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
   if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(s.useWhen)]);
   if (s.avoidWhen) rows.push(['Not when', esc(s.avoidWhen)]);
-  rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed ? ' <span class="hint">in this rotation</span>' : ''}${s.group === 'backrow' && fb.group !== 'backrow' ? ` <span class="hint">to the front-row ${esc(fb.hitter)} — ${hitterView ? 'not you' : 'not the back-row hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
+  rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed && !efb.other ? ' <span class="hint">in this rotation</span>' : ''}${efb.other || (s.group === 'backrow' && fb.group !== 'backrow') ? ` <span class="hint">to the front-row ${esc(availability(fb, state.rotation).hitter || fb.hitter)} — ${hitterView ? 'not you' : 'not this hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
   if (!s.modifier) rows.push(['Rotations', esc(rotationsText(s))]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
