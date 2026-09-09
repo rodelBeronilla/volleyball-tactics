@@ -325,7 +325,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
     <section class="tab" id="tab-3d" data-tab="3d" role="tabpanel">
       <div class="tab-head">
         <h2>Court in 3D</h2>
-        <p>Real court in metres; every ball is a gravity parabola from the setter's hands. Tap a path or a name below; the hitter's route appears with it.</p>
+        <p>Real court in metres; every ball is a gravity parabola from the setter's hands. Filter by tempo, tap a path or a name below; the hitter's route appears with it.</p>
       </div>
       <div class="chips" id="v3-filters" aria-label="Filter groups"></div>
       <div class="toolbar">
@@ -447,25 +447,25 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
    ============================================================ */
 const SETS = [
   // ---- Quick (1st tempo) ----
-  { id: 'one', name: '1', aliases: ['Quick', 'Front quick'], group: 'quick', color: '#ff4d4d', tempo: '1st', hitter: 'MB',
+  { id: 'one', name: '1', aliases: ['Quick', 'Front quick'], group: 'quick', color: '#ff4d4d', hitter: 'MB',
     call: 'One', how: 'signal', pass: 'perfect', approach: [{ x: 0.44, y: 0.30 }], startNote: 'Centre of the net, a step left of the setter, about 3 m off.', useWhen: 'Tight, in-system pass and you are up early — it freezes their middle.', avoidWhen: 'Pass drifts more than a metre off the net.', fallback: 'two',
     signal: { glyph: '☝️', description: 'Index finger up' },
     coachingNote: 'Middle is already in the air when the ball leaves my hands — half a metre above the tape, right in front of me.',
     netView: { landX: 0.50, peak: 0.15, flat: false, label: { dx: 0, dy: -0.15 } },
     courtView: { x: 0.50, y: 0.08, label: { dx: 0.9 } } },
-  { id: 'push1', name: 'Push 1', aliases: ['Push', 'Wide 1'], group: 'quick', color: '#ff7a45', tempo: '1st', hitter: 'MB',
+  { id: 'push1', name: 'Push 1', aliases: ['Push', 'Wide 1'], group: 'quick', color: '#ff7a45', hitter: 'MB',
     call: 'Push', how: 'signal', pass: 'perfect', approach: [{ x: 0.46, y: 0.32 }], startNote: 'Centre, drifting left as the pass goes up.', useWhen: 'Their middle leans toward the 1 — attack the seam between their middle and left blocker.', avoidWhen: 'Pass off the net.', fallback: 'two',
     signal: { glyph: 'P1', description: 'Index finger up, bent / hooked' },
     coachingNote: 'Same tempo as the 1, but I push it a step further left so the middle attacks moving into the seam.',
     netView: { landX: 0.42, peak: 0.18, flat: false, label: { dx: -1.5, dy: 0 } },
     courtView: { x: 0.42, y: 0.08 } },
-  { id: 'back1', name: 'Back 1', aliases: ['Back quick', 'Tight back'], group: 'quick', color: '#ff2d55', tempo: '1st', hitter: 'MB',
+  { id: 'back1', name: 'Back 1', aliases: ['Back quick', 'Tight back'], group: 'quick', color: '#ff2d55', hitter: 'MB',
     call: 'Back one', how: 'signal', pass: 'perfect', approach: [{ x: 0.50, y: 0.30 }], startNote: 'Centre, just left of the setter; cross behind as the ball arrives.', useWhen: 'Their middle commits to the front quick.', avoidWhen: 'Pass is past the setter.', fallback: 'two',
     signal: { glyph: 'B1', description: 'Pinky finger up' },
     coachingNote: 'Mirror image of the 1: the middle is up behind me and I put the ball just over the top of my head.',
     netView: { landX: 0.63, peak: 0.15, flat: false, label: { dx: 1.2, dy: 0 } },
     courtView: { x: 0.63, y: 0.08 } },
-  { id: 'shoot', name: '3 / Shoot', aliases: ['3', 'Shoot', '31'], group: 'quick', color: '#ffa500', tempo: '1st', hitter: 'MB',
+  { id: 'shoot', name: '3 / Shoot', aliases: ['3', 'Shoot', '31'], group: 'quick', color: '#ffa500', hitter: 'MB',
     call: 'Three', how: 'signal', pass: 'good', approach: [{ x: 0.50, y: 0.34 }], startNote: 'Centre, 3 m off the net; run a wide route left along the net.', useWhen: 'Their middle is slow moving left; a medium pass is fine.', avoidWhen: 'Pass tight on the net.', fallback: 'two',
     signal: { glyph: '3', description: 'Three fingers, or an index-finger-and-thumb "gun"' },
     coachingNote: 'Fast and flat halfway to the left antenna — the middle runs a wide route and the ball has to beat their middle blocker.',
@@ -473,19 +473,19 @@ const SETS = [
     courtView: { x: 0.28, y: 0.08 } },
 
   // ---- Medium (2nd tempo) ----
-  { id: 'two', name: '2', aliases: ['Front 2', 'Middle 2'], group: 'medium', color: '#4da3ff', tempo: '2nd', hitter: 'MB',
+  { id: 'two', name: '2', aliases: ['Front 2', 'Middle 2'], group: 'medium', color: '#4da3ff', hitter: 'MB',
     call: 'Two', how: 'both', pass: 'any', approach: [{ x: 0.45, y: 0.32 }], startNote: 'Centre, 3 m off the net.', useWhen: 'Any in-system pass; you get a beat to read the block. The safe middle ball.', avoidWhen: '', fallback: null,
     signal: { glyph: '✌️', description: 'Two fingers (peace sign)' },
     coachingNote: 'A loopy ball in the middle of the net for a hitter who needs a beat to see it — my safe option when the pass is off.',
     netView: { landX: 0.47, peak: 0.45, flat: false, label: { dx: -0.6, dy: 0 } },
     courtView: { x: 0.47, y: 0.08, label: { dx: 0.9 } } },
-  { id: 'back2', name: 'Back 2', aliases: ['Back set', 'Over-the-head 2'], group: 'medium', color: '#7cc4ff', tempo: '2nd', hitter: 'OPP',
+  { id: 'back2', name: 'Back 2', aliases: ['Back set', 'Over-the-head 2'], group: 'medium', color: '#7cc4ff', hitter: 'OPP',
     call: 'Back two', how: 'both', pass: 'good', approach: [{ x: 0.88, y: 0.36 }], startNote: 'Right side, inside the sideline at the 3-m line; come in at an angle.', useWhen: 'Pass is a little behind the setter, or the opposite is hot.', avoidWhen: 'Pass well off the net.', fallback: 'five',
     signal: { glyph: 'B2', description: 'Ring + pinky fingers up' },
     coachingNote: 'Same loop as the 2, set over my shoulder for the opposite or a middle running behind me.',
     netView: { landX: 0.70, peak: 0.45, flat: false, label: { dx: 0.4, dy: 0 } },
     courtView: { x: 0.70, y: 0.08 } },
-  { id: 'rip', name: '32 / Rip', aliases: ['32', 'Rip', 'Gap'], group: 'medium', color: '#2f6fff', tempo: '2nd', hitter: 'MB',
+  { id: 'rip', name: '32 / Rip', aliases: ['32', 'Rip', 'Gap'], group: 'medium', color: '#2f6fff', hitter: 'MB',
     call: 'Thirty-two', how: 'signal', pass: 'good', approach: [{ x: 0.50, y: 0.34 }], startNote: 'Centre, 3 m off; long route left.', useWhen: 'You want to pull their middle blocker away from your outside.', avoidWhen: 'Tight pass.', fallback: 'two',
     signal: { glyph: '⌒', description: 'Hand cupped into an arch' },
     coachingNote: 'Lands halfway between the middle and the left antenna and pulls the opposing middle blocker away from your middle.',
@@ -493,19 +493,19 @@ const SETS = [
     courtView: { x: 0.25, y: 0.08 } },
 
   // ---- Outside (left antenna) ----
-  { id: 'four', name: '4', aliases: ['High outside', 'Hi-ball'], group: 'outside', color: '#34d399', tempo: '3rd', hitter: 'OH',
+  { id: 'four', name: '4', aliases: ['High outside', 'Hi-ball'], group: 'outside', color: '#34d399', hitter: 'OH',
     call: 'Four', how: 'both', pass: 'any', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Any pass from anywhere — the out-of-system ball. Watch the set go up, then go.', avoidWhen: '', fallback: null,
     signal: { glyph: '4', description: 'Four fingers' },
     coachingNote: 'Highest, widest ball on the board — all the way to the antenna, giving the outside time for a full approach.',
     netView: { landX: 0.03, peak: 1.00, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
-  { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', tempo: '2nd', hitter: 'OH',
+  { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', hitter: 'OH',
     call: 'Hut', how: 'both', pass: 'good', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In-system pass and you want to see the block before you commit.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: '/', description: 'One slash across the chest' },
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
     netView: { landX: 0.03, peak: 0.75, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
-  { id: 'go', name: 'Go', aliases: ['Quick outside'], group: 'outside', color: '#a3e635', tempo: '2nd', hitter: 'OH',
+  { id: 'go', name: 'Go', aliases: ['Quick outside'], group: 'outside', color: '#a3e635', hitter: 'OH',
     call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
@@ -513,19 +513,19 @@ const SETS = [
     courtView: { x: 0.03, y: 0.08 } },
 
   // ---- Right side (right antenna) ----
-  { id: 'five', name: '5', aliases: ['High right side', 'High back'], group: 'rightside', color: '#a78bfa', tempo: '3rd', hitter: 'OPP',
+  { id: 'five', name: '5', aliases: ['High right side', 'High back'], group: 'rightside', color: '#a78bfa', hitter: 'OPP',
     call: 'Five', how: 'both', pass: 'any', approach: [{ x: 1.05, y: 0.36 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Out-of-system ball to the right side.', avoidWhen: '', fallback: null,
     signal: { glyph: '🖐️', description: 'Open hand, five fingers' },
     coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
     netView: { landX: 0.97, peak: 1.00, flat: false },
     courtView: { x: 0.97, y: 0.08 } },
-  { id: 'red', name: 'Red', aliases: ['Right-side Go'], group: 'rightside', color: '#e879f9', tempo: '2nd', hitter: 'OPP',
+  { id: 'red', name: 'Red', aliases: ['Right-side Go'], group: 'rightside', color: '#e879f9', hitter: 'OPP',
     call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 1.05, y: 0.36 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
     netView: { landX: 0.97, peak: 0.45, flat: true },
     courtView: { x: 0.97, y: 0.08 } },
-  { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '1st', hitter: 'MB',
+  { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', hitter: 'MB',
     call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, routeShape: 'j', turn: { x: 0.59, y: 0.12 }, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot near the right antenna.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
@@ -534,31 +534,31 @@ const SETS = [
     approach: [{ x: 0.45, y: 0.25 }] },
 
   // ---- Back row (Part 2) — takeoff behind the 3-metre / 10-foot line ----
-  { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', tempo: '2nd', hitter: 'OH',
+  { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', hitter: 'OH',
     call: 'A', how: 'call', pass: 'good', startNote: 'Left back, zone 5, about 5 m off the net.', useWhen: 'Whenever you are back row; the third attacker on the left when the setter is front row.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: 'A', description: 'Line drawn across the upper chest near one shoulder (the A side)' },
     coachingNote: 'Left-back attack from zone 5 — set deeper and higher than a quick; take off behind the 10-foot line, land in front of it if you like.',
     courtView: { x: 0.15, y: 0.30, zones: [5] },
     approach: [{ x: 0.15, y: 0.55 }] },
-  { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', tempo: '2nd', hitter: 'OH',
+  { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', hitter: 'OH',
     call: 'B', how: 'call', pass: 'good', startNote: 'Between zones 5 and 6, about 5 m off the net.', useWhen: 'Their middle blocker is drawn to the pin; you come from the seam.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: 'B', description: 'Line drawn down the chest between the A spot and centre' },
     coachingNote: 'Splits zones 5 and 6 — a deeper, higher ball for the left-side hitter drifting toward the middle; takeoff stays behind the line.',
     courtView: { x: 0.33, y: 0.30, zones: [5, 6] },
     approach: [{ x: 0.33, y: 0.55 }] },
-  { id: 'pipe', name: 'Pipe', aliases: ['Middle back'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'OH',
+  { id: 'pipe', name: 'Pipe', aliases: ['Middle back'], group: 'backrow', color: '#0ea5e9', hitter: 'OH',
     call: 'Pipe', how: 'call', pass: 'good', startNote: 'Middle back, zone 6, about 5 m off the net.', useWhen: 'Your ball from zone 6 whenever you are back row — the go-to third attacker when the setter is front row.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: '|', description: 'Line drawn straight down the centre of the chest' },
     coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a quick, takeoff behind the 10-foot line.',
     courtView: { x: 0.50, y: 0.30, zones: [6] },
     approach: [{ x: 0.50, y: 0.55 }] },
-  { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', tempo: '2nd', hitter: 'OPP',
+  { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', hitter: 'OPP',
     call: 'C', how: 'call', pass: 'good', startNote: 'Between zones 6 and 1, about 5 m off the net.', useWhen: 'Setter front row, opposite in the back row, their block leaning left.', avoidWhen: 'Pass off the net.', fallback: 'five',
     signal: { glyph: 'C', description: 'Line drawn down the chest between centre and the D spot' },
     coachingNote: 'Between zones 6 and 1, the mirror of the B — deeper and higher than a quick, takeoff behind the line.',
     courtView: { x: 0.67, y: 0.30, zones: [6, 1] },
     approach: [{ x: 0.67, y: 0.55 }] },
-  { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', tempo: '2nd', hitter: 'OPP',
+  { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', hitter: 'OPP',
     call: 'D', how: 'call', pass: 'good', startNote: 'Right back, zone 1, about 5 m off the net.', useWhen: 'Setter front row: the opposite\'s ball from zone 1 — our main back-row attack.', avoidWhen: 'Pass off the net.', fallback: 'five',
     signal: { glyph: 'D', description: 'Line drawn across the upper chest near the opposite shoulder' },
     coachingNote: 'Right-back attack from zone 1 — our opposite\'s ball in the back row; same rules, set deeper and higher, takeoff behind the 10-foot line.',
@@ -566,12 +566,19 @@ const SETS = [
     approach: [{ x: 0.85, y: 0.55 }] },
 
   // ---- Tempo modifier — not a location ----
-  { id: 'bic', name: 'BIC', aliases: ['Quick back row'], group: 'backrow', modifier: true, color: '#a5f3fc', tempo: '1st', hitter: 'Back row',
+  { id: 'bic', name: 'BIC', aliases: ['Quick back row'], group: 'backrow', modifier: true, color: '#a5f3fc', hitter: 'Back row',
     call: 'Bic', how: 'both', pass: 'perfect', useWhen: 'Their block commits early to the front-row quicks; run the back-row ball fast and low.', avoidWhen: 'Any pass off the net.', fallback: null,
     signal: { glyph: 'BIC', description: 'Fist with a thumb flick, like lighting a lighter — shown together with the zone signal (A, B, Pipe, C, D)' },
     coachingNote: 'Not a place, a tempo: flick the lighter with the zone signal and the back-row ball comes fast and low — at high levels every back-row set is assumed to be quick.' }
 ];
 
+/* Tempo is not typed in: it is where the hitter is when the setter touches the ball, from the flight model. */
+const TEMPOS = [
+  { id: 'minus', label: 'Minus tempo',  short: 'Minus', hint: 'hitter is leaving the floor or already up when the setter touches the ball' },
+  { id: '1st',   label: 'First tempo',  short: '1st',   hint: 'hitter is planting as the setter touches the ball' },
+  { id: '2nd',   label: 'Second tempo', short: '2nd',   hint: 'hitter is mid-approach at setter contact' },
+  { id: '3rd',   label: 'Third tempo',  short: '3rd',   hint: 'hitter starts the approach on the set' }
+];
 const GROUPS = [
   { id: 'quick',     label: 'Quick',      hint: '1st tempo' },
   { id: 'medium',    label: 'Medium',     hint: '2nd tempo loops' },
@@ -593,7 +600,7 @@ const WORLD = {
   flatOffNet: 0.4,             // flat / pushed balls are hit tight to the net
   peakMax: 3.0,                // peak = 1 (a 4 or 5) reaches this far above the release point
   backrow: { peak: 0.55, bicPeak: 0.30, contactAboveTape: 0.40 },
-  tempoBands: { '1st': [0, 0.85], '2nd': [0.85, 1.45], '3rd': [1.45, 99] }   // hang time in seconds
+  tempoPhases: { minus: 0.78, '1st': 0.5, '2nd': 0.2 }   // how far into the approach the hitter is at setter contact (0 = first step, 1 = takeoff)
 };
 const G = 9.81;
 /* Hitter timing model: a full approach takes approachSec from first step to takeoff; the ball is contacted riseSec after takeoff. */
@@ -640,7 +647,8 @@ function effectiveFallback(s, r) {
   if (alt) return { set: alt, changed: alt.id !== s.fallback };
   if (s.pass === 'any') return null;
   // no always-on ball for this hitter in this rotation (a back-row opposite): the setter goes to another hitter's high ball
-  const any = SETS.find(x => !x.modifier && x.id !== s.id && x.pass === 'any' && availability(x, r).ok && x.group !== 'backrow');
+  const cands = SETS.filter(x => !x.modifier && x.id !== s.id && x.pass === 'any' && availability(x, r).ok && x.group !== 'backrow');
+  const any = cands.find(x => x.group === 'outside') || cands.find(x => x.group === 'rightside') || cands[0];
   return any ? { set: any, changed: any.id !== s.fallback, other: true } : { set: null, changed: true };
 }
 function rotationsText(s) {
@@ -848,7 +856,7 @@ function netSetMarkup(L, s, opts) {
           `<text class="lbl" x="${r1(xt + inward * L.fs * 0.5)}" y="${r1(y + L.fs * 1.55)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${inward > 0 ? 'start' : 'end'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.takeoffLabel || (lateral ? 'takeoff' : `${effectiveHitter(s)} takes off here, straight in`))}</text>` +
           `</g>`;
   }
-  return `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">` +
+  return `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(tempoLabel(s))}, ${esc(effectiveHitter(s))}" style="color:${s.color}">` +
          `<path class="hit" d="${g.d}" stroke-width="${L.hit}"/>` +
          run +
          `<path class="traj" d="${g.d}" stroke="${s.color}" stroke-width="${L.sw}"${v.flat ? ` stroke-dasharray="${r1(L.sw * 3.2)} ${r1(L.sw * 1.6)}"` : ''}/>` +
@@ -902,21 +910,21 @@ function netScene(L, sets, opts) {
 }
 function renderNet() {
   const L = netLayout();
-  const visible = roleSets().filter(s => s.netView && !state.hidden.has(s.group));
+  const visible = roleSets().filter(s => s.netView && !state.hidden.has(tempoOf(s)));
   $('#net-scene').innerHTML = netScene(L, visible);
   renderStrip('strip-net', visible);
   // filter chips
-  $('#net-filters').innerHTML = GROUPS.filter(g => roleSets().some(s => s.group === g.id && s.netView)).map(g => {
-    const on = !state.hidden.has(g.id);
-    const sw = roleSets().filter(s => s.group === g.id && s.netView).map(s => `<i style="background:${s.color}"></i>`).join('');
-    return `<button class="chip filter" data-group="${g.id}" aria-pressed="${on}"><span class="sw" aria-hidden="true">${sw}</span>${g.label}</button>`;
+  $('#net-filters').innerHTML = TEMPOS.filter(t => roleSets().some(s => tempoOf(s) === t.id && s.netView)).map(t => {
+    const on = !state.hidden.has(t.id);
+    const sw = roleSets().filter(s => tempoOf(s) === t.id && s.netView).map(s => `<i style="background:${s.color}"></i>`).join('');
+    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(t.hint)}"><span class="sw" aria-hidden="true">${sw}</span>${t.short}</button>`;
   }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<button class="chip note" data-goto="court" title="Back-row sets are shown on the court">Back row → Court</button>` : '');
-  // legend
-  $('#net-legend').innerHTML = GROUPS.filter(g => g.id !== 'backrow' && roleSets().some(s => s.group === g.id)).map(g => {
-    const items = roleSets().filter(s => s.group === g.id).map(s =>
-      `<button class="lg" data-select="${s.id}" data-set="${s.id}" ${state.hidden.has(g.id) ? 'aria-disabled="true"' : ''}><i style="background:${s.color}"></i><span>${esc(s.name)} <small>· ${esc(s.tempo)} · ${esc(s.hitter)}</small></span></button>`).join('');
-    return `<h4>${g.label} · ${g.hint}</h4>${items}`;
-  }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<h4>Back row</h4><p class="hint" style="grid-column:1/-1">${esc(roleSets().filter(s => s.group === 'backrow' && !s.modifier).map(s => s.name).join(' · '))} are set deeper and higher than front-row balls and are drawn on the <button class="btn small" data-goto="court">Court view</button>. Add "BIC" to call any of them fast and low.</p>` : '');
+  // legend, by tempo
+  $('#net-legend').innerHTML = TEMPOS.filter(t => roleSets().some(s => tempoOf(s) === t.id && s.netView)).map(t => {
+    const items = roleSets().filter(s => tempoOf(s) === t.id && s.netView).map(s =>
+      `<button class="lg" data-select="${s.id}" data-set="${s.id}" ${state.hidden.has(t.id) ? 'aria-disabled="true"' : ''}><i style="background:${s.color}"></i><span>${esc(s.name)} <small>· ${esc(effectiveHitter(s))}</small></span></button>`).join('');
+    return `<h4>${t.label} · ${t.hint}</h4>${items}`;
+  }).join('') + (roleSets().some(s => s.group === 'backrow') ? `<h4>Back row</h4><p class="hint" style="grid-column:1/-1">${esc(roleSets().filter(s => s.group === 'backrow' && !s.modifier).map(s => s.name).join(' · '))} are ${esc(tempoMeta(tempoOf(roleSets().find(s => s.group === 'backrow' && !s.modifier) || SETS[0])).label.toLowerCase())} and are drawn on the <button class="btn small" data-goto="court">Court view</button>. Add "BIC" to run any of them ${esc(tempoMeta(tempoOf(byId('bic') || SETS[0])).label.toLowerCase())}.</p>` : '');
   applySelection();
 }
 
@@ -1115,7 +1123,14 @@ function flight(s, o) {
   const horiz = Math.hypot(p1.x - p0.x, p1.y - p0.y);
   return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH };
 }
-function tempoFor(T) { return Object.keys(WORLD.tempoBands).find(k => T >= WORLD.tempoBands[k][0] && T < WORLD.tempoBands[k][1]) || '3rd'; }
+function tempoFromPhase(p) { const b = WORLD.tempoPhases; return p >= b.minus ? 'minus' : p >= b['1st'] ? '1st' : p >= b['2nd'] ? '2nd' : '3rd'; }
+function tempoOf(s, o) {
+  if (s.modifier) { const ref = SETS.find(x => x.group === 'backrow' && !x.modifier); const f = ref && flight(ref, { bic: true, netH: WORLD.netHeights.men }); return f ? tempoFromPhase(timeline(f).phase) : '1st'; }
+  const f = flight(s, Object.assign({ netH: WORLD.netHeights.men }, o || {})); if (!f) return '2nd';
+  return tempoFromPhase(timeline(f).phase);
+}
+function tempoMeta(id) { return TEMPOS.find(t => t.id === id) || { id, label: id, short: id, hint: '' }; }
+function tempoLabel(s, o) { return tempoMeta(tempoOf(s, o)).label; }
 function flightMs(s) { const f = flight(s, { bic: state.bic }); return (f ? f.T * 1000 : 1000) * (state.slow ? 2.5 : 1); }
 function flightSummary(s) {
   const f = flight(s, { bic: state.bic && s.group === 'backrow' });
@@ -1240,7 +1255,7 @@ function v3Scene(L, sets, opts) {
     const d = bezierThrough(pts);
     const isBack = s.group === 'backrow', bic = opts.bic && isBack;
     const flat = s.netView && s.netView.flat;
-    o += `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">`;
+    o += `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(tempoLabel(s))}, ${esc(effectiveHitter(s))}" style="color:${s.color}">`;
     o += `<path class="hit" d="${d}" stroke-width="${L.hit}"/>`;
     // approach on the floor (shown for the selected set)
     const ap = approachWorld(s, s.routeShape === 'j' ? 12 : 1, { bic });
@@ -1284,13 +1299,13 @@ function v3Scene(L, sets, opts) {
 }
 function render3D() {
   const L = v3Layout();
-  const sets = roleSets().filter(s => !s.modifier && !state.hidden.has(s.group));
+  const sets = roleSets().filter(s => !s.modifier && !state.hidden.has(tempoOf(s)));
   $('#v3-scene').innerHTML = v3Scene(L, sets, { bic: state.bic });
   renderStrip('strip-3d', sets);
-  $('#v3-filters').innerHTML = GROUPS.filter(g => roleSets().some(s => s.group === g.id && !s.modifier)).map(g => {
-    const on = !state.hidden.has(g.id);
-    const sw = roleSets().filter(s => s.group === g.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
-    return `<button class="chip filter" data-group="${g.id}" aria-pressed="${on}"><span class="sw" aria-hidden="true">${sw}</span>${g.label}</button>`;
+  $('#v3-filters').innerHTML = TEMPOS.filter(t => roleSets().some(s => tempoOf(s) === t.id && !s.modifier)).map(t => {
+    const on = !state.hidden.has(t.id);
+    const sw = roleSets().filter(s => tempoOf(s) === t.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
+    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(t.hint)}"><span class="sw" aria-hidden="true">${sw}</span>${t.label}</button>`;
   }).join('');
   $$('#v3-presets button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-cam') === state.cam.preset)));
   $('#v3-bic').setAttribute('aria-pressed', String(state.bic));
@@ -1353,7 +1368,7 @@ let v3raf = null;
 /* ============================================================
    CHECKS — verify every set against what it should represent
    ============================================================ */
-const VALID = { groups: GROUPS.map(g => g.id), tempos: ['1st', '2nd', '3rd'], hitters: ['MB', 'OH', 'OPP', 'Back row'], how: ['signal', 'call', 'both'], pass: ['perfect', 'good', 'any'] };
+const VALID = { groups: GROUPS.map(g => g.id), hitters: ['MB', 'OH', 'OPP', 'Back row'], how: ['signal', 'call', 'both'], pass: ['perfect', 'good', 'any'] };
 const in01 = v => typeof v === 'number' && v >= 0 && v <= 1;
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
 /* Each rule returns findings: { id, ok, msg, level } — level 'err' or 'warn'. Rules about specific
@@ -1366,7 +1381,6 @@ const RULES = [
       if (!s.id) miss.push('id'); if (!s.name) miss.push('name');
       if (!VALID.groups.includes(s.group)) miss.push('group');
       if (!/^#[0-9a-f]{6}$/i.test(s.color || '')) miss.push('colour');
-      if (!VALID.tempos.includes(s.tempo)) miss.push('tempo');
       if (!VALID.hitters.includes(s.hitter)) miss.push('hitter');
       if (!s.signal || !s.signal.glyph || !s.signal.description) miss.push('signal');
       if (!s.coachingNote) miss.push('coaching note');
@@ -1395,16 +1409,16 @@ const RULES = [
     run: sets => sets.filter(s => s.group === 'quick').map(s => {
       const bad = [];
       if (s.netView && s.netView.peak > 0.25) bad.push(`peak ${s.netView.peak} is above the quick ceiling of 0.25`);
-      if (s.tempo !== '1st') bad.push(`tempo is ${s.tempo}, expected 1st`);
+      if (!['minus', '1st'].includes(tempoOf(s))) bad.push(`derives as ${tempoLabel(s)}; a quick must be minus or first tempo`);
       if (s.hitter !== 'MB') bad.push(`hitter is ${s.hitter}, expected MB`);
-      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'low, 1st tempo, middle' };
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `low, ${tempoLabel(s).toLowerCase()}, middle` };
     }) },
   { name: 'Medium sets loop at mid height', why: 'A 2 / Back 2 / 32 sits between the quicks and the high balls so the hitter has a beat to see it.',
     run: sets => sets.filter(s => s.group === 'medium').map(s => {
       const bad = [];
       if (s.netView && !(s.netView.peak >= 0.35 && s.netView.peak <= 0.6)) bad.push(`peak ${s.netView.peak} is outside 0.35–0.6`);
-      if (s.tempo !== '2nd') bad.push(`tempo is ${s.tempo}, expected 2nd`);
-      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'mid-height, 2nd tempo' };
+      if (tempoOf(s) !== '2nd') bad.push(`derives as ${tempoLabel(s)}; a medium ball should be second tempo`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'mid-height, second tempo' };
     }) },
   { name: 'Outside sets go to the left antenna for the OH', why: 'The 4, Hut and Go are the same spot at different heights; only height separates them.',
     run: sets => sets.filter(s => s.group === 'outside').map(s => {
@@ -1563,8 +1577,8 @@ const RULES = [
       for (let r = 1; r <= 6; r++) { const a = availability(s, r); if (!a.ok) continue; const e = effectiveFallback(s, r); if (s.pass !== 'any' && (!e || !e.set)) bad.push(`R${r}: no fallback for the ${a.hitter}`); else if (e && e.set && e.changed) notes.push(`R${r}: ${e.set.name}${e.other ? ' (another hitter)' : ''}`); }
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || (notes.length ? `fallback follows the hitter — ${notes.join(', ')}` : (s.fallback ? `${byId(s.fallback).name} in every rotation` : 'always on')) };
     }) },
-  { name: 'Pass requirement fits the tempo', why: 'A first-tempo ball cannot be run off a bad pass; the high balls must be runnable off anything.',
-    run: sets => sets.filter(s => !s.modifier).map(s => { const P = { any: 1, good: 2, perfect: 3 }, bad = []; if (s.tempo === '1st' && P[s.pass] < 2) bad.push('1st tempo off any pass'); if (s.tempo === '3rd' && s.pass !== 'any') bad.push(`3rd tempo should be runnable off any pass, needs ${s.pass}`); return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${s.tempo} tempo, ${s.pass} pass` }; }) },
+  { name: 'Pass requirement fits the tempo', why: 'Minus and first-tempo balls cannot be run off a bad pass; the high balls must be runnable off anything.',
+    run: sets => sets.filter(s => !s.modifier).map(s => { const P = { any: 1, good: 2, perfect: 3 }, bad = [], t = tempoOf(s); const maxPeak = Math.max(...SETS.filter(x => x.netView).map(x => x.netView.peak)); if ((t === 'minus' || t === '1st') && P[s.pass] < 2) bad.push(`${tempoLabel(s)} off any pass`); if (s.netView && s.netView.peak === maxPeak && s.pass !== 'any') bad.push(`the high ball should be runnable off any pass, needs ${s.pass}`); return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${tempoLabel(s).toLowerCase()}, ${s.pass} pass` }; }) },
   { name: 'Every hitter has an always-on ball and unique calls', why: 'Each role needs one set that works off any pass; calls shouted in a rally must not be confusable.',
     run: sets => {
       const out = [];
@@ -1605,12 +1619,13 @@ const RULES = [
       if (/setter back row/i.test(text) && !sbRots.some(r => availability(s, r).ok)) bad.push('the note mentions the setter back row but the set never runs then');
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || rotationsText(s) };
     }) },
-  { name: 'Hitter timing is derivable', why: 'From hang time we work out where the hitter is at setter contact; a first-tempo ball must have the hitter in the air or planting, a third-tempo ball must let the hitter watch the set.',
-    run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const tl = timeline(f); const bad = []; if (s.tempo === '1st' && tl.phase < 0.5) bad.push('1st tempo but the hitter is barely into the approach at contact'); if (s.tempo === '3rd' && tl.phase > 0.3) bad.push('3rd tempo but the hitter is already running at contact'); return { id: s.id, ok: !bad.length, level: 'warn', msg: bad.join('; ') || timingText(s, tl) }; }) },
+  { name: 'Tempo classes follow from timing', why: 'Tempo is derived from where the hitter is at setter contact: minus (leaving the floor), first (planting), second (mid-approach), third (starts on the set). The named sets must land in the classes the game gives them.',
+    run: () => {
+      const expect = { one: 'minus', push1: 'minus', back1: 'minus', shoot: '1st', slide: '1st', two: '2nd', back2: '2nd', rip: '2nd', go: '2nd', red: '2nd', hut: '3rd', four: '3rd', five: '3rd', A: '2nd', B: '2nd', pipe: '2nd', C: '2nd', D: '2nd', bic: '1st' };
+      return Object.keys(expect).filter(id => byId(id)).map(id => { const s = byId(id), t = tempoOf(s), f = s.modifier ? null : flight(s, { netH: WORLD.netHeights.men }); const ph = f ? timeline(f).phase : null; return { id, ok: t === expect[id], level: 'err', msg: `${tempoMeta(t).label}${ph != null ? ` (${Math.round(ph * 100)}% through the approach at contact)` : ''}${t === expect[id] ? '' : `, expected ${tempoMeta(expect[id]).label}`}` }; });
+    } },
   { name: 'BIC is a tempo modifier, not a location', why: 'It is signalled with a zone signal and means "run it fast and low"; it has no spot of its own.',
-    run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && b.tempo === '1st'; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry, 1st tempo' : 'should be modifier: true with no netView / courtView, group backrow, tempo 1st' }]; } },
-  { name: 'Declared tempo matches the hang time from the flight model', why: 'Height decides how long the ball is in the air; the tempo label should agree with the physics.',
-    run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const t = tempoFor(f.T); return { id: s.id, ok: t === s.tempo, level: 'warn', msg: `${f.T.toFixed(2)} s in the air → ${t} tempo` + (t === s.tempo ? '' : `, but declared ${s.tempo}`) }; }) },
+    run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && tempoOf(b) === '1st'; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry; a BIC ball derives as first tempo' : 'should be modifier: true with no netView / courtView, group backrow, and derive as first tempo' }]; } },
   { name: 'Front-row balls are contacted above the net, back-row balls behind the line', why: 'Sanity check on the 3D model: contact heights above the tape, contact depth in metres.',
     run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const isBack = s.group === 'backrow'; const ok = f.p1.z > f.netH && f.apex.z >= f.p1.z && (isBack ? f.p1.y > 2 : f.p1.y < 1.5); return { id: s.id, ok, level: 'err', msg: `contact ${(f.p1.z - f.netH).toFixed(2)} m above the tape, ${f.p1.y.toFixed(1)} m off the net` }; }) }
 ];
@@ -1640,7 +1655,7 @@ function renderChecks() {
     const bad = c.results.flatMap(r => r.findings).filter(x => x.id === s.id && !x.ok);
     const st = bad.length ? (bad.some(x => x.level !== 'warn') ? 'err' : 'warn') : 'ok';
     const z = zonesOf(s).join('/') || '–';
-    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td class="m-hide">${esc(groupOf(s.group).label)}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(s.tempo)}${f ? ` <span class="hint">(${tempoFor(f.T)})</span>` : ''}</td>` +
+    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td class="m-hide">${esc(groupOf(s.group).label)}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(tempoMeta(tempoOf(s)).short)}</td>` +
       `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num m-hide">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.peakH.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td class="m-hide">${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
   }).join('');
   $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th class="m-hide">Group</th><th>Hitter</th><th>Tempo</th><th class="num">Lands</th><th>Zone</th><th class="num m-hide">Off net</th><th class="num">Apex</th><th class="num">Hang</th><th class="m-hide">Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
@@ -1674,7 +1689,7 @@ function renderSignals() {
       glyphHtml(s, 'glyph') +
       `<div class="name">${esc(s.name)}</div>` +
       `<div class="desc">${esc(s.signal.description)}</div>` +
-      `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)}</span><span class="tag">${esc(s.hitter)}</span>${!s.modifier && [1, 2, 3, 4, 5, 6].some(r => !availability(s, r).ok) ? `<span class="tag rot">${esc([1, 2, 3, 4, 5, 6].filter(r => availability(s, r).ok).map(r => 'R' + r).join(' '))}</span>` : ''}</div>` +
+      `<div class="meta"><span class="tag grp">${esc(tempoLabel(s))}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.hitter)}</span>${!s.modifier && [1, 2, 3, 4, 5, 6].some(r => !availability(s, r).ok) ? `<span class="tag rot">${esc([1, 2, 3, 4, 5, 6].filter(r => availability(s, r).ok).map(r => 'R' + r).join(' '))}</span>` : ''}</div>` +
       `<div class="actions">${s.courtView ? `<button class="btn small" data-show="3d" data-id="${s.id}">Show in 3D</button>` : ''}${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Court</button>` : ''}</div>` +
       `</div>`;
   };
@@ -1695,7 +1710,7 @@ function renderDetail() {
   el.style.setProperty('--c', s.color);
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
   const onNow = s.modifier || availability(s, state.rotation).ok;
-  const canPlay = onNow && inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(s.group)) || (state.tab === 'court' && s.courtView) || (state.tab === '3d' && !s.modifier && !state.hidden.has(s.group)));
+  const canPlay = onNow && inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(tempoOf(s))) || (state.tab === 'court' && s.courtView) || (state.tab === '3d' && !s.modifier && !state.hidden.has(tempoOf(s))));
   const fl = s.modifier ? null : flight(s, { bic: state.bic && s.group === 'backrow' });
   const tl = fl ? timeline(fl) : null;
   const hitterView = state.role !== 'setter';
@@ -1709,7 +1724,7 @@ function renderDetail() {
     where = s.group === 'backrow'
       ? `Zone ${z}: contact ${fl.p1.y.toFixed(1)} m off the net, ${fl.p1.x.toFixed(1)} m from the left sideline. Take off behind the 3-m line.`
       : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net, ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
-    where += ` Hang ${fl.T.toFixed(2)} s · ${s.tempo} tempo${s.netView && s.netView.flat ? ' · flat' : ''}.`;
+    where += ` Hang ${fl.T.toFixed(2)} s · ${tempoLabel(s, { bic: state.bic && s.group === 'backrow' }).toLowerCase()}${s.netView && s.netView.flat ? ' · flat' : ''}.`;
   }
   const rows = [];
   rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
@@ -1723,7 +1738,7 @@ function renderDetail() {
   if (!s.modifier) rows.push(['Rotations', esc(rotationsText(s))]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
-    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(g.label)}${s.hitter !== g.label ? ` · ${esc(effectiveHitter(s))}${effectiveHitter(s) !== s.hitter ? ' (this rotation)' : ''}` : ''}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
+    `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(tempoLabel(s, { bic: state.bic && s.group === 'backrow' }))}${s.hitter !== g.label ? ` · ${esc(effectiveHitter(s))}${effectiveHitter(s) !== s.hitter ? ' (this rotation)' : ''}` : ''}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
     (!s.modifier && !availability(s, state.rotation).ok ? `<p class="banner">Not run in rotation ${state.rotation}: ${esc(availability(s, state.rotation).why)}.</p>` : '') +
     `<div class="acts">` +
       (canPlay ? `<button class="btn primary" data-play>▶ Play</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
@@ -1753,8 +1768,8 @@ function select(id, opts) {
   if (!(opts && opts.silent)) {
     // keep the selected set visible in the net view if its group is filtered out
     const s = id && byId(id);
-    if (s && state.hidden.has(s.group) && state.tab === 'net' && s.netView) { state.hidden.delete(s.group); renderNet(); }
-    if (s && state.hidden.has(s.group) && state.tab === '3d') { state.hidden.delete(s.group); render3D(); }
+    if (s && state.hidden.has(tempoOf(s)) && state.tab === 'net' && s.netView) { state.hidden.delete(s.group); renderNet(); }
+    if (s && state.hidden.has(tempoOf(s)) && state.tab === '3d') { state.hidden.delete(s.group); render3D(); }
   }
 
 }
@@ -1867,7 +1882,7 @@ function play3D(s) {
    ============================================================ */
 function quizPool() {
   const q = state.quiz;
-  return roleSetsAll().filter(s => (q.group === 'all' || s.group === q.group) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
+  return roleSetsAll().filter(s => (q.group === 'all' || tempoOf(s) === q.group) && (q.mode === 'signal' || (!s.modifier && (s.netView || s.courtView))));
 }
 function quizNext() {
   const q = state.quiz;
@@ -1882,8 +1897,8 @@ function quizNext() {
   const id = q.queue.shift();
   const answer = byId(id);
   const distractorPool = SETS.filter(s => s.id !== id && (q.mode === 'signal' || !s.modifier));
-  const same = shuffle(distractorPool.filter(s => s.group === answer.group && roleHas(s)));
-  const mine = shuffle(distractorPool.filter(s => s.group !== answer.group && roleHas(s)));
+  const same = shuffle(distractorPool.filter(s => tempoOf(s) === tempoOf(answer) && roleHas(s)));
+  const mine = shuffle(distractorPool.filter(s => tempoOf(s) !== tempoOf(answer) && roleHas(s)));
   const others = shuffle(distractorPool.filter(s => !roleHas(s)));
   const distractors = same.concat(mine, others).slice(0, 3);
   q.current = id;
@@ -1905,7 +1920,7 @@ function quizAnswer(id) {
 function renderQuiz() {
   const q = state.quiz;
   $$('#tab-quiz .seg button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-mode') === q.mode)));
-  const groupsMine = GROUPS.filter(g => roleSetsAll().some(s => s.group === g.id));
+  const groupsMine = TEMPOS.filter(t => roleSetsAll().some(s => tempoOf(s) === t.id));
   if (q.group !== 'all' && !groupsMine.some(g => g.id === q.group)) q.group = 'all';
   $('#quiz-groups').innerHTML = [{ id: 'all', label: state.role === 'setter' ? 'All sets' : 'All my sets' }].concat(groupsMine).map(g =>
     `<button class="chip${q.group === g.id ? ' active' : ''}" data-qgroup="${g.id}" aria-pressed="${q.group === g.id}">${g.label}</button>`).join('');
@@ -1976,14 +1991,14 @@ document.addEventListener('click', e => {
     const g = t.getAttribute('data-group');
     if (state.hidden.has(g)) state.hidden.delete(g); else state.hidden.add(g);
     const s = state.selected && byId(state.selected);
-    if (s && state.hidden.has(s.group)) select(null);
+    if (s && state.hidden.has(tempoOf(s))) select(null);
     if (state.tab === '3d') render3D(); else renderNet(); return;
   }
   if (t.hasAttribute('data-show')) {
     e.stopPropagation();
     select(t.getAttribute('data-id'), { silent: true });
     const s = byId(t.getAttribute('data-id'));
-    if (s && state.hidden.has(s.group)) state.hidden.delete(s.group);
+    if (s && state.hidden.has(tempoOf(s))) state.hidden.delete(s.group);
     showTab(t.getAttribute('data-show'));
     return;
   }
