@@ -178,6 +178,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 /* approach routes appear for the selected set */
 .set .approach-g{opacity:0;transition:opacity .2s}
 .set.sel .approach-g{opacity:1}
+.set.sel .approach{stroke-dasharray:6 4}
 body:not(.has-sel) .set[data-always] .approach-g{opacity:1}
 
 /* role bar */
@@ -347,6 +348,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <div class="chips" id="net-filters" aria-label="Filter groups"></div>
       <div class="scene-wrap"><div id="net-scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play ball">▶ Play</button></div></div>
       <div class="strip" id="strip-net" aria-label="Select a set"></div>
+      <p class="hint" id="net-note" hidden></p>
       <div class="legend" id="net-legend"></div>
     </section>
 
@@ -669,6 +671,7 @@ function timingText(s, tl) {
   if (s.timingNote) return s.timingNote;
   const f = tl.phase;
   if (f >= 1) return 'Already in the air when the setter touches the ball.';
+  if (f >= 0.8) return 'Leaving the floor as the setter touches the ball — a true quick: be up before the set is.';
   if (f >= 0.65) return 'Planting for takeoff as the setter touches the ball.';
   if (f >= 0.3) return 'On your second step when the setter touches the ball.';
   if (f >= 0.05) return 'First step as the setter touches the ball.';
@@ -745,12 +748,15 @@ function netSetMarkup(L, s, opts) {
   if (s.approach && showLabels) {
     const from = v.run ? v.run.from : s.approach[0].x, to = v.run ? v.run.to : s.approach[1].x, tk = v.run ? v.run.takeoff : s.approach[1].x;
     const x0 = nx(L, from), x1 = nx(L, to), xt = nx(L, tk), y = L.groundY, dir = x1 >= x0 ? 1 : -1;
+    const lateral = Math.abs(to - from) >= 0.1;   // a run along the net is worth drawing side-on; a straight approach is just a takeoff spot
+    const inward = xt < L.W / 2 ? 1 : -1;          // keep labels pointing into the court so they never leave the drawing
     run = `<g class="approach-g">` +
-          `<path class="approach" d="M${r1(x0)} ${y} L${r1(x1)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round" marker-end="url(#arrow-${s.id})"/>` +
-          `<circle cx="${r1(x0)}" cy="${y}" r="${r1(L.fs * 0.28)}" fill="${s.color}"/>` +
+          (lateral ? `<path class="approach" d="M${r1(x0)} ${y} L${r1(x1)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round" marker-end="url(#arrow-${s.id})"/>` +
+                     `<circle cx="${r1(x0)}" cy="${y}" r="${r1(L.fs * 0.28)}" fill="${s.color}"/>` +
+                     `<text class="lbl" x="${r1(x0 - dir * L.fs * 0.6)}" y="${r1(y + L.fs * 0.3)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${dir > 0 ? 'end' : 'start'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.hitter)} run</text>`
+                   : `<path class="approach" d="M${r1(xt)} ${r1(y + L.fs * 0.9)} L${r1(xt)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round"/>`) +
           `<path d="M${r1(xt)} ${r1(y - L.fs * 0.6)} v${r1(L.fs * 1.2)}" stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"/>` +
-          `<text class="lbl" x="${r1(xt - dir * L.fs * 0.5)}" y="${r1(y + L.fs * 1.55)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${dir > 0 ? 'end' : 'start'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.takeoffLabel || 'takeoff')}</text>` +
-          `<text class="lbl" x="${r1(x0 - dir * L.fs * 0.6)}" y="${r1(y + L.fs * 0.3)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${dir > 0 ? 'end' : 'start'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.hitter)} run</text>` +
+          `<text class="lbl" x="${r1(xt + inward * L.fs * 0.5)}" y="${r1(y + L.fs * 1.55)}" font-size="${r1(L.fs * 0.8)}" text-anchor="${inward > 0 ? 'start' : 'end'}" stroke-width="${r1(L.fs * 0.28)}" fill="${s.color}">${esc(s.takeoffLabel || (lateral ? 'takeoff' : `${s.hitter} takes off here, straight in`))}</text>` +
           `</g>`;
   }
   return `<g class="set" data-set="${s.id}"${s.approachAlways ? ' data-always="1"' : ''} tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">` +
@@ -1516,11 +1522,15 @@ function select(id, opts) {
 function applySelection() {
   const sel = state.selected;
   document.body.classList.toggle('has-sel', !!sel && !(byId(sel) || {}).modifier);
+  const scopes = ['#net-scene', '#court-scene', '#v3-scene', '#strip-net', '#strip-court', '#strip-3d', '#net-legend', '#cards', '#cards-more', '#checks-spec'];
+  const hasSel = {};
+  scopes.forEach(sc => { const root = $(sc); hasSel[sc] = !!(root && sel && root.querySelector(`[data-set="${sel}"]`)); });
+  const scopeOf = el => scopes.find(sc => el.closest(sc));
   $$('[data-set]').forEach(el => {
     const id = el.getAttribute('data-set');
     const s = byId(id);
     let dim = false, on = false;
-    if (sel) { on = id === sel; dim = !on; }
+    if (sel) { on = id === sel; const sc = scopeOf(el); dim = !on && (!sc || hasSel[sc]); }
     else if (state.zone && el.closest('#tab-court')) { dim = !zonesOf(s).includes(state.zone); }
     el.classList.toggle('dim', dim);
     el.classList.toggle('sel', on);
@@ -1530,6 +1540,8 @@ function applySelection() {
   $$('#checks-spec tr[data-set]').forEach(tr => tr.classList.toggle('sel', tr.getAttribute('data-set') === sel));
   $$('#court-zonechips [data-zone]').forEach(c => { const on = !sel && state.zone === Number(c.getAttribute('data-zone')); c.classList.toggle('active', on); c.setAttribute('aria-pressed', String(on)); });
   scrollStripsToSelection();
+  const note = $('#net-note'), ss = sel && byId(sel);
+  if (note) { note.hidden = !(ss && !ss.netView && !ss.modifier); if (ss && !ss.netView) note.textContent = `${ss.name} is a back-row ball — the side view only shows front-row sets. See it on the Court or in 3D.`; }
 }
 
 /* ============================================================
@@ -1581,12 +1593,11 @@ function play() {
     }
   }, () => { ball.style.opacity = 0; hitter.style.opacity = 0; });
 }
-function play3D(s) {
-  const ap = approachWorld(s, 24);
-  const q = () => ({ ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter') });
+const q3 = () => ({ ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter') });
+function frame3D(s, ap, t, fl, tl) {
   const lerp = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f });
-  runSequence(s, (t, fl, tl) => {
-    const el = q(); if (!el.ball || !v3cam) return;
+  {
+    const el = q3(); if (!el.ball || !v3cam) return;
     let w;
     if (t < 0) { // the pass arriving into the setter's hands
       const from = { x: fl.p0.x + 0.4, y: fl.p0.y + 2.2, z: fl.p0.z + 1.6 }, tStart = Math.min(tl.startAt, 0) - 0.25;
@@ -1605,7 +1616,11 @@ function play3D(s) {
       const hp = v3cam.project(wp);
       el.hitter.style.opacity = 1; el.hitter.setAttribute('transform', `translate(${r1(hp.x)} ${r1(hp.y)})`);
     }
-  }, () => { const e = q(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; } });
+  }
+}
+function play3D(s) {
+  const ap = approachWorld(s, 24);
+  runSequence(s, (t, fl, tl) => frame3D(s, ap, t, fl, tl), () => { const e = q3(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; } });
 }
 
 /* ============================================================
@@ -1795,7 +1810,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { SETS, WORLD, flight, runChecks, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { SETS, WORLD, flight, timeline, hitterPhase, timingText, approachWorld, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>
