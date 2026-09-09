@@ -442,7 +442,7 @@ const SETS = [
   { id: 'one', name: '1', aliases: ['Quick', 'Front quick'], group: 'quick', color: '#ff4d4d', tempo: '1st', hitter: 'MB',
     call: 'One', how: 'signal', pass: 'perfect', approach: [{ x: 0.44, y: 0.30 }, { x: 0.48, y: 0.10 }], startNote: 'Centre of the net, a step left of the setter, about 3 m off.', useWhen: 'Tight, in-system pass and you are up early — it freezes their middle.', avoidWhen: 'Pass drifts more than a metre off the net.', fallback: 'two',
     signal: { glyph: '☝️', description: 'Index finger up' },
-    coachingNote: 'Middle is already in the air when the ball leaves my hands — a foot above the tape, right in front of me.',
+    coachingNote: 'Middle is already in the air when the ball leaves my hands — half a metre above the tape, right in front of me.',
     netView: { landX: 0.50, peak: 0.15, flat: false, label: { dx: 0, dy: -0.15 } },
     courtView: { x: 0.50, y: 0.08, label: { dx: 0.9 } } },
   { id: 'push1', name: 'Push 1', aliases: ['Push', 'Wide 1'], group: 'quick', color: '#ff7a45', tempo: '1st', hitter: 'MB',
@@ -486,19 +486,19 @@ const SETS = [
 
   // ---- Outside (left antenna) ----
   { id: 'four', name: '4', aliases: ['High outside', 'Hi-ball'], group: 'outside', color: '#34d399', tempo: '3rd', hitter: 'OH',
-    call: 'Four', how: 'both', pass: 'any', approach: [{ x: 0.03, y: 0.42 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Any pass from anywhere — the out-of-system ball. Watch the set go up, then go.', avoidWhen: '', fallback: null,
+    call: 'Four', how: 'both', pass: 'any', approach: [{ x: -0.05, y: 0.36 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Any pass from anywhere — the out-of-system ball. Watch the set go up, then go.', avoidWhen: '', fallback: null,
     signal: { glyph: '4', description: 'Four fingers' },
     coachingNote: 'Highest, widest ball on the board — all the way to the antenna, giving the outside time for a full approach.',
     netView: { landX: 0.03, peak: 1.00, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
   { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', tempo: '2nd', hitter: 'OH',
-    call: 'Hut', how: 'both', pass: 'good', approach: [{ x: 0.03, y: 0.42 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In-system pass and you want to see the block before you commit.', avoidWhen: 'Pass off the net.', fallback: 'four',
+    call: 'Hut', how: 'both', pass: 'good', approach: [{ x: -0.05, y: 0.36 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In-system pass and you want to see the block before you commit.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: '/', description: 'One slash across the chest' },
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
     netView: { landX: 0.03, peak: 0.75, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
   { id: 'go', name: 'Go', aliases: ['Quick outside', 'Shoot 4'], group: 'outside', color: '#a3e635', tempo: '2nd', hitter: 'OH',
-    call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: 0.03, y: 0.42 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
+    call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: -0.05, y: 0.36 }, { x: 0.07, y: 0.12 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
     netView: { landX: 0.03, peak: 0.40, flat: true },
@@ -506,13 +506,13 @@ const SETS = [
 
   // ---- Right side (right antenna) ----
   { id: 'five', name: '5', aliases: ['High right side', 'High back'], group: 'rightside', color: '#a78bfa', tempo: '3rd', hitter: 'OPP',
-    call: 'Five', how: 'both', pass: 'any', approach: [{ x: 0.97, y: 0.42 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Out-of-system ball to the right side.', avoidWhen: '', fallback: null, note51: 'Only when the setter is back row — with the setter front row there is no right-side attacker, so the setter dumps or runs the D.',
+    call: 'Five', how: 'both', pass: 'any', approach: [{ x: 1.05, y: 0.36 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Out-of-system ball to the right side.', avoidWhen: '', fallback: null, note51: 'Only when the setter is back row — with the setter front row there is no right-side attacker, so the setter dumps or runs the D.',
     signal: { glyph: '🖐️', description: 'Open hand, five fingers' },
     coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
     netView: { landX: 0.97, peak: 1.00, flat: false },
     courtView: { x: 0.97, y: 0.08 } },
   { id: 'red', name: 'Red', aliases: ['Right-side Go', 'Quick 5'], group: 'rightside', color: '#e879f9', tempo: '2nd', hitter: 'OPP',
-    call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 0.97, y: 0.42 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'Setter back row only.',
+    call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 1.05, y: 0.36 }, { x: 0.93, y: 0.12 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'Setter back row only.',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
     netView: { landX: 0.97, peak: 0.45, flat: true },
@@ -529,7 +529,7 @@ const SETS = [
   { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', tempo: '2nd', hitter: 'OH',
     call: 'A', how: 'call', pass: 'good', startNote: 'Left back, zone 5, about 5 m off the net.', useWhen: 'Setter front row, you in the back row — it adds a third attacker on the left.', avoidWhen: 'Pass off the net.', fallback: 'four', note51: 'The back-row outside\'s ball when the setter is front row.',
     signal: { glyph: 'A', description: 'Line drawn across the upper chest near one shoulder (the A side)' },
-    coachingNote: 'Left-back attack from zone 5 — set deeper and higher than a front-row ball; take off behind the 10-foot line, land in front of it if you like.',
+    coachingNote: 'Left-back attack from zone 5 — set deeper and higher than a quick; take off behind the 10-foot line, land in front of it if you like.',
     courtView: { x: 0.15, y: 0.30, takeoff: { x: 0.15, y: 0.36 }, start: { x: 0.15, y: 0.55 }, zones: [5] },
     approach: [ { x: 0.15, y: 0.55 }, { x: 0.15, y: 0.36 } ] },
   { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', tempo: '2nd', hitter: 'OH',
@@ -541,13 +541,13 @@ const SETS = [
   { id: 'pipe', name: 'Pipe', aliases: ['Middle back', 'Bic pipe'], group: 'backrow', color: '#0ea5e9', tempo: '2nd', hitter: 'OH',
     call: 'Pipe', how: 'call', pass: 'good', startNote: 'Middle back, zone 6, about 5 m off the net.', useWhen: 'Setter front row: your ball from zone 6, straight over their middle.', avoidWhen: 'Pass off the net.', fallback: 'four', note51: 'The pipe belongs to the outside who has just rotated to the back row.',
     signal: { glyph: '|', description: 'Line drawn straight down the centre of the chest' },
-    coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a front-row ball, takeoff behind the 10-foot line.',
+    coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a quick, takeoff behind the 10-foot line.',
     courtView: { x: 0.50, y: 0.30, takeoff: { x: 0.50, y: 0.36 }, start: { x: 0.50, y: 0.55 }, zones: [6] },
     approach: [ { x: 0.50, y: 0.55 }, { x: 0.50, y: 0.36 } ] },
   { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', tempo: '2nd', hitter: 'OPP',
     call: 'C', how: 'call', pass: 'good', startNote: 'Between zones 6 and 1, about 5 m off the net.', useWhen: 'Setter front row, opposite in the back row, their block leaning left.', avoidWhen: 'Pass off the net.', fallback: 'five', note51: 'Back-row opposite.',
     signal: { glyph: 'C', description: 'Line drawn down the chest between centre and the D spot' },
-    coachingNote: 'Between zones 6 and 1, the mirror of the B — deeper and higher than a front-row ball, takeoff behind the line.',
+    coachingNote: 'Between zones 6 and 1, the mirror of the B — deeper and higher than a quick, takeoff behind the line.',
     courtView: { x: 0.67, y: 0.30, takeoff: { x: 0.67, y: 0.36 }, start: { x: 0.67, y: 0.55 }, zones: [6, 1] },
     approach: [ { x: 0.67, y: 0.55 }, { x: 0.67, y: 0.36 } ] },
   { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', tempo: '2nd', hitter: 'OPP',
@@ -748,7 +748,7 @@ function netSetMarkup(L, s, opts) {
   if (s.approach && showLabels) {
     const from = v.run ? v.run.from : s.approach[0].x, to = v.run ? v.run.to : s.approach[1].x, tk = v.run ? v.run.takeoff : s.approach[1].x;
     const x0 = nx(L, from), x1 = nx(L, to), xt = nx(L, tk), y = L.groundY, dir = x1 >= x0 ? 1 : -1;
-    const lateral = Math.abs(to - from) >= 0.1;   // a run along the net is worth drawing side-on; a straight approach is just a takeoff spot
+    const lateral = Math.abs(to - from) >= 0.1 && from >= 0 && from <= 1;   // a run along the net is worth drawing side-on; from outside the sideline it is just a takeoff spot
     const inward = xt < L.W / 2 ? 1 : -1;          // keep labels pointing into the court so they never leave the drawing
     run = `<g class="approach-g">` +
           (lateral ? `<path class="approach" d="M${r1(x0)} ${y} L${r1(x1)} ${y}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${r1(L.sw)} ${r1(L.sw * 1.6)}" stroke-linecap="round" marker-end="url(#arrow-${s.id})"/>` +
@@ -935,7 +935,7 @@ function courtScene(sets, opts) {
   o += `<path d="M${CL.x0 - 8} ${CL.y0}H${CL.x0 + CL.cw + 8}" stroke="#fff" stroke-width="8" stroke-linecap="round"/>`;
   [CL.x0 - 8, CL.x0 + CL.cw + 8].forEach(ax => { o += `<rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="40" fill="#ff4d4d"/><rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="10" fill="#fff"/><rect x="${ax - 3}" y="${CL.y0 - 6}" width="6" height="10" fill="#fff"/>`; });
   o += `<text x="${r1(cx(0.5))}" y="${CL.y0 - 14}" font-size="${r1(CL.fs * 0.75)}" fill="#8b93ab" text-anchor="middle">NET</text>`;
-  o += `<text transform="rotate(-90)" x="${r1(-cy(1 / 3))}" y="${CL.x0 - 10}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab" text-anchor="middle">3 m / 10 ft line</text>`;
+  o += `<text transform="rotate(-90)" x="${r1(-cy(0.52))}" y="${CL.x0 - 10}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab" text-anchor="middle">↑ 3 m / 10 ft line</text>`;
   o += `<text x="${r1(cx(0.5))}" y="${r1(cy(1) + CL.fs * 1.1)}" font-size="${r1(CL.fs * 0.7)}" fill="#8b93ab" text-anchor="middle">END LINE</text>`;
   // zones
   const zones = [[4, 0, 0], [3, 1, 0], [2, 2, 0], [5, 0, 1], [6, 1, 1], [1, 2, 1]];
@@ -1273,7 +1273,7 @@ const RULES = [
       if (!VALID.pass.includes(s.pass)) miss.push('pass (perfect | good | any)');
       if (!s.useWhen) miss.push('useWhen');
       if (s.fallback && !byId(s.fallback)) miss.push(`fallback "${s.fallback}" is not a set`);
-      if (!s.modifier && !(s.approach && s.approach.length === 2 && s.approach.every(p => in01(p.x) && in01(p.y)))) miss.push('approach [start, takeoff]');
+      if (!s.modifier && !(s.approach && s.approach.length === 2 && s.approach[0].x >= -0.15 && s.approach[0].x <= 1.15 && in01(s.approach[0].y) && in01(s.approach[1].x) && in01(s.approach[1].y))) miss.push('approach [start, takeoff] (start may sit up to 0.15 outside the sidelines)');
       return { id: s.id, ok: !miss.length, level: 'err', msg: miss.length ? 'missing or invalid: ' + miss.join(', ') : 'complete' };
     }) },
   { name: 'Ids, names and signals are unique', why: 'The quiz and the selection logic key on ids; two sets with the same signal cannot be told apart by a hitter.',
@@ -1369,6 +1369,58 @@ const RULES = [
       if (s.group !== 'backrow') { if (Math.abs(t.x - v.x) > 0.12) bad.push(`takeoff x ${t.x} is ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball`); if (t.y < v.y) bad.push('takeoff is closer to the net than the ball'); if (t.y > 0.2) bad.push('takeoff is too deep for a front-row attack'); }
       else if (Math.abs(t.x - v.x) > 0.05) bad.push('takeoff is not in line with the ball');
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `takeoff ${(Math.abs(t.x - v.x) * 9).toFixed(1)} m from the ball, ${(t.y * 9).toFixed(1)} m off the net` };
+    }) },
+  { name: 'Notes agree with the geometry', why: 'Whatever a note claims about where the hitter starts, where the ball goes or how high, the drawn data must match. Recognised phrases are checked; anything else is prose.',
+    run: sets => sets.filter(s => !s.modifier).flatMap(s => {
+      const a0 = s.approach[0], a1 = s.approach[1], v = s.courtView, nv = s.netView || {};
+      const f = flight(s, { netH: WORLD.netHeights.men }), tl = timeline(f);
+      const startText = s.startNote || '', ballText = (s.coachingNote || '') + ' ' + (s.useWhen || '');
+      const out = [];
+      const claim = (ok, phrase, detail) => out.push({ id: s.id, ok, level: 'err', msg: `“${phrase}” — ${detail}` });
+      const m = (re, text) => text.match(re);
+      const startM = a0.x * 9, startD = a0.y * 9;
+      if (m(/outside the left sideline/i, startText)) claim(a0.x < 0, 'outside the left sideline', `start x = ${startM.toFixed(1)} m`);
+      if (m(/outside the right sideline/i, startText)) claim(a0.x > 1, 'outside the right sideline', `start x = ${startM.toFixed(1)} m`);
+      if (m(/inside the sideline/i, startText)) claim(a0.x >= 0 && a0.x <= 1, 'inside the sideline', `start x = ${startM.toFixed(1)} m`);
+      if (m(/^centre|centre of the net/i, startText)) claim(Math.abs(a0.x - 0.5) <= 0.12, 'centre', `start x = ${startM.toFixed(1)} m`);
+      if (m(/^right side/i, startText)) claim(a0.x > 0.7, 'right side', `start x = ${startM.toFixed(1)} m`);
+      if (m(/left back|zone 5/i, startText)) claim(a0.x < 1 / 3 && a0.y > 1 / 3, 'left back / zone 5', `start ${startM.toFixed(1)} m, ${startD.toFixed(1)} m off`);
+      if (m(/middle back|zone 6/i, startText)) claim(a0.x >= 1 / 3 && a0.x < 2 / 3 && a0.y > 1 / 3, 'middle back / zone 6', `start ${startM.toFixed(1)} m, ${startD.toFixed(1)} m off`);
+      if (m(/right back|zone 1\b/i, startText)) claim(a0.x >= 2 / 3 && a0.y > 1 / 3, 'right back / zone 1', `start ${startM.toFixed(1)} m, ${startD.toFixed(1)} m off`);
+      if (m(/between zones 5 and 6/i, startText)) claim(Math.abs(a0.x - 1 / 3) < 0.08, 'between zones 5 and 6', `start x = ${startM.toFixed(1)} m`);
+      if (m(/between zones 6 and 1/i, startText)) claim(Math.abs(a0.x - 2 / 3) < 0.08, 'between zones 6 and 1', `start x = ${startM.toFixed(1)} m`);
+      const off = m(/(\d+(?:\.\d+)?) m off/i, startText); if (off) claim(Math.abs(startD - parseFloat(off[1])) <= 0.7, `${off[1]} m off the net`, `start is ${startD.toFixed(1)} m off`);
+      if (m(/3-m line|10-foot line/i, startText)) claim(Math.abs(startD - 3) <= 0.7, 'at the 3-m line', `start is ${startD.toFixed(1)} m off`);
+      if (m(/drifting left|route left|left along the net/i, startText)) claim(a1.x < a0.x, 'moves left', `run ${startM.toFixed(1)} → ${(a1.x * 9).toFixed(1)} m`);
+      if (m(/left of the setter/i, startText)) claim(a0.x < SETTER_X && SETTER_X - a0.x < 0.2, 'left of the setter', `start x = ${startM.toFixed(1)} m, setter at ${(SETTER_X * 9).toFixed(1)} m`);
+      if (m(/cross behind|run behind|runs behind/i, startText + ' ' + ballText)) claim(a1.x > SETTER_X, 'runs behind the setter', `takeoff at ${(a1.x * 9).toFixed(1)} m, setter at ${(SETTER_X * 9).toFixed(1)} m`);
+      if (m(/in front of the setter/i, startText)) claim(a0.x < SETTER_X, 'starts in front of the setter', `start x = ${startM.toFixed(1)} m`);
+      if (m(/at an angle/i, startText)) claim(Math.abs(a1.x - a0.x) > 0.08, 'comes in at an angle', `run moves ${(Math.abs(a1.x - a0.x) * 9).toFixed(1)} m sideways`);
+      if (s.netView) {
+        if (m(/halfway to the left antenna/i, ballText)) claim(Math.abs(nv.landX - SETTER_X / 2) < 0.06, 'halfway to the left antenna', `lands at ${(nv.landX * 9).toFixed(1)} m, halfway is ${(SETTER_X / 2 * 9).toFixed(1)} m`);
+        if (m(/halfway between the middle and the left antenna/i, ballText)) claim(Math.abs(nv.landX - 0.25) < 0.06, 'halfway between the middle and the left antenna', `lands at ${(nv.landX * 9).toFixed(1)} m`);
+        if (m(/all the way to the antenna|to the (left )?antenna\b/i, ballText) && s.group === 'outside') claim(nv.landX <= 0.1, 'to the left antenna', `lands ${(nv.landX * 9).toFixed(1)} m from it`);
+        if (m(/to the right antenna/i, ballText)) claim(nv.landX >= 0.85, 'to the right antenna', `lands ${((1 - nv.landX) * 9).toFixed(1)} m from it`);
+        if (m(/over my shoulder|behind me|over the top of my head|toward the right antenna/i, ballText)) claim(nv.landX > SETTER_X, 'behind the setter', `lands at ${(nv.landX * 9).toFixed(1)} m, setter at ${(SETTER_X * 9).toFixed(1)} m`);
+        if (m(/middle of the net/i, ballText)) claim(Math.abs(nv.landX - 0.5) <= 0.08, 'middle of the net', `lands at ${(nv.landX * 9).toFixed(1)} m`);
+        if (m(/right in front of me/i, ballText)) claim(nv.landX < SETTER_X && SETTER_X - nv.landX < 0.1, 'right in front of the setter', `lands ${((SETTER_X - nv.landX) * 9).toFixed(1)} m in front`);
+        if (m(/same height as a 4/i, ballText) && byId('four')) claim(nv.peak === byId('four').netView.peak, 'same height as a 4', `peak ${nv.peak} vs ${byId('four').netView.peak}`);
+        if (m(/highest/i, ballText)) claim(nv.peak === Math.max(...SETS.filter(x => x.netView).map(x => x.netView.peak)), 'highest ball', `peak ${nv.peak}`);
+        if (m(/higher than a go/i, ballText) && byId('go')) claim(nv.peak > byId('go').netView.peak, 'higher than a Go', `peak ${nv.peak} vs Go ${byId('go').netView.peak}`);
+        if (m(/faster than a 4/i, ballText) && byId('four')) claim(f.T < flight(byId('four'), { netH: WORLD.netHeights.men }).T, 'faster than a 4', `${f.T.toFixed(2)} s`);
+        if (m(/flat/i, ballText) && m(/flat and fast|flat, fast|fast and flat/i, ballText)) claim(!!nv.flat, 'flat', nv.flat ? 'drawn flat' : 'not marked flat');
+        const above = m(/(half a metre|a foot|(\d+(?:\.\d+)?) m) above the tape/i, ballText);
+        if (above) { const want = above[1].toLowerCase() === 'half a metre' ? 0.5 : above[1].toLowerCase() === 'a foot' ? 0.3 : parseFloat(above[2]); claim(Math.abs(f.peakH - want) <= 0.2, `${above[1]} above the tape`, `apex is ${f.peakH.toFixed(2)} m above the tape`); }
+        if (m(/second step/i, ballText)) claim(tl.phase >= 0.3 && tl.phase < 0.65, 'on the second step at contact', timingText(s, tl));
+        if (m(/already in the air/i, ballText)) claim(tl.phase >= 0.8, 'already in the air at contact', timingText(s, tl));
+        if (m(/one foot/i, ballText)) claim(/one-foot/i.test(s.takeoffLabel || ''), 'takes off on one foot', s.takeoffLabel || 'no takeoff label');
+        if (m(/a step further left/i, ballText) && byId('one')) claim(nv.landX < byId('one').netView.landX, 'a step further left than the 1', `lands at ${(nv.landX * 9).toFixed(1)} m vs 1 at ${(byId('one').netView.landX * 9).toFixed(1)} m`);
+      } else {
+        if (m(/deeper and higher than a quick/i, ballText)) { const q = SETS.filter(x => x.group === 'quick' && x.netView); claim(f.p1.y > 2 && q.every(x => WORLD.backrow.peak > x.netView.peak), 'deeper and higher than a quick', `contact ${f.p1.y.toFixed(1)} m off, peak ${WORLD.backrow.peak}`); }
+        const z = m(/from zone (\d)/i, ballText); if (z) claim(zonesOf(s).includes(Number(z[1])), `from zone ${z[1]}`, `zone ${zonesOf(s).join('/')}`);
+        if (m(/behind the (10-foot |3-m )?line/i, ballText)) claim(a1.y > 1 / 3, 'takeoff behind the line', `takeoff ${(a1.y * 9).toFixed(1)} m off the net`);
+      }
+      return out.length ? out : [{ id: s.id, ok: true, msg: 'no checkable phrases' }];
     }) },
   { name: 'Hitter timing is derivable', why: 'From hang time we work out where the hitter is at setter contact; a first-tempo ball must have the hitter in the air or planting, a third-tempo ball must let the hitter watch the set.',
     run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const tl = timeline(f); const bad = []; if (s.tempo === '1st' && tl.phase < 0.5) bad.push('1st tempo but the hitter is barely into the approach at contact'); if (s.tempo === '3rd' && tl.phase > 0.3) bad.push('3rd tempo but the hitter is already running at contact'); return { id: s.id, ok: !bad.length, level: 'warn', msg: bad.join('; ') || timingText(s, tl) }; }) },
