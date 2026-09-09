@@ -34,7 +34,7 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 
 | Tab | What it shows |
 | --- | --- |
-| 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
+| 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Filter by tempo (minus, first, second, third). Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
 | Diagrams | The two flat views. **Net** is the side view: height and landing spot tell sets apart. **Court** is top-down: front-row landing spots along the net, back-row attacks with start point, dotted approach, takeoff behind the 3 m line and set target; tap a zone number to highlight sets landing there. |
 | Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show in 3D" / "Show on net" / "Show on court". |
 | Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), optional group filter. |
@@ -66,9 +66,14 @@ metres with the constants in `WORLD` (just below `SETS`): net height, where the 
 ball, how far above the tape a hitter contacts it, and how high a `peak = 1` ball goes. Hang time comes
 from gravity alone, so a 1 hangs about 0.5 s and a 4 about 1.5 s. Hitter timing follows from it:
 a full approach takes `WORLD.approachSec` (1.1 s) and the ball is met `WORLD.riseSec` (0.35 s)
-after takeoff, so the card can say where the hitter is when the setter touches the ball. Tempo bands (1st < 0.85 s, 2nd
-0.85–1.45 s, 3rd above) are in `WORLD.tempoBands`; the Checks tab warns when a set's declared `tempo`
-disagrees with its physics.
+after takeoff, so the card can say where the hitter is when the setter touches the ball.
+
+**Tempo is derived, not typed.** It is how far through the approach the hitter is at setter contact
+(`WORLD.tempoPhases`): leaving the floor or already up is **minus tempo** (1, Push 1, Back 1);
+planting is **first tempo** (3/Shoot, Slide, any BIC ball); mid-approach is **second tempo** (2,
+Back 2, 32, Go, Red, A, B, Pipe, C, D); starting on the set is **third tempo** (Hut, 4, 5). Filters,
+the legend, the quiz and the cards all classify by tempo. Raise or lower a set's `peak` and its
+tempo class moves with it; the Checks tab confirms the named sets land where the game puts them. 
 
 ## Editing the `SETS` array
 
@@ -100,7 +105,7 @@ Every view (net, court, cards, quiz) renders from this one array. Each set is on
   courtView: { x: 0.03, y: 0.08 } }                      // top-down
 ```
 
-- **Rename a set / change its signal:** edit `name`, `aliases`, `signal.glyph`, `signal.description`, `coachingNote`. `glyph` can be an emoji (☝️ ✌️ 🖐️ ✊ 🤙) or short text ("3", "A"); text is drawn large in the set's colour.
+- **Rename a set / change its signal:** edit `name`, `aliases`, `signal.glyph`, `signal.description`, `coachingNote`. There is no tempo field: tempo comes from the physics. `glyph` can be an emoji (☝️ ✌️ 🖐️ ✊ 🤙) or short text ("3", "A"); text is drawn large in the set's colour.
 - **Move a set on the net:** `netView.landX` is 0 (left antenna) → 1 (right antenna); `peak` is 0 → 1 where 1 is the height of a 4 or 5; `flat: true` draws a pushed, dashed, low ball. Optional `label: { at: 'apex' | 'band', dx, dy }` nudges the label (units are font sizes) if two labels collide after your edits. Optional `run: { from, to, takeoff }` draws a dotted ground path for a running hitter (used by the Slide).
 - **Move a set on the court:** `courtView.x` is left sideline → right sideline, `y` is net → end line, both 0 → 1. Every set has an `approach: [start]` point; the takeoff and the jump onto the ball are derived, so the route always ends at the ball, and the Checks tab verifies it lands just off the net (front row) or behind the 3-m line (back row). Back-row sets also declare `zones`; front-row zones are derived from `x`.
 - **Who hits it:** `hitter` is `OH`, `MB` or `OPP`. Everything rotation-specific is derived from it and from where the ball lands: an OPP front-row ball that lands short of the antenna (the Back 2) is automatically a middle's ball when the opposite is back row; an OPP pin ball is off then. Change `SYSTEM.lineup` only if your service order differs.
