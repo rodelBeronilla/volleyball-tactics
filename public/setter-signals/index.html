@@ -140,6 +140,45 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 .score b{color:var(--text);font-size:16px}
 .qfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 
+/* 3D view */
+#v3-scene svg{cursor:grab;touch-action:none}
+#v3-scene svg.dragging{cursor:grabbing}
+.v3-readout{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.v3-readout b{color:var(--text);font-variant-numeric:tabular-nums}
+.seg.cam button{padding:0 12px}
+.shadow3{opacity:.2;transition:opacity .2s}
+.drop3{opacity:.25;transition:opacity .2s}
+.set.sel .shadow3{opacity:.9}
+.set.sel .drop3{opacity:.9}
+@media (max-width:700px){ .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px} .toolbar .seg button{padding:0 10px;font-size:13px} }
+.ruler text{fill:#6b7390}
+
+/* checks */
+.status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.03em}
+.status.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.status.warn{background:color-mix(in srgb,#fbbf24 20%,transparent);color:#fbbf24}
+.status.err{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.rules{display:flex;flex-direction:column;gap:0}
+.rule{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.rule:first-child{border-top:0}
+.rule .name{font-weight:700}
+.rule .why{color:var(--muted);font-size:13px}
+.rule ul{margin:4px 0 0;padding-left:18px;font-size:13px}
+.rule li.warn{color:#fbbf24}
+.rule li.err{color:var(--bad)}
+.spec-wrap{overflow-x:auto}
+table.spec{border-collapse:collapse;width:100%;min-width:720px;font-size:13px;font-variant-numeric:tabular-nums}
+table.spec th,table.spec td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+table.spec th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+table.spec td.num{text-align:right}
+table.spec th.num{text-align:right}
+table.spec tr[data-set]{cursor:pointer}
+table.spec tr[data-set]:hover td{background:var(--panel2)}
+table.spec tr.sel td{background:var(--panel3)}
+table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.tab-head .status{vertical-align:middle;margin-left:8px}
+.diag-seg{margin-bottom:-2px}
+
 @media (min-width:900px){
   .app{display:grid;grid-template-columns:200px minmax(0,1fr) 340px;align-items:start;min-height:100vh}
   .nav{position:sticky;top:0;bottom:auto;height:100vh;flex-direction:column;padding:18px 12px;gap:4px;border-top:0;border-right:1px solid var(--line);background:var(--bg);backdrop-filter:none}
@@ -163,13 +202,13 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 <div class="app">
   <nav class="nav" role="tablist" aria-label="Views">
     <div class="brand">Setter Signals<small>&amp; Set Map</small></div>
-    <button role="tab" data-tab="net" aria-selected="true" aria-controls="tab-net">
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18M4 15V9M20 15V9"/><path d="M13 12c-1-6-6-6-9-2"/></svg>
-      <span>Net View</span>
+    <button role="tab" data-tab="3d" aria-selected="true" aria-controls="tab-3d">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+      <span>3D Court</span>
     </button>
-    <button role="tab" data-tab="court" aria-selected="false" aria-controls="tab-court">
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 9h16"/></svg>
-      <span>Court View</span>
+    <button role="tab" data-tab="diagrams" aria-selected="false" aria-controls="tab-net">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18M4 15V9M20 15V9"/><path d="M13 12c-1-6-6-6-9-2"/></svg>
+      <span>Diagrams</span>
     </button>
     <button role="tab" data-tab="signals" aria-selected="false" aria-controls="tab-signals">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 12V4a1.5 1.5 0 0 1 3 0v8M14 12V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-2-2a1.4 1.4 0 0 0-2 2l4 6a5 5 0 0 0 4 2h2a5 5 0 0 0 5-5v-3"/></svg>
@@ -179,10 +218,35 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>
       <span>Quiz</span>
     </button>
+    <button role="tab" data-tab="checks" aria-selected="false" aria-controls="tab-checks">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>Checks</span>
+    </button>
   </nav>
 
   <main class="main">
-    <section class="tab" id="tab-net" data-tab="net" role="tabpanel">
+    <section class="tab" id="tab-3d" data-tab="3d" role="tabpanel">
+      <div class="tab-head">
+        <h2>Court in 3D</h2>
+        <p>Real court, real metres. Every ball is a gravity parabola from the setter's hands; the dotted shadow shows where it travels over the floor. Drag to orbit, tap a ball path to select it.</p>
+      </div>
+      <div class="chips" id="v3-filters" aria-label="Filter groups"></div>
+      <div class="toolbar">
+        <div class="seg cam" role="group" aria-label="Camera" id="v3-presets">
+          <button data-cam="coach" aria-pressed="true">Coach</button>
+          <button data-cam="corner" aria-pressed="false">Corner</button>
+          <button data-cam="blocker" aria-pressed="false">Blockers</button>
+          <button data-cam="top" aria-pressed="false">Top</button>
+        </div>
+        <button class="toggle" id="v3-bic" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo</span></button>
+        <button class="toggle" id="v3-net" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>Women's net</span></button>
+      </div>
+      <div class="scene-wrap"><div id="v3-scene"></div></div>
+      <div class="v3-readout" id="v3-readout"></div>
+    </section>
+
+    <section class="tab" id="tab-net" data-tab="net" role="tabpanel" hidden>
+      <div class="seg diag-seg" role="group" aria-label="Diagram"><button data-diag="net" aria-pressed="true">Net · side view</button><button data-diag="court" aria-pressed="false">Court · top-down</button></div>
       <div class="tab-head">
         <h2>Net View</h2>
         <p>Side view from the back row. Every set leaves the setter's hands; height and landing spot tell them apart. Tap a path.</p>
@@ -193,6 +257,7 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
     </section>
 
     <section class="tab" id="tab-court" data-tab="court" role="tabpanel" hidden>
+      <div class="seg diag-seg" role="group" aria-label="Diagram"><button data-diag="net" aria-pressed="false">Net · side view</button><button data-diag="court" aria-pressed="true">Court · top-down</button></div>
       <div class="tab-head">
         <h2>Court View</h2>
         <p>Top-down, our half. Front-row sets land along the net; back-row attacks take off behind the 3-metre line. Tap a set, or tap a zone number.</p>
@@ -227,6 +292,15 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
       <div class="chips" id="quiz-groups" aria-label="Quiz only this group"></div>
       <div class="score" id="quiz-score"></div>
       <div class="qbox" id="quiz-box"></div>
+    </section>
+    <section class="tab" id="tab-checks" data-tab="checks" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>Checks <span id="checks-badge"></span></h2>
+        <p>Every set in the data is verified against what it is supposed to represent: where it lands, how high it goes, who hits it, and how it relates to the sets around it. Edit the <code>SETS</code> array and this page re-grades it.</p>
+      </div>
+      <div class="qbox"><div class="rules" id="checks-rules"></div></div>
+      <div class="scene-wrap spec-wrap"><table class="spec" id="checks-spec"></table></div>
+      <p class="hint">Hang time and apex come from a gravity model: the ball leaves the setter's hands just above the tape and is contacted above the net at the landing spot. Tempo bands: 1st under 0.85 s, 2nd 0.85 to 1.45 s, 3rd above.</p>
     </section>
   </main>
 
@@ -315,7 +389,7 @@ const SETS = [
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
     netView: { landX: 0.03, peak: 0.75, flat: false },
     courtView: { x: 0.03, y: 0.08 } },
-  { id: 'go', name: 'Go', aliases: ['Quick outside', 'Shoot 4'], group: 'outside', color: '#a3e635', tempo: '1st', hitter: 'OH',
+  { id: 'go', name: 'Go', aliases: ['Quick outside', 'Shoot 4'], group: 'outside', color: '#a3e635', tempo: '2nd', hitter: 'OH',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
     netView: { landX: 0.03, peak: 0.40, flat: true },
@@ -327,12 +401,12 @@ const SETS = [
     coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
     netView: { landX: 0.97, peak: 1.00, flat: false },
     courtView: { x: 0.97, y: 0.08 } },
-  { id: 'red', name: 'Red', aliases: ['Right-side Go', 'Quick 5'], group: 'rightside', color: '#e879f9', tempo: '1st', hitter: 'OPP',
+  { id: 'red', name: 'Red', aliases: ['Right-side Go', 'Quick 5'], group: 'rightside', color: '#e879f9', tempo: '2nd', hitter: 'OPP',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
     netView: { landX: 0.97, peak: 0.45, flat: true },
     courtView: { x: 0.97, y: 0.08 } },
-  { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '2nd', hitter: 'MB',
+  { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', tempo: '1st', hitter: 'MB',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
     netView: { landX: 0.90, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 }, run: { from: 0.45, to: 0.92, takeoff: 0.88 } },
@@ -367,7 +441,7 @@ const SETS = [
     approach: [ { x: 0.85, y: 0.55 }, { x: 0.85, y: 0.36 } ] },
 
   // ---- Tempo modifier — not a location ----
-  { id: 'bic', name: 'BIC', aliases: ['Bic', 'Quick back row'], group: 'backrow', modifier: true, color: '#22d3ee', tempo: '1st', hitter: 'Back row',
+  { id: 'bic', name: 'BIC', aliases: ['Bic', 'Quick back row'], group: 'backrow', modifier: true, color: '#a5f3fc', tempo: '1st', hitter: 'Back row',
     signal: { glyph: 'BIC', description: 'Fist with a thumb flick, like lighting a lighter — shown together with the zone signal (A, B, Pipe, C, D)' },
     coachingNote: 'Not a place, a tempo: flick the lighter with the zone signal and the back-row ball comes fast and low — at high levels every back-row set is assumed to be quick.' }
 ];
@@ -380,16 +454,36 @@ const GROUPS = [
   { id: 'backrow',   label: 'Back row',   hint: 'Behind the 3-m line' }
 ];
 const SETTER_X = 0.56;
-const TEMPO_MS = { '1st': 700, '2nd': 1100, '3rd': 1600 };
+const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };   // court fraction (net → end line) where a back-row ball is contacted
+
+/* Real-world flight model — metres and seconds. Tweak here if your gym or level differs. */
+const WORLD = {
+  courtW: 9, courtD: 9,
+  netHeights: { men: 2.43, women: 2.24 },
+  releaseY: 0.5,               // setter stands this far off the net
+  releaseAboveTape: 0.10,      // hands release the ball this far above the tape
+  contactAboveTape: 0.35,      // hitter contacts a front-row ball this far above the tape
+  contactOffNet: [0.45, 0.5],  // front-row contact distance off the net = base + peak × range
+  flatOffNet: 0.4,             // flat / pushed balls are hit tight to the net
+  peakMax: 3.0,                // peak = 1 (a 4 or 5) reaches this far above the release point
+  backrow: { peak: 0.55, bicPeak: 0.30, contactAboveTape: 0.40 },
+  tempoBands: { '1st': [0, 0.85], '2nd': [0.85, 1.45], '3rd': [1.45, 99] }   // hang time in seconds
+};
+const G = 9.81;
 const STORE_KEY = 'setterSignals.quiz.v1';
 
 /* ---------------- state ---------------- */
 const state = {
-  tab: 'net',
+  tab: '3d',
+  diag: 'net',
   selected: null,
   hidden: new Set(),
   bic: false,
   zone: null,
+  netH: 2.43,
+  slow: false,
+  cam: { yaw: 0.2, pitch: 0.58, dist: 18, preset: 'coach' },
+  v3drag: false,
   quiz: { mode: 'signal', group: 'all', queue: [], current: null, choices: [], answered: null, score: loadScore() }
 };
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -550,7 +644,7 @@ function courtSetPath(s, bic) {
   const v = s.courtView;
   const sx = cx(SETTER_X), sy = cy(0.05);
   const isBack = s.group === 'backrow';
-  const ty = isBack ? (bic ? 0.28 : 0.30) : v.y;
+  const ty = isBack ? (bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) : v.y;
   const ex = cx(v.x), ey = cy(ty);
   let bow;
   if (isBack) bow = bic ? 0.02 : 0.06; else bow = 0.02 + (s.netView ? s.netView.peak : 0.5) * 0.06;
@@ -678,6 +772,395 @@ function renderCourt() {
 }
 
 /* ============================================================
+   PHYSICS — where the ball really goes (metres, seconds)
+   ============================================================ */
+function flight(s, o) {
+  o = o || {};
+  const netH = o.netH || state.netH;
+  const p0 = { x: SETTER_X * WORLD.courtW, y: WORLD.releaseY, z: netH + WORLD.releaseAboveTape };
+  let p1, peak;
+  if (s.group === 'backrow') {
+    if (!s.courtView) return null;
+    p1 = { x: s.courtView.x * WORLD.courtW, y: (o.bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) * WORLD.courtD, z: netH + WORLD.backrow.contactAboveTape };
+    peak = o.bic ? WORLD.backrow.bicPeak : WORLD.backrow.peak;
+  } else if (s.netView) {
+    const v = s.netView;
+    p1 = { x: v.landX * WORLD.courtW, y: v.flat ? WORLD.flatOffNet : WORLD.contactOffNet[0] + v.peak * WORLD.contactOffNet[1], z: netH + WORLD.contactAboveTape };
+    peak = v.peak;
+  } else return null;
+  const d = p1.z - p0.z;
+  const peakH = Math.max(peak * WORLD.peakMax, d + 0.05);
+  const A = 4 * peakH - 2 * d;
+  const k = (A + Math.sqrt(Math.max(0, A * A - 4 * d * d))) / 2;   // z(t) = z0 + d·t + k·t(1−t)
+  const T = Math.sqrt(2 * k / G);
+  const at = t => ({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t, z: p0.z + d * t + k * t * (1 - t) });
+  const apex = at(0.5 + d / (2 * k));
+  const horiz = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH };
+}
+function tempoFor(T) { return Object.keys(WORLD.tempoBands).find(k => T >= WORLD.tempoBands[k][0] && T < WORLD.tempoBands[k][1]) || '3rd'; }
+function flightMs(s) { const f = flight(s, { bic: state.bic }); return (f ? f.T * 1000 : 1000) * (state.slow ? 2.5 : 1); }
+function flightSummary(s) {
+  const f = flight(s, { bic: state.bic && s.group === 'backrow' });
+  if (!f) return '';
+  return `Hang <b>${f.T.toFixed(2)} s</b> · apex <b>+${f.peakH.toFixed(2)} m</b> above the tape · contact <b>${f.p1.x.toFixed(1)} m</b> from the left antenna, <b>${f.p1.y.toFixed(1)} m</b> off the net · <b>${f.speed.toFixed(1)} m/s</b> across`;
+}
+
+/* ============================================================
+   3D VIEW — perspective projection of the real court
+   ============================================================ */
+const V3 = {
+  presets: { coach: { yaw: 0.2, pitch: 0.58, dist: 18 }, corner: { yaw: -0.85, pitch: 0.42, dist: 19 }, blocker: { yaw: Math.PI + 0.15, pitch: 0.4, dist: 17 }, top: { yaw: 0, pitch: 1.4, dist: 21 } },
+  target: { x: 4.5, y: 2.6, z: 1.2 }
+};
+let v3cam = null;
+const vsub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+const vdot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+const vcross = (a, b) => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
+const vnorm = a => { const l = Math.hypot(a.x, a.y, a.z) || 1; return { x: a.x / l, y: a.y / l, z: a.z / l }; };
+function v3Layout() { return narrow.matches ? { W: 1000, H: 820, fs: 30, sw: 7, hit: 64, F: 1000 } : { W: 1000, H: 620, fs: 19, sw: 4.5, hit: 30, F: 1000 }; }
+function makeCamera(L) {
+  const c = state.cam, t = V3.target;
+  const cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
+  const pos = { x: t.x + c.dist * Math.sin(c.yaw) * cp, y: t.y + c.dist * Math.cos(c.yaw) * cp, z: t.z + c.dist * sp };
+  const f = vnorm(vsub(t, pos));
+  const r = vnorm(vcross({ x: 0, y: 0, z: 1 }, f));
+  const u = vcross(f, r);
+  const cx = L.W / 2, cy = L.H * 0.52;
+  return { pos, project(p) { const v = vsub(p, pos); const zc = Math.max(0.5, vdot(v, f)); return { x: cx + L.F * vdot(v, r) / zc, y: cy - L.F * vdot(v, u) / zc, z: zc }; } };
+}
+function bezierThrough(pts) {   // Catmull-Rom → cubic Bézier segments (C commands)
+  let d = `M${r1(pts[0].x)} ${r1(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    d += ` C${r1(p1.x + (p2.x - p0.x) / 6)} ${r1(p1.y + (p2.y - p0.y) / 6)} ${r1(p2.x - (p3.x - p1.x) / 6)} ${r1(p2.y - (p3.y - p1.y) / 6)} ${r1(p2.x)} ${r1(p2.y)}`;
+  }
+  return d;
+}
+function polyline(cam, world) { return bezierThrough(world.map(p => cam.project(p))); }
+function approachWorld(s, n) {
+  if (!s.approach) return null;
+  const a0 = s.approach[0], a1 = s.approach[1];
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    let x, y;
+    if (s.group === 'backrow') { x = a0.x + (a1.x - a0.x) * t; y = a0.y + (a1.y - a0.y) * t; }
+    else { // curved run (slide): quadratic through a control point pulled toward the net
+      const cxp = a0.x + (a1.x - a0.x) * 0.55, cyp = a0.y + 0.03;
+      x = (1 - t) * (1 - t) * a0.x + 2 * (1 - t) * t * cxp + t * t * a1.x;
+      y = (1 - t) * (1 - t) * a0.y + 2 * (1 - t) * t * cyp + t * t * a1.y;
+    }
+    pts.push({ x: x * WORLD.courtW, y: y * WORLD.courtD, z: 0 });
+  }
+  return pts;
+}
+function arrowHead(a, b, size, color) {
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  const p = (dx, dy) => `${r1(b.x + Math.cos(ang) * dx - Math.sin(ang) * dy)} ${r1(b.y + Math.sin(ang) * dx + Math.cos(ang) * dy)}`;
+  return `<path d="M${p(0, 0)} L${p(-size, size * 0.55)} L${p(-size, -size * 0.55)}z" fill="${color}"/>`;
+}
+function resolveLabels(labels, fs) {
+  // Greedy placement: try above the apex, then beside it, then progressively higher; nearest-first order.
+  const placed = [];
+  const hits = b => placed.some(p => b.x0 < p.x1 && p.x0 < b.x1 && b.y0 < p.y1 && p.y0 < b.y1);
+  labels.slice().sort((a, b) => b.y - a.y).forEach(l => {
+    const w = l.text.length * fs * 0.68 + fs * 0.4, h = fs * 1.15;
+    const cands = [
+      [0, 0], [w * 0.75, fs * 0.9], [-w * 0.75, fs * 0.9], [0, -h], [w * 0.75, -h * 0.4], [-w * 0.75, -h * 0.4], [0, -2 * h], [w * 0.9, -2 * h], [-w * 0.9, -2 * h], [0, -3 * h]
+    ];
+    let done = false;
+    for (const [dx, dy] of cands) {
+      const box = { x0: l.x + dx - w / 2, x1: l.x + dx + w / 2, y0: l.y + dy - h, y1: l.y + dy };
+      if (!hits(box)) { l.x += dx; l.y += dy; l.shifted = Math.hypot(dx, dy); placed.push(box); done = true; break; }
+    }
+    if (!done) { let dy = -4 * h; while (hits({ x0: l.x - w / 2, x1: l.x + w / 2, y0: l.y + dy - h, y1: l.y + dy }) && dy > -12 * h) dy -= h; l.y += dy; l.shifted = -dy; placed.push({ x0: l.x - w / 2, x1: l.x + w / 2, y0: l.y - h, y1: l.y }); }
+  });
+}
+function v3Scene(L, sets, opts) {
+  opts = opts || {};
+  const cam = makeCamera(L);
+  const P = p => cam.project(p);
+  const W = WORLD.courtW, D = WORLD.courtD, netH = state.netH;
+  const line = (a, b, attrs) => { const pa = P(a), pb = P(b); return `<path d="M${r1(pa.x)} ${r1(pa.y)}L${r1(pb.x)} ${r1(pb.y)}" ${attrs}/>`; };
+  const poly = (pts, attrs) => `<path d="M${pts.map(p => { const q = P(p); return `${r1(q.x)} ${r1(q.y)}`; }).join('L')}z" ${attrs}/>`;
+  const fs = L.fs;
+  let o = `<svg class="scene" viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="3D view of the court with set trajectories">`;
+  // floors
+  o += poly([{ x: 0, y: -D, z: 0 }, { x: W, y: -D, z: 0 }, { x: W, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }], 'fill="#171d2b"');
+  o += poly([{ x: 0, y: 0, z: 0 }, { x: W, y: 0, z: 0 }, { x: W, y: D, z: 0 }, { x: 0, y: D, z: 0 }], 'fill="#1a2233"');
+  o += poly([{ x: 0, y: 0, z: 0 }, { x: W, y: 0, z: 0 }, { x: W, y: D / 3, z: 0 }, { x: 0, y: D / 3, z: 0 }], 'fill="#22304a"');
+  const lineA = 'fill="none" stroke="#e8ebf5" stroke-width="2" stroke-linejoin="round"';
+  const faintA = 'fill="none" stroke="#e8ebf5" stroke-width="1.2" opacity=".35"';
+  o += poly([{ x: 0, y: -D, z: 0 }, { x: W, y: -D, z: 0 }, { x: W, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }], faintA);
+  o += line({ x: 0, y: -D / 3, z: 0 }, { x: W, y: -D / 3, z: 0 }, faintA);
+  o += poly([{ x: 0, y: 0, z: 0 }, { x: W, y: 0, z: 0 }, { x: W, y: D, z: 0 }, { x: 0, y: D, z: 0 }], lineA);
+  o += line({ x: 0, y: D / 3, z: 0 }, { x: W, y: D / 3, z: 0 }, lineA);
+  // zone numbers on the floor
+  if (!opts.noLabels) {
+    [[4, 1.5, 1.6], [3, 4.5, 1.6], [2, 7.5, 1.6], [5, 1.5, 6.2], [6, 4.5, 6.2], [1, 7.5, 6.2]].forEach(([z, x, y]) => {
+      const q = P({ x, y, z: 0 }); const size = L.F * 1.1 / q.z;
+      const on = !state.selected && state.zone === z;
+      o += `<text x="${r1(q.x)}" y="${r1(q.y + size * 0.35)}" font-size="${r1(size)}" text-anchor="middle" fill="#fff" opacity="${on ? 0.55 : 0.14}" font-weight="800">${z}</text>`;
+    });
+  }
+  // height ruler at the left antenna
+  if (!opts.noLabels) {
+    o += `<g class="ruler">`;
+    o += line({ x: -0.35, y: 0, z: netH }, { x: -0.35, y: 0, z: netH + 3.2 }, 'stroke="#3a4157" stroke-width="1.5" stroke-dasharray="4 5"');
+    [1, 2, 3].forEach(m => { const q = P({ x: -0.35, y: 0, z: netH + m }); o += `<text x="${r1(q.x - fs * 0.35)}" y="${r1(q.y + fs * 0.3)}" font-size="${r1(fs * 0.7)}" text-anchor="end">+${m} m</text>`; });
+    const q0 = P({ x: -0.35, y: 0, z: netH }); o += `<text x="${r1(q0.x - fs * 0.35)}" y="${r1(q0.y + fs * 0.3)}" font-size="${r1(fs * 0.7)}" text-anchor="end">tape ${netH.toFixed(2)} m</text>`;
+    o += `</g>`;
+  }
+  // net
+  o += poly([{ x: 0, y: 0, z: netH - 1 }, { x: W, y: 0, z: netH - 1 }, { x: W, y: 0, z: netH }, { x: 0, y: 0, z: netH }], 'fill="#8b93ab" opacity=".22" stroke="#3a4157" stroke-width="1"');
+  for (let x = 1; x < W; x++) o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH }, 'stroke="#3a4157" stroke-width="1" opacity=".6"');
+  o += line({ x: 0, y: 0, z: netH - 0.5 }, { x: W, y: 0, z: netH - 0.5 }, 'stroke="#3a4157" stroke-width="1" opacity=".6"');
+  o += line({ x: 0, y: 0, z: netH }, { x: W, y: 0, z: netH }, 'stroke="#e8ebf5" stroke-width="4" stroke-linecap="round"');
+  [0, W].forEach(x => { o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#ff4d4d" stroke-width="5" stroke-linecap="round"'); o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#fff" stroke-width="5" stroke-dasharray="10 10"'); });
+  // setter
+  const rel = flight(sets[0] || SETS[0]) ? flight(sets[0] || SETS[0]).p0 : { x: SETTER_X * W, y: WORLD.releaseY, z: netH + 0.1 };
+  const feet = { x: rel.x, y: rel.y, z: 0 }, hip = { x: rel.x, y: rel.y, z: 0.95 }, shoulder = { x: rel.x, y: rel.y, z: 1.55 }, head = { x: rel.x, y: rel.y, z: 1.75 };
+  o += line(feet, shoulder, 'stroke="#e8ebf5" stroke-width="3" stroke-linecap="round"');
+  o += line({ x: rel.x - 0.25, y: rel.y, z: rel.z - 0.15 }, shoulder, 'stroke="#e8ebf5" stroke-width="2.5" stroke-linecap="round"');
+  o += line({ x: rel.x + 0.25, y: rel.y, z: rel.z - 0.15 }, shoulder, 'stroke="#e8ebf5" stroke-width="2.5" stroke-linecap="round"');
+  { const q = P(head); o += `<circle cx="${r1(q.x)}" cy="${r1(q.y)}" r="${r1(L.F * 0.13 / q.z)}" fill="#e8ebf5"/>`; }
+  if (!opts.noLabels) { const q = P(feet); o += `<text x="${r1(q.x)}" y="${r1(q.y + fs * 1.1)}" font-size="${r1(fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter</text>`; }
+  // sets, far → near
+  const items = sets.map(s => { const fl = flight(s, { bic: opts.bic && s.group === 'backrow' }); return fl ? { s, fl, depth: P(fl.apex).z } : null; }).filter(Boolean).sort((a, b) => b.depth - a.depth);
+  const labels = [];
+  items.forEach(it => {
+    const { s, fl } = it;
+    const N = 20, pts = [], ground = [];
+    for (let i = 0; i <= N; i++) { const p = fl.at(i / N); pts.push(P(p)); ground.push(P({ x: p.x, y: p.y, z: 0 })); }
+    const d = bezierThrough(pts);
+    const isBack = s.group === 'backrow', bic = opts.bic && isBack;
+    const flat = s.netView && s.netView.flat;
+    o += `<g class="set" data-set="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)} — ${esc(s.tempo)} tempo, ${esc(s.hitter)}" style="color:${s.color}">`;
+    o += `<path class="hit" d="${d}" stroke-width="${L.hit}"/>`;
+    // approach on the floor
+    const ap = approachWorld(s, isBack ? 1 : 12);
+    if (ap) {
+      const pp = ap.map(P);
+      o += `<path class="approach" d="${bezierThrough(pp)}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.7)}" stroke-dasharray="${bic ? '3 5' : '2 7'}" stroke-linecap="round"/>`;
+      o += arrowHead(pp[pp.length - 2], pp[pp.length - 1], fs * 0.5, s.color);
+      const q0 = pp[0]; o += `<circle cx="${r1(q0.x)}" cy="${r1(q0.y)}" r="${r1(fs * 0.3)}" fill="#0f1117" stroke="${s.color}" stroke-width="2"/>`;
+      if (s.courtView.takeoff) { const t = s.courtView.takeoff; o += line({ x: (t.x - 0.08) * W, y: t.y * D, z: 0 }, { x: (t.x + 0.08) * W, y: t.y * D, z: 0 }, `stroke="${s.color}" stroke-width="${r1(L.sw * 0.8)}" stroke-linecap="round"`); }
+    }
+    // ground shadow + drop line
+    o += `<path class="shadow3" d="${bezierThrough(ground)}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.45)}" stroke-dasharray="3 6" stroke-linecap="round"/>`;
+    o += `<path class="drop3" d="M${r1(pts[N].x)} ${r1(pts[N].y)}L${r1(ground[N].x)} ${r1(ground[N].y)}" stroke="${s.color}" stroke-width="1.2" stroke-dasharray="3 4"/>`;
+    o += `<path class="traj" d="${d}" stroke="${s.color}" stroke-width="${bic ? L.sw * 0.8 : L.sw}"${flat || bic ? ` stroke-dasharray="${r1(L.sw * 3.2)} ${r1(L.sw * 1.6)}"` : ''}/>`;
+    o += `<circle cx="${r1(pts[N].x)}" cy="${r1(pts[N].y)}" r="${r1(fs * 0.3)}" fill="${s.color}" stroke="#0f1117" stroke-width="2"/>`;
+    o += `<circle cx="${r1(ground[N].x)}" cy="${r1(ground[N].y)}" r="${r1(fs * 0.18)}" fill="${s.color}" opacity=".8"/>`;
+    if (!opts.noLabels) { const c = pts[N]; labels.push({ id: s.id, text: s.name + (bic ? ' ·BIC' : ''), x: c.x, y: c.y - fs * 0.75, ax: c.x, ay: c.y - fs * 0.3 }); }
+    o += `<!--LABEL:${s.id}--></g>`;
+  });
+  const lfs = fs * 0.9;
+  resolveLabels(labels, lfs);
+  labels.forEach(l => {
+    let m = '';
+    if (l.shifted > lfs * 0.8) m += `<path d="M${r1(l.ax)} ${r1(l.ay)}L${r1(l.x)} ${r1(l.y - lfs * 0.35)}" stroke="currentColor" stroke-width="1.2" opacity=".7"/>`;
+    m += `<text class="lbl" x="${r1(l.x)}" y="${r1(l.y)}" font-size="${r1(lfs)}" text-anchor="middle" stroke-width="${r1(lfs * 0.32)}">${esc(l.text)}</text>`;
+    o = o.replace(`<!--LABEL:${l.id}-->`, m);
+  });
+  o += `<circle class="shadowball" r="${r1(fs * 0.22)}" fill="#fff" opacity="0"/>`;
+  o += `<circle class="hitter" r="${r1(fs * 0.4)}" fill="#fbbf24" stroke="#0f1117" stroke-width="2"/>`;
+  o += `<circle class="ball" r="${r1(fs * 0.36)}" fill="#fff" stroke="#0f1117" stroke-width="2"/>`;
+  o += `</svg>`;
+  v3cam = cam;
+  return o;
+}
+function render3D() {
+  const L = v3Layout();
+  const sets = SETS.filter(s => !s.modifier && !state.hidden.has(s.group));
+  $('#v3-scene').innerHTML = v3Scene(L, sets, { bic: state.bic });
+  $('#v3-filters').innerHTML = GROUPS.map(g => {
+    const on = !state.hidden.has(g.id);
+    const sw = SETS.filter(s => s.group === g.id && !s.modifier).map(s => `<i style="background:${s.color}"></i>`).join('');
+    return `<button class="chip filter" data-group="${g.id}" aria-pressed="${on}"><span class="sw" aria-hidden="true">${sw}</span>${g.label}</button>`;
+  }).join('');
+  $$('#v3-presets button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-cam') === state.cam.preset)));
+  $('#v3-bic').setAttribute('aria-pressed', String(state.bic));
+  $('#v3-net').setAttribute('aria-pressed', String(state.netH === WORLD.netHeights.women));
+  const s = state.selected && byId(state.selected);
+  $('#v3-readout').innerHTML = s && flight(s) ? `<span><b>${esc(s.name)}</b></span><span>${flightSummary(s)}</span>` : `<span>Net ${state.netH.toFixed(2)} m · court 9 × 9 m per side · attack line 3 m from the net.</span><span>Select a set for its hang time and contact point.</span>`;
+  applySelection();
+}
+function v3Orbit() {
+  const wrap = $('#v3-scene');
+  let drag = null;
+  wrap.addEventListener('pointerdown', e => { if (e.button !== 0 && e.pointerType === 'mouse') return; drag = { x: e.clientX, y: e.clientY, yaw: state.cam.yaw, pitch: state.cam.pitch, moved: false, id: e.pointerId }; });
+  wrap.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+    if (!drag.moved && wrap.setPointerCapture) { try { wrap.setPointerCapture(drag.id); } catch (err) { /* ignore */ } }
+    drag.moved = true; state.v3drag = true;
+    const svg = wrap.querySelector('svg'); if (svg) svg.classList.add('dragging');
+    state.cam.yaw = drag.yaw - dx * 0.008;
+    state.cam.pitch = Math.min(1.5, Math.max(0.08, drag.pitch + dy * 0.008));
+    state.cam.preset = null;
+    if (!v3raf) v3raf = requestAnimationFrame(() => { v3raf = null; render3D(); });
+  });
+  const end = () => { if (!drag) return; drag = null; setTimeout(() => { state.v3drag = false; }, 0); };
+  wrap.addEventListener('pointerup', end); wrap.addEventListener('pointercancel', end);
+}
+let v3raf = null;
+
+/* ============================================================
+   CHECKS — verify every set against what it should represent
+   ============================================================ */
+const VALID = { groups: GROUPS.map(g => g.id), tempos: ['1st', '2nd', '3rd'], hitters: ['MB', 'OH', 'OPP', 'Back row'] };
+const in01 = v => typeof v === 'number' && v >= 0 && v <= 1;
+const near = (a, b, tol) => Math.abs(a - b) <= tol;
+/* Each rule returns findings: { id, ok, msg, level } — level 'err' or 'warn'. Rules about specific
+   named sets look them up by id and simply pass when that set is not in the data, so you can
+   rename or remove sets without breaking the checks. */
+const RULES = [
+  { name: 'Data is complete', why: 'Every set needs an id, name, group, colour, tempo, hitter, signal and coaching note; sets that are drawn need geometry.',
+    run: sets => sets.map(s => {
+      const miss = [];
+      if (!s.id) miss.push('id'); if (!s.name) miss.push('name');
+      if (!VALID.groups.includes(s.group)) miss.push('group');
+      if (!/^#[0-9a-f]{6}$/i.test(s.color || '')) miss.push('colour');
+      if (!VALID.tempos.includes(s.tempo)) miss.push('tempo');
+      if (!VALID.hitters.includes(s.hitter)) miss.push('hitter');
+      if (!s.signal || !s.signal.glyph || !s.signal.description) miss.push('signal');
+      if (!s.coachingNote) miss.push('coaching note');
+      if (!s.modifier && !s.courtView) miss.push('courtView');
+      if (!s.modifier && s.group !== 'backrow' && !s.netView) miss.push('netView');
+      if (s.netView && !(in01(s.netView.landX) && in01(s.netView.peak))) miss.push('netView.landX/peak in 0–1');
+      if (s.courtView && !(in01(s.courtView.x) && in01(s.courtView.y))) miss.push('courtView.x/y in 0–1');
+      return { id: s.id, ok: !miss.length, level: 'err', msg: miss.length ? 'missing or invalid: ' + miss.join(', ') : 'complete' };
+    }) },
+  { name: 'Ids, names and signals are unique', why: 'The quiz and the selection logic key on ids; two sets with the same signal cannot be told apart by a hitter.',
+    run: sets => {
+      const out = [];
+      const dup = (key, label) => { const seen = {}; sets.forEach(s => { const k = key(s); if (!k) return; (seen[k] = seen[k] || []).push(s.id); }); Object.keys(seen).forEach(k => { if (seen[k].length > 1) seen[k].forEach(id => out.push({ id, ok: false, level: 'err', msg: `${label} "${k}" is shared with ${seen[k].filter(o => o !== id).join(', ')}` })); }); };
+      dup(s => s.id, 'id'); dup(s => s.name.toLowerCase(), 'name'); dup(s => s.signal && s.signal.description.trim().toLowerCase(), 'signal');
+      const seenColor = {}; sets.filter(s => !s.modifier).forEach(s => { (seenColor[s.color.toLowerCase()] = seenColor[s.color.toLowerCase()] || []).push(s.id); });
+      Object.keys(seenColor).forEach(c => { if (seenColor[c].length > 1) seenColor[c].forEach(id => out.push({ id, ok: false, level: 'warn', msg: `colour ${c} is shared with ${seenColor[c].filter(o => o !== id).join(', ')}` })); });
+      return out.length ? out : [{ id: null, ok: true, msg: 'all ids, names, signals and colours are distinct' }];
+    } },
+  { name: 'Quick sets are low, fast and for the middle', why: 'A first-tempo ball is set a foot or so above the tape while the middle is already in the air.',
+    run: sets => sets.filter(s => s.group === 'quick').map(s => {
+      const bad = [];
+      if (s.netView && s.netView.peak > 0.25) bad.push(`peak ${s.netView.peak} is above the quick ceiling of 0.25`);
+      if (s.tempo !== '1st') bad.push(`tempo is ${s.tempo}, expected 1st`);
+      if (s.hitter !== 'MB') bad.push(`hitter is ${s.hitter}, expected MB`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'low, 1st tempo, middle' };
+    }) },
+  { name: 'Medium sets loop at mid height', why: 'A 2 / Back 2 / 32 sits between the quicks and the high balls so the hitter has a beat to see it.',
+    run: sets => sets.filter(s => s.group === 'medium').map(s => {
+      const bad = [];
+      if (s.netView && !(s.netView.peak >= 0.35 && s.netView.peak <= 0.6)) bad.push(`peak ${s.netView.peak} is outside 0.35–0.6`);
+      if (s.tempo !== '2nd') bad.push(`tempo is ${s.tempo}, expected 2nd`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'mid-height, 2nd tempo' };
+    }) },
+  { name: 'Outside sets go to the left antenna for the OH', why: 'The 4, Hut and Go are the same spot at different heights; only height separates them.',
+    run: sets => sets.filter(s => s.group === 'outside').map(s => {
+      const bad = [];
+      if (s.netView && s.netView.landX > 0.1) bad.push(`lands at ${s.netView.landX}, not at the left antenna (≤ 0.1)`);
+      if (s.hitter !== 'OH') bad.push(`hitter is ${s.hitter}, expected OH`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'left antenna, OH' };
+    }) },
+  { name: 'Right-side sets go behind the setter', why: 'The 5, Red and Slide all travel over the setter\'s head toward the right antenna.',
+    run: sets => sets.filter(s => s.group === 'rightside').map(s => {
+      const bad = [];
+      if (s.netView && s.netView.landX <= SETTER_X) bad.push(`lands at ${s.netView.landX}, in front of the setter`);
+      if (s.netView && s.netView.landX < 0.85) bad.push(`lands at ${s.netView.landX}, short of the right antenna area (≥ 0.85)`);
+      if (!['OPP', 'MB'].includes(s.hitter)) bad.push(`hitter is ${s.hitter}, expected OPP or MB`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'behind the setter to the right antenna' };
+    }) },
+  { name: 'Back-row attacks take off behind the 3-metre line', why: 'The hitter must leave the floor behind the attack line; the ball is contacted in front of the takeoff and may land anywhere.',
+    run: sets => sets.filter(s => s.group === 'backrow' && !s.modifier).map(s => {
+      const v = s.courtView, bad = [];
+      if (!v.takeoff || v.takeoff.y <= 1 / 3) bad.push('takeoff is not behind the 3-metre line');
+      if (!v.start || !v.takeoff || v.start.y <= v.takeoff.y) bad.push('start point is not deeper than the takeoff');
+      if (v.takeoff && v.y >= v.takeoff.y) bad.push('ball is contacted behind the takeoff');
+      if (!s.approach) bad.push('no approach path');
+      if (s.hitter !== 'Back row') bad.push(`hitter is ${s.hitter}, expected Back row`);
+      const derived = v.x < 1 / 3 ? 5 : v.x < 2 / 3 ? 6 : 1;
+      if (v.zones && !v.zones.includes(derived)) bad.push(`declared zones ${v.zones.join('/')} do not include zone ${derived} where x = ${v.x} sits`);
+      return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `takeoff at ${(v.takeoff.y * 9).toFixed(1)} m, contact at ${(v.y * 9).toFixed(1)} m` };
+    }) },
+  { name: 'Back-row spots read A → B → Pipe → C → D left to right', why: 'A is left back (zone 5), Pipe is middle back (zone 6), D is right back (zone 1); B and C split the seams.',
+    run: () => {
+      const ids = ['A', 'B', 'pipe', 'C', 'D'].map(byId);
+      if (ids.some(s => !s)) return [{ id: null, ok: true, msg: 'skipped (a named back-row set is not in the data)' }];
+      const xs = ids.map(s => s.courtView.x);
+      const ordered = xs.every((x, i) => i === 0 || x > xs[i - 1]);
+      const pipeMid = near(byId('pipe').courtView.x, 0.5, 0.05);
+      return [{ id: null, ok: ordered && pipeMid, level: 'err', msg: ordered && pipeMid ? `x = ${xs.join(' < ')}, Pipe centred` : `order is ${xs.join(', ')}` + (pipeMid ? '' : '; Pipe is not centred') }];
+    } },
+  { name: '4 and 5 are the highest balls; Hut sits below the 4', why: 'The high balls define peak = 1; a Hut is a lower, faster outside ball; a Red is a flatter, faster 5.',
+    run: () => {
+      const out = [], four = byId('four'), five = byId('five'), hut = byId('hut'), go = byId('go'), red = byId('red');
+      const maxPeak = Math.max(...SETS.filter(s => s.netView).map(s => s.netView.peak));
+      if (four) out.push({ id: 'four', ok: four.netView.peak === maxPeak, level: 'err', msg: four.netView.peak === maxPeak ? 'highest ball on the board' : `peak ${four.netView.peak} is not the maximum (${maxPeak})` });
+      if (five) out.push({ id: 'five', ok: five.netView.peak === maxPeak, level: 'err', msg: five.netView.peak === maxPeak ? 'highest ball on the board' : `peak ${five.netView.peak} is not the maximum (${maxPeak})` });
+      if (four && hut) out.push({ id: 'hut', ok: hut.netView.peak < four.netView.peak && (!go || hut.netView.peak > go.netView.peak), level: 'err', msg: 'between the Go and the 4' });
+      if (four && hut && near(hut.netView.landX, four.netView.landX, 0.02) === false) out.push({ id: 'hut', ok: false, level: 'err', msg: 'does not land where the 4 lands' });
+      if (five && red) out.push({ id: 'red', ok: red.netView.flat && red.netView.peak < five.netView.peak && near(red.netView.landX, five.netView.landX, 0.02), level: 'err', msg: 'flat, lower than the 5, same landing spot' });
+      return out.length ? out : [{ id: null, ok: true, msg: 'skipped' }];
+    } },
+  { name: 'Go, Red, Shoot and Slide are flat, pushed balls', why: 'These are drawn dashed and asymmetric; the hitter is already moving when the setter contacts the ball.',
+    run: () => ['go', 'red', 'shoot', 'slide'].map(byId).filter(Boolean).map(s => ({ id: s.id, ok: !!s.netView.flat, level: 'err', msg: s.netView.flat ? 'flat' : 'not marked flat' })) },
+  { name: '32 / Rip lands between the middle and the left antenna, above a 2', why: 'It pulls the opposing middle blocker away; it must be wider than a 2 and higher than a 2.',
+    run: () => { const rip = byId('rip'), two = byId('two'); if (!rip || !two) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = rip.netView.landX > 0.15 && rip.netView.landX < 0.4 && rip.netView.peak > two.netView.peak; return [{ id: 'rip', ok, level: 'err', msg: ok ? `lands at ${rip.netView.landX}, peak ${rip.netView.peak} > 2's ${two.netView.peak}` : 'placement or height is wrong relative to the 2' }]; } },
+  { name: '1, Push 1 and Back 1 sit around the setter', why: 'The 1 is just in front, the Push 1 a step further left, the Back 1 mirrors the 1 behind the setter, all at the lowest height.',
+    run: () => {
+      const one = byId('one'), push = byId('push1'), back = byId('back1'); if (!one) return [{ id: null, ok: true, msg: 'skipped' }];
+      const minPeak = Math.min(...SETS.filter(s => s.netView).map(s => s.netView.peak)), out = [];
+      out.push({ id: 'one', ok: one.netView.peak === minPeak && one.netView.landX < SETTER_X && SETTER_X - one.netView.landX < 0.1, level: 'err', msg: one.netView.peak === minPeak ? 'lowest ball, just in front of the setter' : 'not the lowest ball' });
+      if (push) out.push({ id: 'push1', ok: push.netView.landX < one.netView.landX && push.netView.peak <= 0.25, level: 'err', msg: push.netView.landX < one.netView.landX ? 'pushed further left than the 1' : 'not further left than the 1' });
+      if (back) out.push({ id: 'back1', ok: back.netView.landX > SETTER_X && near(back.netView.landX - SETTER_X, SETTER_X - one.netView.landX, 0.03) && back.netView.peak === one.netView.peak, level: 'err', msg: back.netView.landX > SETTER_X ? 'mirror of the 1 behind the setter' : 'not behind the setter' });
+      return out;
+    } },
+  { name: 'Slide has a running approach and a one-foot takeoff', why: 'The middle starts centre, runs behind the setter and takes off on one foot near the right antenna.',
+    run: () => { const s = byId('slide'); if (!s) return [{ id: null, ok: true, msg: 'skipped' }]; const r = s.netView.run, bad = []; if (!r) bad.push('no run in netView'); else { if (!(r.from < SETTER_X && r.to > SETTER_X)) bad.push('run does not cross behind the setter'); if (!(r.takeoff < r.to && r.takeoff > SETTER_X)) bad.push('takeoff is not before the end of the run'); } if (!s.approach || !s.courtView.takeoff) bad.push('no court approach / takeoff'); if (s.hitter !== 'MB') bad.push('hitter is not MB'); return [{ id: 'slide', ok: !bad.length, level: 'err', msg: bad.join('; ') || `runs ${r.from} → ${r.to}, one-foot takeoff at ${r.takeoff}` }]; } },
+  { name: 'BIC is a tempo modifier, not a location', why: 'It is signalled with a zone signal and means "run it fast and low"; it has no spot of its own.',
+    run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && b.tempo === '1st'; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry, 1st tempo' : 'should be modifier: true with no netView / courtView, group backrow, tempo 1st' }]; } },
+  { name: 'Declared tempo matches the hang time from the flight model', why: 'Height decides how long the ball is in the air; the tempo label should agree with the physics.',
+    run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const t = tempoFor(f.T); return { id: s.id, ok: t === s.tempo, level: 'warn', msg: `${f.T.toFixed(2)} s in the air → ${t} tempo` + (t === s.tempo ? '' : `, but declared ${s.tempo}`) }; }) },
+  { name: 'Front-row balls are contacted above the net, back-row balls behind the line', why: 'Sanity check on the 3D model: contact heights above the tape, contact depth in metres.',
+    run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const isBack = s.group === 'backrow'; const ok = f.p1.z > f.netH && f.apex.z >= f.p1.z && (isBack ? f.p1.y > 2 : f.p1.y < 1.5); return { id: s.id, ok, level: 'err', msg: `contact ${(f.p1.z - f.netH).toFixed(2)} m above the tape, ${f.p1.y.toFixed(1)} m off the net` }; }) }
+];
+function runChecks() {
+  const results = RULES.map(r => { let f; try { f = r.run(SETS); } catch (e) { f = [{ id: null, ok: false, level: 'err', msg: 'rule crashed: ' + e.message }]; } return { rule: r, findings: f }; });
+  const all = results.flatMap(r => r.findings);
+  const errs = all.filter(f => !f.ok && f.level !== 'warn').length, warns = all.filter(f => !f.ok && f.level === 'warn').length;
+  return { results, errs, warns, total: all.length };
+}
+function renderChecks() {
+  const c = runChecks();
+  const badge = c.errs ? `<span class="status err">✗ ${c.errs} failing</span>` : c.warns ? `<span class="status warn">⚠ ${c.warns} warning${c.warns > 1 ? 's' : ''}</span>` : `<span class="status ok">✓ all ${c.total} checks pass</span>`;
+  $('#checks-badge').innerHTML = badge;
+  $('#checks-rules').innerHTML = c.results.map(r => {
+    const bad = r.findings.filter(f => !f.ok);
+    const st = bad.length ? (bad.some(f => f.level !== 'warn') ? 'err' : 'warn') : 'ok';
+    const icon = st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗';
+    const groups = {};
+    r.findings.filter(f => f.ok && f.id).forEach(f => { (groups[f.msg] = groups[f.msg] || []).push(byId(f.id) ? byId(f.id).name : f.id); });
+    const okList = Object.keys(groups).map(msg => groups[msg].length > 1 ? `<li>${esc(msg)}: ${esc(groups[msg].join(' · '))}</li>` : `<li>${esc(groups[msg][0])}: ${esc(msg)}</li>`).join('');
+    const okGlobal = r.findings.filter(f => f.ok && !f.id).map(f => `<li>${esc(f.msg)}</li>`).join('');
+    const badList = bad.map(f => `<li class="${f.level === 'warn' ? 'warn' : 'err'}">${f.id ? esc(byId(f.id) ? byId(f.id).name : f.id) + ': ' : ''}${esc(f.msg)}</li>`).join('');
+    return `<div class="rule"><span class="status ${st}">${icon}</span><div><div class="name">${esc(r.rule.name)}</div><div class="why">${esc(r.rule.why)}</div><ul>${badList}${okGlobal}${okList}</ul></div></div>`;
+  }).join('');
+  const rows = SETS.map(s => {
+    const f = s.modifier ? null : flight(s, { netH: WORLD.netHeights.men });
+    const bad = c.results.flatMap(r => r.findings).filter(x => x.id === s.id && !x.ok);
+    const st = bad.length ? (bad.some(x => x.level !== 'warn') ? 'err' : 'warn') : 'ok';
+    const z = zonesOf(s).join('/') || '–';
+    return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td>${esc(groupOf(s.group).label)}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(s.tempo)}${f ? ` <span class="hint">(${tempoFor(f.T)})</span>` : ''}</td>` +
+      `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.peakH.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td>${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
+  }).join('');
+  $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th>Group</th><th>Hitter</th><th>Tempo</th><th class="num">Lands from L antenna</th><th>Zone</th><th class="num">Off net</th><th class="num">Apex over tape</th><th class="num">Hang</th><th>Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
+  applySelection();
+}
+
+/* ============================================================
    SIGNALS
    ============================================================ */
 function renderSignals() {
@@ -703,16 +1186,19 @@ function renderDetail() {
   if (!s) { el.classList.remove('open'); el.style.removeProperty('--c'); $('.content', el).innerHTML = ''; return; }
   const g = groupOf(s.group);
   el.style.setProperty('--c', s.color);
-  const inScene = state.tab === 'net' || state.tab === 'court';
-  const canPlay = inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(s.group)) || (state.tab === 'court' && s.courtView));
+  const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
+  const canPlay = inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(s.group)) || (state.tab === 'court' && s.courtView) || (state.tab === '3d' && !s.modifier && !state.hidden.has(s.group)));
+  const fl = s.modifier ? null : flight(s, { bic: state.bic && s.group === 'backrow' });
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
     `<div class="top"><div class="title"><h3>${esc(s.name)}</h3>${s.aliases && s.aliases.length ? `<div class="aliases">Also: ${esc(s.aliases.join(', '))}</div>` : ''}</div><button class="close" data-close aria-label="Close">✕</button></div>` +
     `<div class="meta"><span class="tag grp">${esc(g.label)}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.tempo)} tempo</span><span class="tag">${esc(s.hitter)}</span>${s.netView && s.netView.flat ? '<span class="tag">flat / pushed</span>' : ''}</div>` +
     `<div class="sig">${glyphHtml(s, 'glyph')}<p><small>Hand signal</small>${esc(s.signal.description)}</p></div>` +
     `<p class="note">${esc(s.coachingNote)}</p>` +
+    (fl ? `<p class="hint">${flightSummary(s)}</p>` : '') +
     `<div class="acts">` +
-      (canPlay ? `<button class="btn primary" data-play>▶ Play ball</button>` : '') +
+      (canPlay ? `<button class="btn primary" data-play>▶ Play ball</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
+      (!s.modifier && state.tab !== '3d' ? `<button class="btn" data-show="3d" data-id="${s.id}">Show in 3D</button>` : '') +
       (s.netView && state.tab !== 'net' ? `<button class="btn" data-show="net" data-id="${s.id}">Show on net</button>` : '') +
       (s.courtView && state.tab !== 'court' ? `<button class="btn" data-show="court" data-id="${s.id}">Show on court</button>` : '') +
     `</div>`;
@@ -727,7 +1213,7 @@ function select(id, opts) {
   if (id) state.zone = null;
   applySelection();
   renderDetail();
-  if (id && narrow.matches && (state.tab === 'net' || state.tab === 'court')) {
+  if (id && narrow.matches && (state.tab === 'net' || state.tab === 'court' || state.tab === '3d')) {
     const wrap = $(`#tab-${state.tab} .scene-wrap`);
     if (wrap) wrap.scrollIntoView({ block: 'start', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
   }
@@ -735,7 +1221,9 @@ function select(id, opts) {
     // keep the selected set visible in the net view if its group is filtered out
     const s = id && byId(id);
     if (s && state.hidden.has(s.group) && state.tab === 'net' && s.netView) { state.hidden.delete(s.group); renderNet(); }
+    if (s && state.hidden.has(s.group) && state.tab === '3d') { state.hidden.delete(s.group); render3D(); }
   }
+  if (state.tab === '3d') { const s3 = id && byId(id); $('#v3-readout').innerHTML = s3 && flight(s3) ? `<span><b>${esc(s3.name)}</b></span><span>${flightSummary(s3)}</span>` : `<span>Net ${state.netH.toFixed(2)} m · court 9 × 9 m per side · attack line 3 m from the net.</span><span>Select a set for its hang time and contact point.</span>`; }
 }
 function applySelection() {
   const sel = state.selected;
@@ -750,6 +1238,7 @@ function applySelection() {
     if (el.hasAttribute('aria-pressed')) el.setAttribute('aria-pressed', String(on));
   });
   $$('#court-scene .zone').forEach(z => z.classList.toggle('active', !sel && state.zone === Number(z.getAttribute('data-zone'))));
+  $$('#checks-spec tr[data-set]').forEach(tr => tr.classList.toggle('sel', tr.getAttribute('data-set') === sel));
   $$('#court-zonechips [data-zone]').forEach(c => { const on = !sel && state.zone === Number(c.getAttribute('data-zone')); c.classList.toggle('active', on); c.setAttribute('aria-pressed', String(on)); });
 }
 
@@ -760,6 +1249,7 @@ let raf = null, ballTimer = null;
 function play() {
   const s = state.selected && byId(state.selected);
   if (!s) return;
+  if (state.tab === '3d') return play3D(s);
   const scene = state.tab === 'court' ? $('#court-scene') : $('#net-scene');
   const grp = scene && scene.querySelector(`[data-set="${s.id}"]`);
   if (!grp) return;
@@ -769,8 +1259,7 @@ function play() {
   const hitter = scene.querySelector('.hitter');
   if (raf) cancelAnimationFrame(raf);
   if (ballTimer) clearTimeout(ballTimer);
-  const fast = state.tab === 'court' && state.bic && s.group === 'backrow';
-  const dur = (TEMPO_MS[s.tempo] || 1000) * (fast ? 0.6 : 1);
+  const dur = flightMs(s);
   const len = path.getTotalLength();
   const alen = approach ? approach.getTotalLength() : 0;
   const t0 = performance.now();
@@ -787,6 +1276,28 @@ function play() {
     }
     if (p < 1) raf = requestAnimationFrame(step);
     else ballTimer = setTimeout(() => { ball.style.opacity = 0; hitter.style.opacity = 0; }, 600);
+  }
+  raf = requestAnimationFrame(step);
+}
+function play3D(s) {
+  const fl = flight(s, { bic: state.bic && s.group === 'backrow' });
+  if (!fl) return;
+  if (raf) cancelAnimationFrame(raf);
+  if (ballTimer) clearTimeout(ballTimer);
+  const dur = fl.T * 1000 * (state.slow ? 2.5 : 1);
+  const ap = approachWorld(s, 24);
+  const t0 = performance.now();
+  const q = () => ({ ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter') });
+  function step(now) {
+    const el = q(); if (!el.ball || !v3cam) return;
+    const p = Math.min(1, (now - t0) / dur);
+    const w = fl.at(p), b = v3cam.project(w), sh = v3cam.project({ x: w.x, y: w.y, z: 0 });
+    el.ball.style.opacity = 1; el.shadow.style.opacity = 0.6;
+    el.ball.setAttribute('transform', `translate(${r1(b.x)} ${r1(b.y)})`);
+    el.shadow.setAttribute('transform', `translate(${r1(sh.x)} ${r1(sh.y)})`);
+    if (ap) { const i = Math.min(ap.length - 1, Math.round(ap.length * Math.min(1, p * 1.1))); const h = v3cam.project(ap[i]); el.hitter.style.opacity = 1; el.hitter.setAttribute('transform', `translate(${r1(h.x)} ${r1(h.y)})`); }
+    if (p < 1) raf = requestAnimationFrame(step);
+    else ballTimer = setTimeout(() => { const e = q(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; } }, 700);
   }
   raf = requestAnimationFrame(step);
 }
@@ -870,27 +1381,38 @@ function renderQuiz() {
    TABS + EVENTS
    ============================================================ */
 function showTab(id) {
+  if (id === 'diagrams') id = state.diag;
   state.tab = id;
-  $$('.nav [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === id)));
+  if (id === 'net' || id === 'court') state.diag = id;
+  const navId = (id === 'net' || id === 'court') ? 'diagrams' : id;
+  $$('.nav [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === navId)));
+  $$('.diag-seg button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-diag') === state.diag)));
   $$('.tab').forEach(t => { t.hidden = t.getAttribute('data-tab') !== id; });
   if (id === 'court') renderCourt();
   if (id === 'net') renderNet();
+  if (id === '3d') render3D();
+  if (id === 'checks') renderChecks();
   if (id === 'quiz' && !state.quiz.current) quizNext();
   renderDetail();
   applySelection();
   window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-mode],[data-qgroup],[data-qanswer],[data-qnext],[data-qreset],#bic-toggle');
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-qgroup],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],#bic-toggle,#v3-bic,#v3-net');
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
+  if (t.hasAttribute('data-diag')) { showTab(t.getAttribute('data-diag')); return; }
+  if (t.hasAttribute('data-cam')) { const p = V3.presets[t.getAttribute('data-cam')]; state.cam = Object.assign({}, p, { preset: t.getAttribute('data-cam') }); render3D(); return; }
+  if (t.id === 'v3-bic') { state.bic = !state.bic; render3D(); renderDetail(); return; }
+  if (t.id === 'v3-net') { state.netH = state.netH === WORLD.netHeights.men ? WORLD.netHeights.women : WORLD.netHeights.men; render3D(); renderDetail(); return; }
+  if (t.hasAttribute('data-slow')) { state.slow = !state.slow; renderDetail(); return; }
   if (t.hasAttribute('data-goto')) { showTab(t.getAttribute('data-goto')); return; }
   if (t.hasAttribute('data-group')) {
     const g = t.getAttribute('data-group');
     if (state.hidden.has(g)) state.hidden.delete(g); else state.hidden.add(g);
     const s = state.selected && byId(state.selected);
     if (s && state.hidden.has(s.group)) select(null);
-    renderNet(); return;
+    if (state.tab === '3d') render3D(); else renderNet(); return;
   }
   if (t.hasAttribute('data-show')) {
     e.stopPropagation();
@@ -900,7 +1422,7 @@ document.addEventListener('click', e => {
     showTab(t.getAttribute('data-show'));
     return;
   }
-  if (t.hasAttribute('data-select')) { const id = t.getAttribute('data-select'); select(state.selected === id ? null : id); return; }
+  if (t.hasAttribute('data-select')) { const id = t.getAttribute('data-select'); select(state.selected === id ? null : id, { silent: !!t.closest('#checks-spec') }); return; }
   if (t.hasAttribute('data-zone') && !t.closest('#quiz-box')) {
     const z = Number(t.getAttribute('data-zone'));
     state.zone = state.zone === z ? null : z;
@@ -909,7 +1431,7 @@ document.addEventListener('click', e => {
   }
   if (t.hasAttribute('data-close')) { select(null); return; }
   if (t.hasAttribute('data-play')) { play(); return; }
-  if (t.id === 'bic-toggle') { state.bic = !state.bic; renderCourt(); return; }
+  if (t.id === 'bic-toggle') { state.bic = !state.bic; renderCourt(); renderDetail(); return; }
   if (t.hasAttribute('data-mode')) { state.quiz.mode = t.getAttribute('data-mode'); state.quiz.queue = []; quizNext(); return; }
   if (t.hasAttribute('data-qgroup')) { state.quiz.group = t.getAttribute('data-qgroup'); state.quiz.queue = []; quizNext(); return; }
   if (t.hasAttribute('data-qanswer')) { quizAnswer(t.getAttribute('data-qanswer')); return; }
@@ -918,12 +1440,13 @@ document.addEventListener('click', e => {
 });
 // SVG set paths + zones (click and keyboard)
 document.addEventListener('click', e => {
-  const g = e.target.closest('#net-scene .set, #court-scene .set');
+  if (state.v3drag) return;
+  const g = e.target.closest('#net-scene .set, #court-scene .set, #v3-scene .set');
   if (g) { const id = g.getAttribute('data-set'); select(state.selected === id ? null : id); }
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
-  const el = e.target.closest('.set[data-set], .card[data-select], .zone[data-zone]');
+  const el = e.target.closest('.set[data-set], .card[data-select], .zone[data-zone], tr[data-select]');
   if (!el) return;
   e.preventDefault();
   el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
@@ -931,12 +1454,15 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.selected) select(null); });
 
 // re-layout the net view when crossing the phone/desktop breakpoint
-(narrow.addEventListener ? narrow.addEventListener.bind(narrow, 'change') : narrow.addListener.bind(narrow))(() => { if (state.tab === 'net') renderNet(); });
+(narrow.addEventListener ? narrow.addEventListener.bind(narrow, 'change') : narrow.addListener.bind(narrow))(() => { if (state.tab === 'net') renderNet(); if (state.tab === '3d') render3D(); });
 
 /* ---------------- boot ---------------- */
+v3Orbit();
 renderSignals();
 renderQuiz();
-showTab('net');
+showTab('3d');
+{ const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
+window.SetterSignals = { SETS, WORLD, flight, runChecks };
 })();
 </script>
 </body>

@@ -16,12 +16,22 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 
 | Tab | What it shows |
 | --- | --- |
-| Net View | Side view of the net. Every path leaves the setter's hands; height and landing spot tell sets apart. Filter chips hide groups, tap a path to select, ▶ animates the ball (and the Slide's runner). |
-| Court View | Top-down half court. Front-row landing spots along the net; back-row attacks with start point, dotted approach, takeoff behind the 3 m line, and set target. BIC toggle switches back-row styling. Tap a zone number to highlight sets landing there. |
-| Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show on net" / "Show on court". |
+| 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
+| Diagrams | The two flat views. **Net** is the side view: height and landing spot tell sets apart. **Court** is top-down: front-row landing spots along the net, back-row attacks with start point, dotted approach, takeoff behind the 3 m line and set target; tap a zone number to highlight sets landing there. |
+| Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show in 3D" / "Show on net" / "Show on court". |
 | Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), optional group filter. |
+| Checks | Every set is graded against explicit rules (where it lands, how high, who hits it, how it relates to neighbouring sets, takeoff behind the line, unique signals, tempo vs. physics). A spec sheet lists each set's landing spot, contact height, apex and hang time in metres and seconds. |
 
-Selection is shared across tabs. Keyboard: Tab to a path or card, Enter/Space to select, Esc to clear.
+Selection is shared across tabs. Keyboard: Tab to a path, card or spec row, Enter/Space to select, Esc to clear.
+
+## The flight model
+
+Heights in the side view are relative (`peak` 0 → 1). The 3D view and the Checks tab turn them into
+metres with the constants in `WORLD` (just below `SETS`): net height, where the setter releases the
+ball, how far above the tape a hitter contacts it, and how high a `peak = 1` ball goes. Hang time comes
+from gravity alone, so a 1 hangs about 0.5 s and a 4 about 1.5 s. Tempo bands (1st < 0.85 s, 2nd
+0.85–1.45 s, 3rd above) are in `WORLD.tempoBands`; the Checks tab warns when a set's declared `tempo`
+disagrees with its physics.
 
 ## Editing the `SETS` array
 
@@ -50,4 +60,9 @@ Every view (net, court, cards, quiz) renders from this one array. Each set is on
 - **Modifiers** (like BIC) have `modifier: true` and no `netView`/`courtView`; they appear on the Signals tab and in the Signal → Set quiz only.
 - Group labels and hints live in the small `GROUPS` array just below `SETS`.
 
-Save the file and reload the page. If the browser console shows an error after editing, it is almost always a missing comma or quote in the object you changed.
+Save the file and reload the page, then open the **Checks** tab: it re-grades the data and names
+exactly which set broke which rule. Rules about specific named sets (4 above Hut, Back 1 mirrors the 1,
+Slide has a run, and so on) look sets up by `id` and simply pass when that id is gone, so renaming or
+removing a set never breaks the page. To add a rule, append an object to the `RULES` array.
+If the browser console shows an error after editing, it is almost always a missing comma or quote in
+the object you changed.
