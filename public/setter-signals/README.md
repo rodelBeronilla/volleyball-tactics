@@ -85,25 +85,35 @@ opposite on a Back 2) is already close and takes two or three steps (0.75 s); a 
 1.2 s and the slide 1.0 s. The ball is met `WORLD.riseSec` (0.35 s) after takeoff, so the card can
 say where the hitter is when the setter touches the ball.
 
-Peak heights above the net, as drawn, follow the usual coaching references: 1 and Back 1 0.4 m
-(a foot or so, the middle is already up); Push 1 0.5 m; 3/Shoot 0.7 m; Slide 0.8 m (1 to 3 ft); 2,
-Back 2 and 32 1.0 m (2 to 3 ft); Go and Red 1.2 m (4 ft, the hitter on the second step); Hut 1.8 m
-(6 ft, the hitter on the first step); the normal back-row balls 1.75 m; 4 and 5 3.1 m (10 ft). BIC
-drops a back-row ball to about 1 m.
+Peak heights above the net, as drawn, sit inside the ranges coaches publish, and the Checks tab
+grades each set against them ("Heights match published references"):
+
+| Set | Drawn | Published reference |
+| --- | --- | --- |
+| 1, Back 1 | 0.42 m (1.4 ft) | just above the net, 1–2 ft |
+| Push 1 | 0.48 m (1.6 ft) | same tempo as the 1 |
+| 3 / Shoot (31) | 0.61 m (2 ft), a foot off the net | 1–2 ft, lands a foot off the net |
+| Slide | 0.80 m (2.6 ft) | 1–3 ft (some say 3–4 ft), one-foot takeoff |
+| 2, Back 2, 32 | 1.0 m (3.3 ft) | 2–3 ft / "one metre" |
+| Go, Red | 1.19 m (3.9 ft), flat | 3–4 ft, hitter on the second step |
+| BIC | 1.45 m (4.8 ft) | lower and faster than a Pipe, a 2nd/3rd-step ball |
+| Pipe, A, B, C, D | 1.83 m (6 ft) | about a metre above the antenna, 2nd/3rd-step |
+| Hut | 2.4 m (7.9 ft) | 8–10 ft "rainbow", 1st-step or slower |
+| 4, 5 | 3.3 m (10.8 ft), a metre off the net | 10–12 ft, about 3 m, a metre off the net |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
 a metre in front of it, the Back 1 half a metre behind, the Push 1 about 1.3 m in front, the 2 about
 0.7 m in front and the Back 2 about 1.1 m behind. Pin sets (Go, Hut, 4, Red, 5) land a metre inside
 the antenna, the Slide about 1.4 m inside the right antenna, the 3/Shoot and 32 in zone 3 (2.3 to
-2.5 m from the left antenna). Quicks are contacted half a metre off the net, flat balls 0.4 m, the
-2 about 0.7 m, a Hut 0.9 m and a high ball 1.2 m (4 ft). Back-row balls are contacted 2.7 m off the
+2.5 m from the left antenna). Quicks are contacted half a metre off the net, flat balls a foot off,
+the 2 about 0.6 m, a Hut 0.9 m and a high ball about a metre off. Back-row balls are contacted 2.7 m off the
 net (2.5 m for a BIC) with the takeoff behind the 3-m line.
 
 **Tempo is derived, not typed.** It is how far through the approach the hitter is at setter contact
 (`WORLD.tempoPhases`): leaving the floor or already up is **minus tempo** (1, Push 1, Back 1);
-planting is **first tempo** (3/Shoot, Slide, any BIC ball); on the second step is **second
-tempo** (2, Back 2, 32, Go, Red, A, B, Pipe, C, D); on the first step or still waiting is **third
+planting is **first tempo** (3/Shoot, Slide); on the second step is **second tempo** (2, Back 2,
+32, Go, Red, A, B, Pipe, C, D, and a BIC ball); on the first step or still waiting is **third
 tempo** (Hut, 4, 5). This matches the common "2nd-step tempo" (Go, Red) and "1st-step or slower"
 (Hut, 5) descriptions of those sets. The
 filters, the legend, the quiz and the cards all classify by tempo and by row, never by set type. Raise or lower a set's `peak` and its
