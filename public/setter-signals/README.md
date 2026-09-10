@@ -85,21 +85,26 @@ opposite on a Back 2) is already close and takes two or three steps (0.75 s); a 
 1.2 s and the slide 1.0 s. The ball is met `WORLD.riseSec` (0.35 s) after takeoff, so the card can
 say where the hitter is when the setter touches the ball.
 
-Peak heights above the net, as drawn, sit inside the ranges coaches publish, and the Checks tab
-grades each set against them ("Heights match published references"):
+Height and hang time are the same thing under gravity, so the ladder is anchored on measured set
+flight times rather than on the feet-above-the-net figures coaching sites quote (which run high:
+"10–12 ft" for a 4 would be a 1.6 s ball, slower than anything measured in elite play). The data:
+in the Olympic men's finals of 2000 and 2021, quick sets flew 0.40–0.49 s from setter release to
+hitter contact, and sets to the outside averaged 1.12 s (2000) and 0.97 s (2021). A Go is the fast
+end of that outside range, a Hut the 2000 average, a 4 the slow tail. The Checks tab grades every
+set on this ("Hang times match measured set flight times"):
 
-| Set | Drawn | Published reference |
-| --- | --- | --- |
-| 1, Back 1 | 0.42 m (1.4 ft) | just above the net, 1–2 ft |
-| Push 1 | 0.48 m (1.6 ft) | same tempo as the 1 |
-| 3 / Shoot (31) | 0.61 m (2 ft), a foot off the net | 1–2 ft, lands a foot off the net |
-| Slide | 0.80 m (2.6 ft) | 1–3 ft (some say 3–4 ft), one-foot takeoff |
-| 2, Back 2, 32 | 1.0 m (3.3 ft) | 2–3 ft / "one metre" |
-| Go, Red | 1.19 m (3.9 ft), flat | 3–4 ft, hitter on the second step |
-| BIC | 1.45 m (4.8 ft) | lower and faster than a Pipe, a 2nd/3rd-step ball |
-| Pipe, A, B, C, D | 1.83 m (6 ft) | about a metre above the antenna, 2nd/3rd-step |
-| Hut | 2.4 m (7.9 ft) | 8–10 ft "rainbow", 1st-step or slower |
-| 4, 5 | 3.3 m (10.8 ft), a metre off the net | 10–12 ft, about 3 m, a metre off the net |
+| Set | Hang | Peak above the net | Reference |
+| --- | --- | --- | --- |
+| 1, Back 1 | 0.45 s | 0.49 m (1.6 ft) | measured quick 0.40–0.49 s; "1–2 ft" |
+| Push 1 | 0.51 s | 0.56 m (1.8 ft) | same tempo as the 1 |
+| 3 / Shoot (31) | 0.55 s | 0.61 m (2 ft), a foot off the net | "1–2 ft, a foot off the net" |
+| Slide | 0.67 s | 0.79 m (2.6 ft) | "1–3 ft", one-foot takeoff |
+| 2, Back 2, 32 | 0.79 s | 1.0 m (3.3 ft) | "2–3 ft" / "one metre", hitter on the second step |
+| Go, Red | 0.88 s | 1.18 m (3.9 ft), flat | fast end of the outside range (0.97 s in 2021); "3–4 ft" |
+| BIC | 0.99 s | 1.46 m (4.8 ft) | lower and faster than a Pipe, still a 2nd/3rd-step ball |
+| Pipe, A, B, C, D | 1.13 s | 1.83 m (6 ft) | "about a metre above the antenna" |
+| Hut | 1.12 s | 1.76 m (5.8 ft) | the 2000 outside average; hitter on the first step |
+| 4, 5 | 1.33 s | 2.4 m (7.9 ft), a metre off the net | slow tail of the outside range; the out-of-system ball |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
