@@ -52,6 +52,12 @@ p{margin:0}
 .filters .chips{flex:1 1 auto}
 .chip .s{display:none}
 .seg.row button[disabled]{opacity:.35}
+.rolebar .seg.pass button{padding:0 12px}
+.sc.rec{border-color:#fbbf24}
+.sc.rec b{color:#fbbf24;margin-left:4px;font-size:12px}
+.kv .cmp{display:block}
+.kv .cmp b{color:var(--text);margin-right:6px}
+.smove-g text{font-family:inherit}
 .chip.on,.chip[aria-pressed="true"].filter{border-color:var(--accent)}
 .chip.active{background:var(--panel3);border-color:var(--accent)}
 
@@ -599,7 +605,17 @@ const ROWS = [
 /* `group` is an internal family used by the colour scheme and the data checks; it is never shown as a filter. The UI classifies by tempo and by row. */
 const GROUPS = ['quick', 'medium', 'outside', 'rightside', 'backrow'];
 const SETTER_X = 0.66;   // setter's target: about 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2
-const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };   // court fraction (net → end line) where a back-row ball is contacted
+const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };
+/* Pass quality. Where the ball arrives decides where the setter sets from and which balls are on.
+   spot is in court fractions (x: left sideline → right, y: net → end line); release is metres above the tape
+   (a jump set on a perfect pass, a standing set further off); lift is extra height the setter adds when
+   setting from further away; allow lists the pass grades of the sets that can be run. */
+const PASSES = [
+  { id: 'perfect', label: 'Perfect', spot: { x: SETTER_X, y: 0.5 / 9 }, release: 0.10, lift: 0, allow: ['perfect', 'good', 'any'], hint: 'On target at the net: the setter jump-sets and the whole menu is on.' },
+  { id: 'good', label: 'Good', spot: { x: SETTER_X - 0.05, y: 1.5 / 9 }, release: 0.0, lift: 0.1, allow: ['good', 'any'], hint: 'A metre and a half off the net, a step left of target: the setter moves to it and sets standing. The quicks and the flat pin balls are off.' },
+  { id: 'off', label: 'Off', spot: { x: 0.5, y: 3.0 / 9 }, release: -0.3, lift: 0.5, allow: ['any'], hint: 'In the middle at the 3-m line: the setter runs it down and lofts a high ball. Out-of-system menu only.' }
+];
+const passOf = id => PASSES.find(p => p.id === id) || PASSES[0];   // court fraction (net → end line) where a back-row ball is contacted
 
 /* Real-world flight model — metres and seconds. Tweak here if your gym or level differs. */
 const WORLD = {
@@ -694,7 +710,7 @@ function effectiveFallback(s, r) {
   r = r || state.rotation;
   const a = availability(s, r); if (!a.ok || s.modifier) return null;
   const fb = s.fallback && byId(s.fallback);
-  if (fb) { const fa = availability(fb, r); if (fa.ok && fa.hitter === a.hitter) return { set: fb, changed: false }; }
+  if (fb) { const fa = availability(fb, r); if (fa.ok && fa.hitter === a.hitter && passOk(fb)) return { set: fb, changed: false }; }
   const alt = SETS.find(x => !x.modifier && x.id !== s.id && x.pass === 'any' && availability(x, r).ok && availability(x, r).hitter === a.hitter);
   if (alt) return { set: alt, changed: alt.id !== s.fallback };
   if (s.pass === 'any') return null;
@@ -740,6 +756,7 @@ const state = {
   diag: 'net',
   selected: null,
   hidden: new Set(),
+  pass: (function () { try { const r = localStorage.getItem('setterSignals.pass'); if (['perfect', 'good', 'off'].includes(r)) return r; } catch (e) { /* ignore */ } return 'perfect'; })(),
   row: (function () { try { const r = localStorage.getItem('setterSignals.row'); if (['front', 'back', 'both'].includes(r)) return r; } catch (e) { /* ignore */ } return 'both'; })(),
   bic: false,
   zone: null,
@@ -777,9 +794,25 @@ function roleHas(s) {   // could this role ever hit it (any rotation)?
   if (s.hitter === state.role) return true;
   return [1, 2, 3, 4, 5, 6].some(r => availability(s, r).hitter === state.role);
 }
-function roleHasNow(s) {   // is it on in this rotation, for this role?
+function passOk(s) { return passOf(state.pass).allow.includes(s.modifier ? 'perfect' : s.pass); }
+function offWhy(s) {   // why a set is not live right now: rotation first, then the pass
   const a = availability(s, state.rotation);
-  if (!a.ok) return false;
+  if (!a.ok) return `Not in rotation ${state.rotation}: ${a.why}`;
+  if (!passOk(s)) return `Needs a ${s.modifier ? 'perfect' : s.pass} pass — this is ${state.pass === 'off' ? 'an off' : 'a ' + state.pass} pass`;
+  return '';
+}
+function recommended() {   // the call on this pass: the outside's high ball off an off pass, nothing special otherwise
+  if (state.pass !== 'off') return null;
+  return roleSets().find(s => s.hitter === 'OH' && s.pass === 'any' && s.group !== 'backrow') || roleSets().find(s => s.pass === 'any') || null;
+}
+function setPass(id) {
+  state.pass = id;
+  try { localStorage.setItem('setterSignals.pass', id); } catch (e) { /* ignore */ }
+  renderRoleBar(); renderTab();
+}
+function roleHasNow(s) {   // is it on in this rotation, for this role, on this pass?
+  const a = availability(s, state.rotation);
+  if (!a.ok || !passOk(s)) return false;
   if (state.role === 'setter') return true;
   if (s.hitter === 'Back row') return state.role === 'OH' || state.role === 'OPP';
   return a.hitter === state.role;
@@ -828,9 +861,12 @@ function renderRoleBar() {
   const mine = roleSets().filter(s => !s.modifier);
   const front = mine.filter(s => s.group !== 'backrow').map(s => s.name), back = mine.filter(s => s.group === 'backrow').map(s => s.name);
   const where = `Rotation ${rot.r}: setter in zone ${rot.setterZone}, ${rot.setterFront ? 'front' : 'back'} row · front ${rot.front.join(' ')} · back ${rot.back.join(' ')}`;
-  const hint = state.role === 'setter' ? `${where}. ${rot.setterFront ? 'Two front-row hitters: the opposite attacks from the back row and you can dump.' : 'Three front-row hitters plus the back-row outside.'}` : `${where}. Your balls now — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`;
+  const pass = passOf(state.pass), rec = recommended();
+  const passText = pass.id === 'perfect' ? '' : ` ${pass.hint}${rec ? ` Best call: the ${rec.name}.` : ''}`;
+  const hint = (state.role === 'setter' ? `${where}. ${rot.setterFront ? 'Two front-row hitters: the opposite attacks from the back row and you can dump.' : 'Three front-row hitters plus the back-row outside.'}` : `${where}. Your balls now — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`) + passText;
   $('#rolebar').innerHTML = `<span class="lab">I am the</span><div class="seg" role="group" aria-label="Role">${ROLES.map(r => `<button data-role="${r.id}" aria-pressed="${state.role === r.id}">${r.label}</button>`).join('')}</div>` +
     `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}` +
+    `<span class="lab">Pass</span><div class="seg pass" role="group" aria-label="Pass quality">${PASSES.map(p => `<button data-pass="${p.id}" aria-pressed="${state.pass === p.id}" title="${esc(p.hint)}">${p.label}</button>`).join('')}</div>` +
     `<span class="hint">${esc(hint)}</span>`;
 }
 function howLabel(s) {
@@ -842,7 +878,11 @@ function howLabel(s) {
 function timeline(fl) {
   const approachSec = fl.approachSec || WORLD.approach.OH;
   const takeoffAt = fl.T - WORLD.riseSec, startAt = takeoffAt - approachSec;
-  return { T: fl.T, startAt, takeoffAt, approachSec, phase: -startAt / approachSec };
+  // on an off pass the setter first runs from the target to the ball, arriving as it does (t = 0)
+  const pass = fl.pass || passOf('perfect');
+  const moveM = Math.hypot((pass.spot.x - SETTER_X) * WORLD.courtW, pass.spot.y * WORLD.courtD - WORLD.releaseY);
+  const moveSec = pass.id === 'perfect' ? 0 : 0.25 + moveM / 3.5;
+  return { T: fl.T, startAt, takeoffAt, approachSec, phase: -startAt / approachSec, moveSec, moveM };
 }
 function timingText(s, tl) {
   if (s.timingNote) return s.timingNote;
@@ -892,7 +932,7 @@ const nx = (L, x) => L.ax0 + x * (L.ax1 - L.ax0);
 function netGeom(L, s) {
   const v = s.netView;
   const handsY = L.netY - L.fs * 1.1;
-  const sx = nx(L, SETTER_X), sy = handsY;
+  const sx = nx(L, passOf(state.pass).spot.x), sy = handsY;
   const ex = nx(L, v.landX), ey = handsY - L.fs * 0.35;
   const apexY = handsY - v.peak * (handsY - L.topY);
   const c = (apexY - (sy + ey) / 8) / 0.75;          // both control points at this y ⇒ apex exactly at apexY
@@ -947,7 +987,8 @@ function netSetMarkup(L, s, opts) {
 function netScene(L, sets, opts) {
   const handsY = L.netY - L.fs * 1.1;
   const span = handsY - L.topY;
-  const setterX = nx(L, SETTER_X);
+  const pass = passOf(state.pass);
+  const setterX = nx(L, pass.spot.x), baseX = nx(L, SETTER_X);
   let o = `<svg class="scene" viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="Side view of the net with set trajectories">`;
   o += `<defs><pattern id="mesh" width="${L.fs * 0.5}" height="${L.fs * 0.5}" patternUnits="userSpaceOnUse"><path d="M0 0H${L.fs * 0.5}V${L.fs * 0.5}" fill="none" stroke="#3a4157" stroke-width="1"/></pattern>`;
   sets.forEach(s => { o += `<marker id="arrow-${s.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="${s.color}"/></marker>`; });
@@ -980,11 +1021,17 @@ function netScene(L, sets, opts) {
        `<path d="M${r1(setterX - L.fs * 0.55)} ${r1(handsY + L.fs * 0.15)} L${r1(setterX - L.fs * 0.25)} ${r1(headY + headR + L.fs * 0.35)} L${r1(setterX + L.fs * 0.25)} ${r1(headY + headR + L.fs * 0.35)} L${r1(setterX + L.fs * 0.55)} ${r1(handsY + L.fs * 0.15)}" fill="none" stroke="#e8ebf5" stroke-width="${r1(L.sw * 0.9)}" stroke-linecap="round" stroke-linejoin="round"/>` +
        `<circle cx="${r1(setterX)}" cy="${r1(headY)}" r="${r1(headR)}" fill="#e8ebf5"/>` +
        `<path d="M${r1(setterX)} ${r1(headY + headR)} V${r1(L.netY + L.netH + L.fs * 0.9)} M${r1(setterX)} ${r1(L.netY + L.netH + L.fs * 0.9)} L${r1(setterX - L.fs * 0.5)} ${r1(L.floorY)} M${r1(setterX)} ${r1(L.netY + L.netH + L.fs * 0.9)} L${r1(setterX + L.fs * 0.5)} ${r1(L.floorY)}" fill="none" stroke="#e8ebf5" stroke-width="${r1(L.sw * 0.9)}" stroke-linecap="round"/>` +
-       (opts && opts.noLabels ? '' : `<text x="${r1(setterX)}" y="${r1(L.floorY + L.fs * 1.1)}" font-size="${r1(L.fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter</text>`) +
+       (opts && opts.noLabels ? '' : `<text x="${r1(setterX)}" y="${r1(L.floorY + L.fs * 1.1)}" font-size="${r1(L.fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter${pass.id === 'perfect' ? '' : ` · ${(pass.spot.y * WORLD.courtD).toFixed(1)} m off the net`}</text>`) +
        `</g>`;
+  if (pass.id !== 'perfect') {   // where the setter came from
+    o += `<g class="smove-g"><circle cx="${r1(baseX)}" cy="${r1(L.floorY)}" r="${r1(L.fs * 0.3)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>` +
+         `<path d="M${r1(baseX)} ${r1(L.floorY)} L${r1(setterX)} ${r1(L.floorY)}" stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6" fill="none"/>` +
+         (opts && opts.noLabels ? '' : `<text x="${r1(baseX)}" y="${r1(L.floorY - L.fs * 0.6)}" font-size="${r1(L.fs * 0.7)}" fill="#8b93ab" text-anchor="middle">target</text>`) + `</g>`;
+  }
   // sets: draw the highest first so low ones sit on top
   sets.slice().sort((a, b) => b.netView.peak - a.netView.peak).forEach(s => { o += netSetMarkup(L, s, opts); });
   // animated markers
+  o += `<circle class="smove" r="${r1(L.fs * 0.4)}" fill="#e8ebf5" stroke="#0f1117" stroke-width="2" opacity="0"/>`;
   o += `<circle class="hitter" r="${r1(L.fs * 0.42)}" fill="#fbbf24" stroke="#0f1117" stroke-width="2"/>`;
   o += `<circle class="ball" r="${r1(L.fs * 0.38)}" fill="#fff" stroke="#0f1117" stroke-width="2"/>`;
   o += `</svg>`;
@@ -1021,7 +1068,7 @@ const cx = x => CL.x0 + x * CL.cw;
 const cy = y => CL.y0 + y * CL.ch;
 function courtSetPath(s, bic) {
   const v = s.courtView;
-  const sx = cx(SETTER_X), sy = cy(0.05);
+  const ps = passOf(state.pass).spot, sx = cx(ps.x), sy = cy(ps.y);
   const isBack = s.group === 'backrow';
   const fl = isBack ? null : flight(s);
   const ty = isBack ? (bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) : (fl ? fl.p1.y / WORLD.courtD : v.y);
@@ -1157,12 +1204,19 @@ function courtScene(sets, opts) {
          `<rect class="hitz" x="${r1(rx)}" y="${r1(ry)}" width="${r1(CL.cw / 3)}" height="${r1(rh)}"/>` +
          `<text x="${r1(zx)}" y="${r1(zy)}" font-size="${row === 0 ? 40 : 64}" text-anchor="middle" dominant-baseline="middle">${z}</text></g>`;
   });
-  // setter
-  const sx = cx(SETTER_X), sy = cy(0.05);
+  // setter, at the pass; a dotted run from the target when the pass is off
+  const pass = passOf(state.pass), sx = cx(pass.spot.x), sy = cy(pass.spot.y);
+  if (pass.id !== 'perfect') {
+    const bx = cx(SETTER_X), by = cy(0.05);
+    o += `<g class="smove-g"><circle cx="${r1(bx)}" cy="${r1(by)}" r="${r1(CL.fs * 0.5)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>` +
+         `<path d="M${r1(bx)} ${r1(by)} L${r1(sx)} ${r1(sy)}" stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6" fill="none"/>` +
+         (opts.noLabels ? '' : `<text x="${r1(sx + CL.fs * 0.7)}" y="${r1(sy + CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab">${esc(pass.label)} pass · setter ${(Math.hypot((pass.spot.x - SETTER_X) * WORLD.courtW, (pass.spot.y - 0.05) * WORLD.courtD)).toFixed(1)} m from target</text>`) + `</g>`;
+  }
   o += `<g aria-label="Setter"><circle cx="${r1(sx)}" cy="${r1(sy)}" r="${r1(CL.fs * 0.5)}" fill="#e8ebf5"/><text x="${r1(sx)}" y="${r1(sy + CL.fs * 0.28)}" font-size="${r1(CL.fs * 0.65)}" font-weight="800" fill="#0f1117" text-anchor="middle">S</text></g>`;
   const labelPos = courtLabelPositions(sets);
   if (!opts.noLabels) labelPos._leaders.forEach(l => { o += `<path d="M${r1(l.x)} ${r1(l.y0)}V${r1(l.y1)}" stroke="${l.color}" stroke-width="1.5" stroke-dasharray="2 3" opacity=".6"/>`; });
   sets.forEach(s => { o += courtSetMarkup(s, { bic: opts.bic, noLabels: opts.noLabels, labelPos }); });
+  o += `<circle class="smove" r="${r1(CL.fs * 0.42)}" fill="#e8ebf5" stroke="#0f1117" stroke-width="2" opacity="0"/>`;
   o += `<circle class="hitter" r="${r1(CL.fs * 0.42)}" fill="#fbbf24" stroke="#0f1117" stroke-width="2"/>`;
   o += `<circle class="ball" r="${r1(CL.fs * 0.36)}" fill="#fff" stroke="#0f1117" stroke-width="2"/>`;
   o += `</svg>`;
@@ -1176,7 +1230,7 @@ function renderCourt() {
   renderFilters('court-filters', pool);
   $('#bic-toggle').setAttribute('aria-pressed', String(state.bic));
   $('#bic-hint').textContent = state.bic
-    ? 'BIC: same spots, lower and faster — the hitter is on the second step when the ball is set. At high levels every back-row set is run at BIC tempok.'
+    ? 'BIC: same spots, lower and faster — the hitter is on the second step when the ball is set. At high levels every back-row set is run at BIC tempo.'
     : 'Normal back-row ball: set deeper and higher than a front-row ball, about a metre above the antenna. At high levels every back-row set is run at BIC tempo.';
   $('#court-zonechips').innerHTML = [4, 3, 2, 5, 6, 1].map(z =>
     `<button class="chip${state.zone === z ? ' active' : ''}" data-zone="${z}" aria-pressed="${state.zone === z}">Zone ${z}</button>`).join('') +
@@ -1190,7 +1244,8 @@ function renderCourt() {
 function flight(s, o) {
   o = o || {};
   const netH = o.netH || state.netH;
-  const p0 = { x: SETTER_X * WORLD.courtW, y: WORLD.releaseY, z: netH + WORLD.releaseAboveTape };
+  const pass = passOf(o.pass || state.pass);
+  const p0 = { x: pass.spot.x * WORLD.courtW, y: pass.spot.y * WORLD.courtD, z: netH + pass.release };
   let p1, peak;
   if (s.group === 'backrow') {
     if (!s.courtView) return null;
@@ -1202,7 +1257,7 @@ function flight(s, o) {
     peak = v.peak;
   } else return null;
   const d = p1.z - p0.z;
-  const peakH = Math.max(peak * WORLD.peakMax, d + 0.05);
+  const peakH = Math.max(peak * WORLD.peakMax + pass.lift, d + 0.05);
   const A = 4 * peakH - 2 * d;
   const k = (A + Math.sqrt(Math.max(0, A * A - 4 * d * d))) / 2;   // z(t) = z0 + d·t + k·t(1−t)
   const T = Math.sqrt(2 * k / G);
@@ -1210,18 +1265,18 @@ function flight(s, o) {
   const apex = at(0.5 + d / (2 * k));
   const horiz = Math.hypot(p1.x - p0.x, p1.y - p0.y);
   const hitter = o.hitter || (s.hitter === 'Back row' ? 'OH' : (availability(s, o.rotation || state.rotation).hitter || s.hitter));
-  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH, aboveNet: apex.z - netH, hitter, approachSec: approachSecFor(s, hitter) };
+  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH, aboveNet: apex.z - netH, hitter, approachSec: approachSecFor(s, hitter), pass };
 }
 function tempoFromPhase(p) { const b = WORLD.tempoPhases; return p >= b.minus ? 'minus' : p >= b['1st'] ? '1st' : p >= b['2nd'] ? '2nd' : '3rd'; }
 function tempoOf(s, o) {
-  if (s.modifier) { const ref = SETS.find(x => x.group === 'backrow' && !x.modifier); const f = ref && flight(ref, { bic: true, netH: WORLD.netHeights.men }); return f ? tempoFromPhase(timeline(f).phase) : '1st'; }
-  const f = flight(s, Object.assign({ netH: WORLD.netHeights.men }, o || {})); if (!f) return '2nd';
+  if (s.modifier) { const ref = SETS.find(x => x.group === 'backrow' && !x.modifier); const f = ref && flight(ref, { bic: true, netH: WORLD.netHeights.men, pass: 'perfect' }); return f ? tempoFromPhase(timeline(f).phase) : '1st'; }
+  const f = flight(s, Object.assign({ netH: WORLD.netHeights.men, pass: 'perfect' }, o || {})); if (!f) return '2nd';
   return tempoFromPhase(timeline(f).phase);
 }
 function tempoMeta(id) { return TEMPOS.find(t => t.id === id) || { id, label: id, short: id, hint: '' }; }
 /* The hint on a tempo chip carries the derived height band: the lowest and highest apex above the net among the sets in that class. */
 function tempoHint(t) {
-  const hs = SETS.filter(s => !s.modifier && tempoOf(s) === t.id).map(s => flight(s, { netH: WORLD.netHeights.men })).filter(Boolean).map(f => f.aboveNet);
+  const hs = SETS.filter(s => !s.modifier && tempoOf(s) === t.id).map(s => flight(s, { netH: WORLD.netHeights.men, pass: 'perfect' })).filter(Boolean).map(f => f.aboveNet);
   if (!hs.length) return t.hint;
   const lo = Math.min(...hs), hi = Math.max(...hs);
   const band = hi - lo < 0.15 ? `${lo.toFixed(1)} m` : `${lo.toFixed(1)}–${hi.toFixed(1)} m`;
@@ -1334,14 +1389,21 @@ function v3Scene(L, sets, opts) {
   o += line({ x: 0, y: 0, z: netH - 0.5 }, { x: W, y: 0, z: netH - 0.5 }, 'stroke="#3a4157" stroke-width="1" opacity=".6"');
   o += line({ x: 0, y: 0, z: netH }, { x: W, y: 0, z: netH }, 'stroke="#e8ebf5" stroke-width="4" stroke-linecap="round"');
   [0, W].forEach(x => { o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#ff4d4d" stroke-width="5" stroke-linecap="round"'); o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#fff" stroke-width="5" stroke-dasharray="10 10"'); });
-  // setter
-  const rel = flight(sets[0] || SETS[0]) ? flight(sets[0] || SETS[0]).p0 : { x: SETTER_X * W, y: WORLD.releaseY, z: netH + 0.1 };
+  // setter, where the pass takes them; a dotted run from the target when the pass is off
+  const pass = passOf(state.pass);
+  const rel = { x: pass.spot.x * W, y: pass.spot.y * D, z: netH + pass.release };
+  if (pass.id !== 'perfect') {
+    const base = { x: SETTER_X * W, y: WORLD.releaseY, z: 0 };
+    o += `<g class="smove-g">` + line(base, { x: rel.x, y: rel.y, z: 0 }, 'stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6"');
+    { const q = P(base); o += `<circle cx="${r1(q.x)}" cy="${r1(q.y)}" r="${r1(fs * 0.3)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>`; if (!opts.noLabels) o += `<text x="${r1(q.x)}" y="${r1(q.y - fs * 0.5)}" font-size="${r1(fs * 0.7)}" fill="#8b93ab" text-anchor="middle">target</text>`; }
+    o += `</g>`;
+  }
   const feet = { x: rel.x, y: rel.y, z: 0 }, hip = { x: rel.x, y: rel.y, z: 0.95 }, shoulder = { x: rel.x, y: rel.y, z: 1.55 }, head = { x: rel.x, y: rel.y, z: 1.75 };
   o += line(feet, shoulder, 'stroke="#e8ebf5" stroke-width="3" stroke-linecap="round"');
   o += line({ x: rel.x - 0.25, y: rel.y, z: rel.z - 0.15 }, shoulder, 'stroke="#e8ebf5" stroke-width="2.5" stroke-linecap="round"');
   o += line({ x: rel.x + 0.25, y: rel.y, z: rel.z - 0.15 }, shoulder, 'stroke="#e8ebf5" stroke-width="2.5" stroke-linecap="round"');
   { const q = P(head); o += `<circle cx="${r1(q.x)}" cy="${r1(q.y)}" r="${r1(L.F * 0.13 / q.z)}" fill="#e8ebf5"/>`; }
-  if (!opts.noLabels) { const q = P(feet); o += `<text x="${r1(q.x)}" y="${r1(q.y + fs * 1.1)}" font-size="${r1(fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter</text>`; }
+  if (!opts.noLabels) { const q = P(feet); o += `<text x="${r1(q.x)}" y="${r1(q.y + fs * 1.1)}" font-size="${r1(fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter${pass.id === 'perfect' ? '' : ` · ${pass.label.toLowerCase()} pass, ${(pass.spot.y * D).toFixed(1)} m off`}</text>`; }
   // sets, far → near
   const items = sets.map(s => { const fl = flight(s, { bic: opts.bic && s.group === 'backrow' }); return fl ? { s, fl, depth: P(fl.apex).z } : null; }).filter(Boolean).sort((a, b) => b.depth - a.depth);
   const labels = [];
@@ -1373,6 +1435,12 @@ function v3Scene(L, sets, opts) {
     // ground shadow + drop line
     o += `<path class="shadow3" d="${bezierThrough(ground)}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.45)}" stroke-dasharray="3 6" stroke-linecap="round"/>`;
     o += `<path class="drop3" d="M${r1(pts[N].x)} ${r1(pts[N].y)}L${r1(ground[N].x)} ${r1(ground[N].y)}" stroke="${s.color}" stroke-width="1.2" stroke-dasharray="3 4"/>`;
+    if (isBack && state.selected === s.id) {   // the other tempo of the same ball, for comparison
+      const gf = flight(s, { bic: !bic }); const gp = []; for (let i = 0; i <= N; i++) gp.push(P(gf.at(i / N)));
+      const ga = P(gf.apex);
+      o += `<path class="ghost" d="${bezierThrough(gp)}" fill="none" stroke="${s.color}" stroke-width="${r1(L.sw * 0.6)}" stroke-dasharray="2 5" opacity=".5"/>`;
+      if (!opts.noLabels) o += `<text class="lbl" x="${r1(ga.x)}" y="${r1(ga.y - fs * 0.35)}" font-size="${r1(fs * 0.7)}" text-anchor="middle" stroke-width="${r1(fs * 0.25)}" opacity=".7">${bic ? 'normal' : 'BIC'} · ${gf.T.toFixed(2)} s</text>`;
+    }
     o += `<path class="traj" d="${d}" stroke="${s.color}" stroke-width="${bic ? L.sw * 0.8 : L.sw}"${flat || bic ? ` stroke-dasharray="${r1(L.sw * 3.2)} ${r1(L.sw * 1.6)}"` : ''}/>`;
     o += `<circle cx="${r1(pts[N].x)}" cy="${r1(pts[N].y)}" r="${r1(fs * 0.3)}" fill="${s.color}" stroke="#0f1117" stroke-width="2"/>`;
     o += `<circle cx="${r1(ground[N].x)}" cy="${r1(ground[N].y)}" r="${r1(fs * 0.18)}" fill="${s.color}" opacity=".8"/>`;
@@ -1388,6 +1456,7 @@ function v3Scene(L, sets, opts) {
     o = o.replace(`<!--LABEL:${l.id}-->`, m);
   });
   o += `<circle class="shadowball" r="${r1(fs * 0.22)}" fill="#fff" opacity="0"/>`;
+  o += `<circle class="smove" r="${r1(fs * 0.38)}" fill="#e8ebf5" stroke="#0f1117" stroke-width="2" opacity="0"/>`;
   o += `<circle class="hitter" r="${r1(fs * 0.4)}" fill="#fbbf24" stroke="#0f1117" stroke-width="2"/>`;
   o += `<circle class="ball" r="${r1(fs * 0.36)}" fill="#fff" stroke="#0f1117" stroke-width="2"/>`;
   o += `</svg>`;
@@ -1747,13 +1816,32 @@ const RULES = [
       const pipe = byId('pipe'); if (pipe) { const fb = flight(pipe, { bic: true, netH: WORLD.netHeights.men }), fp = flight(pipe, { netH: WORLD.netHeights.men }); const ok = fb.T >= 0.85 && fb.T <= 1.05 && fb.aboveNet < fp.aboveNet - 0.2; out.push({ id: 'bic', ok, level: 'err', msg: `BIC ${fb.T.toFixed(2)} s, ${fb.aboveNet.toFixed(2)} m vs Pipe ${fp.T.toFixed(2)} s, ${fp.aboveNet.toFixed(2)} m above the net` }); }
       return out;
     } },
+  { name: 'Pass quality gates the menu the way a 5-1 setter would call it', why: 'A perfect pass turns everything on. A good pass keeps the balls that survive a setter setting standing a metre or so off the net, and an off pass leaves only the out-of-system balls, with a high ball to the outside always available. The setter is drawn where the pass takes them.',
+    run: () => {
+      const out = [];
+      PASSES.forEach(p => {
+        const live = SETS.filter(s => !s.modifier && p.allow.includes(s.pass));
+        const inside = p.spot.x >= 0 && p.spot.x <= 1 && p.spot.y >= 0 && p.spot.y <= 1 && p.release >= -0.4 && p.release <= 0.2;
+        const oh = live.some(s => s.hitter === 'OH' && s.group !== 'backrow' && s.pass === 'any');
+        const bad = [];
+        if (!inside) bad.push('spot or release height is not plausible');
+        if (!oh) bad.push('no high ball for the outside');
+        if (p.id === 'off' && live.some(s => s.pass !== 'any')) bad.push('an off pass should leave only the out-of-system balls');
+        if (p.id === 'perfect' && live.length !== SETS.filter(s => !s.modifier).length) bad.push('a perfect pass should turn everything on');
+        if (p.id === 'good' && live.some(s => s.pass === 'perfect')) bad.push('a good pass should not allow perfect-pass balls');
+        out.push({ id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${p.label} pass: ${live.length} sets on (${live.map(s => s.name).join(', ')})` });
+      });
+      return out;
+    } },
   { name: 'BIC is a tempo modifier, not a location', why: 'It is signalled with a zone signal and means "run it fast and low"; it has no spot of its own.',
     run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && tempoOf(b) === '2nd' && WORLD.backrow.bicPeak < WORLD.backrow.peak; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry; lower and faster than a Pipe, still a second-tempo (2nd/3rd-step) ball' : 'should be modifier: true with no netView / courtView, group backrow, lower than the Pipe, and derive as second tempo' }]; } },
   { name: 'Front-row balls are contacted above the net, back-row balls behind the line', why: 'Sanity check on the 3D model: contact heights above the tape, contact depth in metres.',
     run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const isBack = s.group === 'backrow'; const ok = f.p1.z > f.netH && f.apex.z >= f.p1.z && (isBack ? f.p1.y > 2 : f.p1.y < 1.5); return { id: s.id, ok, level: 'err', msg: `contact ${(f.p1.z - f.netH).toFixed(2)} m above the tape, ${f.p1.y.toFixed(1)} m off the net` }; }) }
 ];
 function runChecks() {
+  const savedPass = state.pass; state.pass = 'perfect';   // the data is graded as set off a perfect pass
   const results = RULES.map(r => { let f; try { f = r.run(SETS); } catch (e) { f = [{ id: null, ok: false, level: 'err', msg: 'rule crashed: ' + e.message }]; } return { rule: r, findings: f }; });
+  state.pass = savedPass;
   const all = results.flatMap(r => r.findings);
   const errs = all.filter(f => !f.ok && f.level !== 'warn').length, warns = all.filter(f => !f.ok && f.level === 'warn').length;
   return { results, errs, warns, total: all.length };
@@ -1791,8 +1879,9 @@ function renderChecks() {
 function renderStrip(id, sets) {
   const el = $('#' + id); if (!el) return;
   const ids = new Set(sets.map(s => s.id));
-  const all = roleSetsAll().filter(s => !s.modifier && rowOk(s) && (ids.has(s.id) || (!availability(s, state.rotation).ok && !state.hidden.has(tempoOf(s)))));
-  el.innerHTML = all.map(s => { const off = !ids.has(s.id); return `<button class="sc${off ? ' off' : ''}" data-set="${s.id}" data-select="${s.id}" style="color:${s.color}" title="${off ? esc('Not in rotation ' + state.rotation + ': ' + availability(s, state.rotation).why) : ''}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(s.name)}</span></button>`; }).join('');
+  const all = roleSetsAll().filter(s => !s.modifier && rowOk(s) && (ids.has(s.id) || (offWhy(s) && !state.hidden.has(tempoOf(s)))));
+  const rec = recommended();
+  el.innerHTML = all.map(s => { const off = !ids.has(s.id); return `<button class="sc${off ? ' off' : ''}${rec && rec.id === s.id ? ' rec' : ''}" data-set="${s.id}" data-select="${s.id}" style="color:${s.color}" title="${off ? esc(offWhy(s)) : rec && rec.id === s.id ? 'Best call on this pass' : ''}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(s.name)}</span>${rec && rec.id === s.id ? '<b aria-hidden="true">★</b>' : ''}</button>`; }).join('');
 }
 function scrollStripsToSelection() {
   if (!state.selected) return;
@@ -1812,7 +1901,7 @@ function renderSignals() {
       `<div class="name">${esc(s.name)}</div>` +
       `<div class="desc">${esc(s.signal.description)}</div>` +
       `<div class="meta"><span class="tag grp">${esc(tempoLabel(s))}${s.modifier ? ' · modifier' : ''}</span>${hitterTags(s).map(h => `<span class="tag">${esc(h)}</span>`).join('')}${!s.modifier && [1, 2, 3, 4, 5, 6].some(r => !availability(s, r).ok) ? `<span class="tag rot">${esc([1, 2, 3, 4, 5, 6].filter(r => availability(s, r).ok).map(r => 'R' + r).join(' '))}</span>` : ''}</div>` +
-      `<div class="actions">${s.courtView ? `<button class="btn small" data-show="3d" data-id="${s.id}">Show in 3D</button>` : ''}${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Court</button>` : ''}</div>` +
+      `<div class="actions">${s.courtView ? `<button class="btn small" data-show="3d" data-id="${s.id}">Show in 3D</button>` : ''}${s.modifier ? `<button class="btn small" data-show="3d" data-id="pipe" data-bic="1">Pipe at BIC tempo in 3D</button>` : ''}${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Court</button>` : ''}</div>` +
       `</div>`;
   };
   const pool = roleSetsAll(), mine = pool.filter(shown), others = SETS.filter(s => !roleHas(s) && shown(s));
@@ -1831,7 +1920,7 @@ function renderDetail() {
   if (!s) { el.classList.remove('open'); el.classList.remove('peek'); el.style.removeProperty('--c'); $('.content', el).innerHTML = ''; return; }
   el.style.setProperty('--c', s.color);
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
-  const onNow = s.modifier || availability(s, state.rotation).ok;
+  const onNow = s.modifier ? passOk(s) : (availability(s, state.rotation).ok && passOk(s));
   const canPlay = onNow && inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(tempoOf(s))) || (state.tab === 'court' && s.courtView) || (state.tab === '3d' && !s.modifier && !state.hidden.has(tempoOf(s))));
   const fl = s.modifier ? null : flight(s, { bic: state.bic && s.group === 'backrow' });
   const tl = fl ? timeline(fl) : null;
@@ -1847,12 +1936,17 @@ function renderDetail() {
       ? `Zone ${z}: contact ${fl.p1.y.toFixed(1)} m off the net, ${fl.p1.x.toFixed(1)} m from the left sideline. Take off behind the 3-m line.`
       : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net. Peaks ${fl.aboveNet.toFixed(1)} m (${(fl.aboveNet * 3.28).toFixed(0)} ft) above the net; contact ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
     where += ` Hang ${fl.T.toFixed(2)} s · ${tempoLabel(s, { bic: state.bic && s.group === 'backrow' }).toLowerCase()}${s.netView && s.netView.flat ? ' · flat' : ''}.`;
+    if (state.pass !== 'perfect') where += ` Set from ${fl.p0.y.toFixed(1)} m off the net on this ${state.pass} pass.`;
   }
+  const bicRow = s.group === 'backrow' && !s.modifier ? (() => { const n = flight(s, { bic: false }), b = flight(s, { bic: true }); return `<span class="cmp"><b>Normal</b> ${n.T.toFixed(2)} s · ${n.aboveNet.toFixed(2)} m above the net</span><span class="cmp"><b>BIC</b> ${b.T.toFixed(2)} s · ${b.aboveNet.toFixed(2)} m, ${(n.T - b.T).toFixed(2)} s faster</span> <button class="chip${state.bic ? ' active' : ''}" data-bic-toggle aria-pressed="${state.bic}">${state.bic ? 'Showing BIC' : 'Show BIC'}</button>`; })() : '';
+  const bicCard = s.modifier ? (() => { const ref = byId('pipe') || SETS.find(x => x.group === 'backrow' && !x.modifier); if (!ref) return ''; const n = flight(ref, { bic: false }), b = flight(ref, { bic: true }); return `${esc(ref.name)} normal: ${n.T.toFixed(2)} s hang, ${n.aboveNet.toFixed(2)} m above the net. ${esc(ref.name)} at BIC tempo: ${b.T.toFixed(2)} s, ${b.aboveNet.toFixed(2)} m — ${(n.T - b.T).toFixed(2)} s faster, ${(n.aboveNet - b.aboveNet).toFixed(2)} m lower. Same rule for A, B, C and D.`; })() : '';
   const rows = [];
   rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
   if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(startNoteFor(s))]);
   if (tl) rows.push([hitterView ? 'Timing' : 'Hitter timing', `${esc(timingText(s, tl))}${timelineSvg(tl, s.color)}`]);
   if (where) rows.push(['Ball', esc(where)]);
+  if (bicRow) rows.push(['BIC', bicRow]);
+  if (bicCard) rows.push(['Tempo', esc(bicCard)]);
   if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
   if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(forHitter(s.useWhen, s))]);
   if (s.avoidWhen) rows.push(['Not when', esc(forHitter(s.avoidWhen, s))]);
@@ -1862,9 +1956,11 @@ function renderDetail() {
     `<div class="bar"></div>` +
     `<div class="top"><div class="title"><h3>${esc(s.name)}</h3><div class="aliases">${s.aliases && s.aliases.length ? `Also: ${esc(s.aliases.join(', '))} · ` : ''}${esc(tempoLabel(s, { bic: state.bic && s.group === 'backrow' }))}${s.hitter !== 'Back row' ? ` · ${esc(effectiveHitter(s))}${effectiveHitter(s) !== s.hitter ? ' (this rotation)' : ''}` : ''}</div></div><button class="close" data-close aria-label="Close">✕</button></div>` +
     (!s.modifier && !availability(s, state.rotation).ok ? `<p class="banner">Not run in rotation ${state.rotation}: ${esc(availability(s, state.rotation).why)}.</p>` : '') +
+    (availability(s, state.rotation).ok && !passOk(s) ? `<p class="banner">Not on ${state.pass === 'off' ? 'an off' : 'a ' + state.pass} pass — needs a ${esc(s.modifier ? 'perfect' : s.pass)} pass.${fb ? ` Run the <button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button> instead.` : ''}</p>` : '') +
     `<div class="acts">` +
       (canPlay ? `<button class="btn primary" data-play>▶ Play</button><button class="chip${state.slow ? ' active' : ''}" data-slow aria-pressed="${state.slow}">½ speed</button>` : '') +
       (!s.modifier && state.tab !== '3d' ? `<button class="btn" data-show="3d" data-id="${s.id}">Show in 3D</button>` : '') +
+      (s.modifier ? `<button class="btn" data-show="3d" data-id="pipe" data-bic="1">Show the Pipe at BIC tempo</button>` : '') +
       (s.netView && state.tab !== 'net' ? `<button class="btn" data-show="net" data-id="${s.id}">Net</button>` : '') +
       (s.courtView && state.tab !== 'court' ? `<button class="btn" data-show="court" data-id="${s.id}">Court</button>` : '') +
     `</div>` +
@@ -1879,8 +1975,11 @@ function renderDetail() {
    ============================================================ */
 function select(id, opts) {
   if (id && byId(id) && !roleHas(byId(id))) { state.role = 'setter'; try { localStorage.setItem('setterSignals.role', 'setter'); } catch (e) { /* ignore */ } renderRoleBar(); renderSignals(); if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); }
+  const prev = state.selected && byId(state.selected);
   state.selected = id;
   if (id) state.zone = null;
+  const nxt = id && byId(id);
+  if (state.tab === '3d' && ((nxt && nxt.group === 'backrow') || (prev && prev.group === 'backrow'))) render3D();   // the BIC/normal ghost is drawn for the selected back-row ball only
   applySelection();
   renderDetail();
   if (id && narrow.matches && (state.tab === 'net' || state.tab === 'court' || state.tab === '3d')) {
@@ -1931,7 +2030,7 @@ function runSequence(s, frame, done) {
   const fl = flight(s, { bic: state.bic && s.group === 'backrow' });
   if (!fl) return;
   const tl = timeline(fl);
-  const t0 = Math.min(tl.startAt, 0) - 0.25, total = tl.T - t0;
+  const t0 = Math.min(tl.startAt, -tl.moveSec) - 0.25, total = tl.T - t0;
   const dur = total * 1000 * (state.slow ? 2.5 : 1);
   stopAnim();
   const begin = performance.now();
@@ -1954,10 +2053,18 @@ function play() {
   const ball = scene.querySelector('.ball'), hitter = scene.querySelector('.hitter');
   const len = path.getTotalLength(), alen = approach ? approach.getTotalLength() : 0;
   const hands = path.getPointAtLength(0), end = path.getPointAtLength(len);
+  const smove = scene.querySelector('.smove');
+  const isCourt = state.tab === 'court';
   runSequence(s, (t, fl, tl) => {
     ball.style.opacity = 1;
     const pt = t <= 0 ? hands : path.getPointAtLength(len * Math.min(1, t / fl.T));
     ball.setAttribute('transform', `translate(${r1(pt.x)} ${r1(pt.y)})`);
+    if (smove && tl.moveSec) {   // the setter runs from the target to the pass, arriving as the ball does
+      const f = Math.max(0, Math.min(1, (t + tl.moveSec) / tl.moveSec));
+      const bx = isCourt ? cx(SETTER_X) : hands.x + (nx(netLayout(), SETTER_X) - nx(netLayout(), fl.pass.spot.x)), by = isCourt ? cy(0.05) : hands.y;
+      const q = { x: bx + (hands.x - bx) * f, y: by + (hands.y - by) * f };
+      smove.style.opacity = t < 0.05 ? 1 : 0; smove.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
+    }
     if (approach) {
       hitter.style.opacity = 1;
       const h = hitterPhase(t, tl);
@@ -1967,9 +2074,9 @@ function play() {
       else { const a = approach.getPointAtLength(alen); const tgt = state.tab === 'court' ? end : { x: end.x, y: a.y }; q = { x: a.x + (tgt.x - a.x) * h.f, y: a.y + (tgt.y - a.y) * h.f }; }
       hitter.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
     }
-  }, () => { ball.style.opacity = 0; hitter.style.opacity = 0; });
+  }, () => { ball.style.opacity = 0; hitter.style.opacity = 0; if (smove) smove.style.opacity = 0; });
 }
-const q3 = () => ({ ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter') });
+const q3 = () => ({ ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter'), smove: $('#v3-scene .smove') });
 function frame3D(s, ap, t, fl, tl) {
   const lerp = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f });
   {
@@ -1980,6 +2087,11 @@ function frame3D(s, ap, t, fl, tl) {
       const f = Math.min(1, (t - tStart) / (0 - tStart)); w = lerp(from, fl.p0, f); w.z += 0.5 * Math.sin(Math.PI * f);
     } else w = fl.at(Math.min(1, t / fl.T));
     const b = v3cam.project(w), sh = v3cam.project({ x: w.x, y: w.y, z: 0 });
+    if (el.smove && tl.moveSec) {
+      const f = Math.max(0, Math.min(1, (t + tl.moveSec) / tl.moveSec));
+      const q = v3cam.project(lerp({ x: SETTER_X * WORLD.courtW, y: WORLD.releaseY, z: 0.9 }, { x: fl.p0.x, y: fl.p0.y, z: 0.9 }, f));
+      el.smove.style.opacity = t < 0.05 ? 1 : 0; el.smove.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
+    }
     el.ball.style.opacity = 1; el.shadow.style.opacity = 0.6;
     el.ball.setAttribute('transform', `translate(${r1(b.x)} ${r1(b.y)})`);
     el.shadow.setAttribute('transform', `translate(${r1(sh.x)} ${r1(sh.y)})`);
@@ -1996,7 +2108,7 @@ function frame3D(s, ap, t, fl, tl) {
 }
 function play3D(s) {
   const ap = approachWorld(s, 24);
-  runSequence(s, (t, fl, tl) => frame3D(s, ap, t, fl, tl), () => { const e = q3(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; } });
+  runSequence(s, (t, fl, tl) => frame3D(s, ap, t, fl, tl), () => { const e = q3(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; if (e.smove) e.smove.style.opacity = 0; } });
 }
 
 /* ============================================================
@@ -2096,7 +2208,7 @@ function showTab(id) {
   window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-pass],[data-bic-toggle],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-diag')) { showTab(t.getAttribute('data-diag')); return; }
@@ -2118,7 +2230,8 @@ document.addEventListener('click', e => {
     e.stopPropagation();
     select(t.getAttribute('data-id'), { silent: true });
     const s = byId(t.getAttribute('data-id'));
-    if (s) { state.hidden.delete(tempoOf(s)); if (!rowOk(s)) setRow('both'); }
+    if (s) { state.hidden.delete(tempoOf(s)); if (!rowOk(s)) setRow('both'); if (!passOk(s) && !s.modifier) setPass('perfect'); }
+    if (t.hasAttribute('data-bic')) state.bic = true;
     showTab(t.getAttribute('data-show'));
     return;
   }
@@ -2134,6 +2247,8 @@ document.addEventListener('click', e => {
   if (t.id === 'bic-toggle') { state.bic = !state.bic; renderCourt(); renderDetail(); return; }
   if (t.hasAttribute('data-mode')) { state.quiz.mode = t.getAttribute('data-mode'); state.quiz.queue = []; quizNext(); return; }
   if (t.hasAttribute('data-row')) { setRow(t.getAttribute('data-row')); return; }
+  if (t.hasAttribute('data-pass')) { setPass(t.getAttribute('data-pass')); return; }
+  if (t.hasAttribute('data-bic-toggle')) { state.bic = !state.bic; renderTab(); return; }
   if (t.hasAttribute('data-qanswer')) { quizAnswer(t.getAttribute('data-qanswer')); return; }
   if (t.hasAttribute('data-qnext')) { quizNext(); return; }
   if (t.hasAttribute('data-qreset')) { state.quiz.score = { correct: 0, total: 0, streak: 0, best: 0 }; saveScore(); renderQuiz(); return; }

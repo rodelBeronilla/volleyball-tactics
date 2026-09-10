@@ -41,6 +41,27 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 | Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), and the same filters. |
 | Checks | Every set is graded against explicit rules: where it lands, how high, who hits it, how it relates to neighbouring sets, takeoff placement, unique signals and calls, tempo versus physics, pass requirement versus tempo, fallback chains, and — importantly — whether the words in each note match the drawn data (outside the sideline, centre, zone, metres off the net, halfway to the antenna, behind the setter, second step, above the tape…). A spec sheet lists each set's landing spot, contact height, apex and hang time. |
 
+## Pass quality
+
+Next to the rotation, **Pass: Perfect / Good / Off** says where the ball arrives, and the app does
+what a 5-1 setter would do with it. A perfect pass is on target at the net and the whole menu is
+on. A good pass lands a metre and a half off the net, a step left of target: the setter moves to it
+and sets standing, so the quicks and the flat pin balls (1, Push 1, Back 1, Go, Red, BIC) are off
+and the 2, 3, 32, Back 2, Slide, Hut, 4, 5 and the back-row balls stay on. An off pass lands in the
+middle at the 3-m line: the setter runs it down and lofts a high ball, only the out-of-system balls
+(2, 4, 5) are on, and the 4 is starred as the best call. Every view draws the setter where the pass
+takes them, with a dotted run from the target, and ▶ shows the setter run to the ball before the
+set. Sets that are off on the current pass stay in the name strip, dimmed, with the reason; select
+one and the card says which ball to run instead. Flight paths are recomputed from the new release
+point, so an off-pass 4 is set from 3 m off the net, lofted higher, and lands in the same place.
+Tempo classes and the Checks tab are always graded off a perfect pass.
+
+## BIC, side by side
+
+Selecting a back-row ball in 3D draws the other tempo of the same ball as a faint dashed ghost with
+its hang time, and the card lists both ("Normal 1.13 s · 1.83 m", "BIC 0.99 s · 1.46 m, 0.14 s
+faster") with a Show BIC toggle. The BIC signal card itself has "Pipe at BIC tempo in 3D".
+
 ## Filters
 
 Every tab carries the same two controls, and they stay in step as you move between tabs:
