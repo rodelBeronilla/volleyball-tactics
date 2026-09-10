@@ -82,6 +82,14 @@ from gravity alone, so a 1 hangs about 0.5 s and a 4 about 1.5 s. Hitter timing 
 a full approach takes `WORLD.approachSec` (1.1 s) and the ball is met `WORLD.riseSec` (0.35 s)
 after takeoff, so the card can say where the hitter is when the setter touches the ball.
 
+The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is right of
+centre, 5.6 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half a metre in front
+of it, the Back 1 half a metre behind, the Push 1 about 1.4 m in front, the 2 about 0.8 m in front
+and the Back 2 about 1.2 m behind. Pin sets (Go, Hut, 4, Red, 5) land 0.6 m inside the antenna, the
+Slide about a metre inside the right antenna, the 3/Shoot and 32 in zone 3 (2.3 to 2.5 m from the
+left antenna). Quicks are contacted half a metre off the net, flat balls 0.4 m, high balls 0.9 m.
+Back-row balls are contacted 2.7 m off the net (2.5 m for a BIC) with the takeoff behind the 3-m line.
+
 **Tempo is derived, not typed.** It is how far through the approach the hitter is at setter contact
 (`WORLD.tempoPhases`): leaving the floor or already up is **minus tempo** (1, Push 1, Back 1);
 planting is **first tempo** (3/Shoot, Slide, any BIC ball); mid-approach is **second tempo** (2,
