@@ -44,20 +44,43 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 ## Pass quality
 
 Next to the rotation, **Pass** grades the pass by how far it lands from the setter's target, and
-**toward** says which zone it went to. Perfect is within half a metre of target: the setter
-jump-sets and the whole menu is on. Good is within 1.5 m: the setter moves to it and sets standing,
+**going** says which way it went. A perfect pass is the setter's optimal position, and every grade
+after it is a radius of error around that point: the landing spot is the grade's radius along the
+chosen bearing (off the net, off-left, off-right, left, right, tight), so a good pass can never be
+further than 1.5 m from target whichever way it goes, and bearings that would leave the court or
+cross into another grade's ring are not offered. Perfect is within half a metre of target: the
+setter jump-sets and the whole menu is on. Good is within 1.5 m: the setter moves to it and sets standing,
 so the quicks and the flat pin balls (1, Push 1, Back 1, Go, Red, BIC) are off and the 2, 3, 32,
 Back 2, Slide, Hut, 4, 5 and the back-row balls stay on. Off is within 3 m: the setter runs it down
 and lofts a high ball, only the out-of-system balls (2, 4, 5) are on, and the 4 is starred as the
 best call. Shank is anything further: whoever gets there bump-sets a high ball to a pin (4 or 5),
-no middle ball. The landing spot is the grade's distance from target along the line toward the
-chosen zone, or exactly where you tap: on the Court view, **📍 Place the pass** then tap the court,
-and the 1.5 m and 3 m tolerance rings around the target show which grade you are in. Every view
+no middle ball. Or tap exactly where the pass lands: on the Court view, **📍 Place the pass** then tap the
+court, and the 1.5 m and 3 m tolerance rings around the target show which grade you are in. Every view
 draws the setter where the pass takes them, with a dotted run from the target, and ▶ shows the
 setter run to the ball before the set. Sets that are off on the current pass stay in the name
 strip, dimmed, with the reason; select one and the card says which ball to run instead. Flight
 paths are recomputed from the new release point (lower and lofted the further off it is) and land
 in the same place. Tempo classes and the Checks tab are always graded off a perfect pass.
+
+## Serve receive and the setter's route
+
+The setter has a start and a route in every rotation, just as the hitters do, and it is derived
+rather than typed. Front-row players wait at the 3-m line in their rotational zone, back-row
+players pass from 6.5 m off the net, the libero plays for the back-row middle. The setter starts
+at the point closest to the target that keeps them legal under the overlap rule: behind the player
+in front of them and on the correct side of their row neighbours. That gives the classic 5-1
+picture without any per-rotation data: in rotations 1 and 2 the setter stacks at the 3-m line
+right of centre and runs 1.9 m; in rotation 3 they start left of centre behind the middle and run
+2.6 m; in rotation 4 they start at the net left of the middle and run 1.7 m along it; in rotations
+5 and 6 they are already at the target. The 3D and Court views draw the formation, the setter's
+start and their dotted route, and the role bar says why the start is where it is.
+
+▶ now plays the whole rally by default: the opponent's serve (about a second in the air), the pass
+(about 1.2 s, apex around 3.5 m) into the setter's hands, the setter releasing on the serve and
+running to the ball, the hitter moving from their receive spot to their approach start, then the
+set and the approach. "Set only" on the card shortens the clip to the set. The Checks tab verifies
+that every start is legal, is the closest legal point to target, and that the setter reaches the
+ball before the pass does.
 
 ## BIC, side by side
 
