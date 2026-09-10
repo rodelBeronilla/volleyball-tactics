@@ -649,6 +649,38 @@ function availability(s, r) {
   return { ok: true, hitter: s.hitter, why: '' };
 }
 function effectiveHitter(s) { const a = availability(s, state.rotation); return a.hitter || s.hitter; }
+/* When a rotation hands a ball to a different hitter (the Back 2 becomes the middle's when the opposite is back row),
+   that hitter runs it from their own start, not the original hitter's. The start is borrowed from the closest ball that
+   hitter already owns: same side of the setter first, otherwise their always-on ball. Nothing is typed per rotation. */
+function routeSource(s, hitter) {
+  if (!hitter || hitter === s.hitter || !s.netView) return s;
+  const side = s.netView.landX > SETTER_X;
+  const own = SETS.filter(x => !x.modifier && x.hitter === hitter && x.approach && x.netView && x.group !== 'backrow' && x.routeShape !== 'j');
+  return own.find(x => (x.netView.landX > SETTER_X) === side) || own.find(x => x.pass === 'any') || own[0] || s;
+}
+function startNoteFor(s) {
+  const eff = effectiveHitter(s);
+  if (eff === s.hitter) return s.startNote;
+  const src = routeSource(s, eff);
+  return `As the ${roleLabel(eff).toLowerCase()} in this rotation — ${src.startNote ? src.startNote.charAt(0).toLowerCase() + src.startNote.slice(1) : 'from your usual start.'}`;
+}
+/* Notes written for the original hitter, re-addressed when a rotation hands the ball to someone else. */
+function forHitter(text, s) {
+  const eff = effectiveHitter(s);
+  if (!text || eff === s.hitter) return text;
+  const word = { MB: 'middle', OH: 'outside', OPP: 'opposite' };
+  const from = word[s.hitter], to = word[eff];
+  return from && to ? text.replace(new RegExp(`\\b${from}\\b`, 'gi'), m => m[0] === m[0].toUpperCase() ? to.charAt(0).toUpperCase() + to.slice(1) : to) : text;
+}
+function hitterTags(s) {   // who hits it, by rotation, e.g. OPP R1–3 · MB R4–6
+  if (s.modifier || s.hitter === 'Back row') return [s.hitter];
+  const by = {};
+  for (let r = 1; r <= 6; r++) { const a = availability(s, r); if (a.ok) (by[a.hitter] = by[a.hitter] || []).push(r); }
+  const hs = Object.keys(by);
+  if (hs.length <= 1) return hs.length ? hs : [s.hitter];
+  const span = rs => rs.length === 1 ? `R${rs[0]}` : `R${rs[0]}–${rs[rs.length - 1]}`;
+  return hs.map(h => `${h} ${span(by[h])}`);
+}
 /* The fallback must be a ball the same hitter can run in this rotation; otherwise use that hitter's always-on ball. */
 function effectiveFallback(s, r) {
   r = r || state.rotation;
@@ -1038,13 +1070,14 @@ function routeGeom(s, o) {
   const fl = flight(s, o || { bic: state.bic && s.group === 'backrow' });
   if (!fl) return null;
   const W = WORLD.courtW, D = WORLD.courtD;
-  const start = s.approach[0], turn = s.routeShape === 'j' ? s.turn : null;
+  const src = routeSource(s, o && o.hitter ? o.hitter : effectiveHitter(s));
+  const start = src.approach[0], turn = src.routeShape === 'j' ? src.turn : null;
   const ball = { x: fl.p1.x / W, y: fl.p1.y / D };
   const jumpM = s.jump != null ? s.jump : s.group === 'backrow' ? WORLD.jumpBack : s.routeShape === 'j' ? WORLD.jumpSlide : WORLD.jumpFront;
   const from = turn || start;
   const dxm = (ball.x - from.x) * W, dym = (ball.y - from.y) * D, len = Math.hypot(dxm, dym) || 1;
-  const takeoff = s.approach[1] || { x: ball.x - jumpM * dxm / len / W, y: ball.y - jumpM * dym / len / D };
-  return { start, turn, takeoff, ball, jumpM, fl };
+  const takeoff = src.approach[1] || { x: ball.x - jumpM * dxm / len / W, y: ball.y - jumpM * dym / len / D };
+  return { start, turn, takeoff, ball, jumpM, fl, borrowed: src !== s ? src : null };
 }
 function routePoints(s, n, o) {   // court fractions along the hitter's route, start → takeoff
   const g = routeGeom(s, o); if (!g) return [];
@@ -1526,10 +1559,27 @@ const RULES = [
       return out;
     } },
   { name: 'Slide has a running approach and a one-foot takeoff', why: 'The middle starts centre, runs behind the setter and takes off on one foot near the right antenna.',
-    run: () => { const s = byId('slide'); if (!s) return [{ id: null, ok: true, msg: 'skipped' }]; const g = routeGeom(s, { netH: WORLD.netHeights.men }), bad = []; if (!g) bad.push('no approach'); else { if (!(g.start.x < SETTER_X && g.takeoff.x > SETTER_X)) bad.push('run does not cross behind the setter'); if (!(g.takeoff.x < g.ball.x)) bad.push('takeoff is not before the ball'); if (!g.turn) bad.push('slide should be a J route with a turn point'); } if (!/one-foot/i.test(s.takeoffLabel || '')) bad.push('takeoffLabel should say one-foot takeoff'); if (s.hitter !== 'MB') bad.push('hitter is not MB'); return [{ id: 'slide', ok: !bad.length, level: 'err', msg: bad.join('; ') || `runs ${(g.start.x * 9).toFixed(1)} → ${(g.takeoff.x * 9).toFixed(1)} m, ${s.takeoffLabel}` }]; } },
+    run: () => { const s = byId('slide'); if (!s) return [{ id: null, ok: true, msg: 'skipped' }]; const g = routeGeom(s, { netH: WORLD.netHeights.men, hitter: s.hitter }), bad = []; if (!g) bad.push('no approach'); else { if (!(g.start.x < SETTER_X && g.takeoff.x > SETTER_X)) bad.push('run does not cross behind the setter'); if (!(g.takeoff.x < g.ball.x)) bad.push('takeoff is not before the ball'); if (!g.turn) bad.push('slide should be a J route with a turn point'); } if (!/one-foot/i.test(s.takeoffLabel || '')) bad.push('takeoffLabel should say one-foot takeoff'); if (s.hitter !== 'MB') bad.push('hitter is not MB'); return [{ id: 'slide', ok: !bad.length, level: 'err', msg: bad.join('; ') || `runs ${(g.start.x * 9).toFixed(1)} → ${(g.takeoff.x * 9).toFixed(1)} m, ${s.takeoffLabel}` }]; } },
+  { name: 'A ball that changes hands runs from the new hitter\'s start', why: 'In the 5-1 the Back 2 is the opposite\'s with the setter back row and the middle\'s with the setter front row. The middle must run it from centre, not from the right sideline, and the route must still land on the ball.',
+    run: sets => sets.filter(s => !s.modifier && s.approach).flatMap(s => {
+      const hs = [...new Set([1, 2, 3, 4, 5, 6].map(r => availability(s, r)).filter(a => a.ok && a.hitter !== s.hitter).map(a => a.hitter))];
+      return hs.map(h => {
+        const g = routeGeom(s, { netH: WORLD.netHeights.men, hitter: h }), bad = [];
+        if (!g.borrowed) bad.push('no route for ' + h);
+        else {
+          if (g.borrowed.hitter !== h) bad.push(`borrowed route belongs to ${g.borrowed.hitter}`);
+          if (h === 'MB' && Math.abs(g.start.x - 0.5) > 0.12) bad.push(`middle starts ${(g.start.x * 9).toFixed(1)} m from the left sideline, not centre`);
+          const W = WORLD.courtW, D = WORLD.courtD, t = g.takeoff, b = g.ball, from = g.turn || g.start;
+          const a1 = Math.atan2((b.y - from.y) * D, (b.x - from.x) * W), a2 = Math.atan2((b.y - t.y) * D, (b.x - t.x) * W);
+          if (Math.abs(a1 - a2) > 0.2) bad.push('route does not point at the ball');
+          if (t.y > 0.2 || t.y < b.y) bad.push('takeoff is not just off the net behind the ball');
+        }
+        return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${h} runs it from ${g.borrowed.name}'s start (${(g.start.x * 9).toFixed(1)} m, ${(g.start.y * 9).toFixed(1)} m off)` };
+      });
+    }) },
   { name: 'Every approach lines up with the ball', why: 'The last leg of the route must point at the contact point, the takeoff must sit one broad-jump short of it, and the takeoff must be on the court: just off the net for front-row balls, behind the line for back-row balls.',
     run: sets => sets.filter(s => !s.modifier && s.approach).map(s => {
-      const g = routeGeom(s, { netH: WORLD.netHeights.men }), bad = [];
+      const g = routeGeom(s, { netH: WORLD.netHeights.men, hitter: s.hitter }), bad = [];
       const W = WORLD.courtW, D = WORLD.courtD;
       const t = g.takeoff, b = g.ball, from = g.turn || g.start;
       const jump = Math.hypot((b.x - t.x) * W, (b.y - t.y) * D);
@@ -1543,7 +1593,7 @@ const RULES = [
     }) },
   { name: 'Notes agree with the geometry', why: 'Whatever a note claims about where the hitter starts, where the ball goes or how high, the drawn data must match. Recognised phrases are checked; anything else is prose.',
     run: sets => sets.filter(s => !s.modifier).flatMap(s => {
-      const rg0 = routeGeom(s, { netH: WORLD.netHeights.men }); const a0 = rg0.start, a1 = rg0.takeoff, v = s.courtView, nv = s.netView || {};
+      const rg0 = routeGeom(s, { netH: WORLD.netHeights.men, hitter: s.hitter }); const a0 = rg0.start, a1 = rg0.takeoff, v = s.courtView, nv = s.netView || {};
       const f = flight(s, { netH: WORLD.netHeights.men }), tl = timeline(f);
       const startText = s.startNote || '', ballText = (s.coachingNote || '') + ' ' + (s.useWhen || '');
       const out = [];
@@ -1731,7 +1781,7 @@ function renderSignals() {
       glyphHtml(s, 'glyph') +
       `<div class="name">${esc(s.name)}</div>` +
       `<div class="desc">${esc(s.signal.description)}</div>` +
-      `<div class="meta"><span class="tag grp">${esc(tempoLabel(s))}${s.modifier ? ' · modifier' : ''}</span><span class="tag">${esc(s.hitter)}</span>${!s.modifier && [1, 2, 3, 4, 5, 6].some(r => !availability(s, r).ok) ? `<span class="tag rot">${esc([1, 2, 3, 4, 5, 6].filter(r => availability(s, r).ok).map(r => 'R' + r).join(' '))}</span>` : ''}</div>` +
+      `<div class="meta"><span class="tag grp">${esc(tempoLabel(s))}${s.modifier ? ' · modifier' : ''}</span>${hitterTags(s).map(h => `<span class="tag">${esc(h)}</span>`).join('')}${!s.modifier && [1, 2, 3, 4, 5, 6].some(r => !availability(s, r).ok) ? `<span class="tag rot">${esc([1, 2, 3, 4, 5, 6].filter(r => availability(s, r).ok).map(r => 'R' + r).join(' '))}</span>` : ''}</div>` +
       `<div class="actions">${s.courtView ? `<button class="btn small" data-show="3d" data-id="${s.id}">Show in 3D</button>` : ''}${s.netView ? `<button class="btn small" data-show="net" data-id="${s.id}">Net</button>` : ''}${s.courtView ? `<button class="btn small" data-show="court" data-id="${s.id}">Court</button>` : ''}</div>` +
       `</div>`;
   };
@@ -1770,12 +1820,12 @@ function renderDetail() {
   }
   const rows = [];
   rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
-  if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(s.startNote)]);
+  if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(startNoteFor(s))]);
   if (tl) rows.push([hitterView ? 'Timing' : 'Hitter timing', `${esc(timingText(s, tl))}${timelineSvg(tl, s.color)}`]);
   if (where) rows.push(['Ball', esc(where)]);
   if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
-  if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(s.useWhen)]);
-  if (s.avoidWhen) rows.push(['Not when', esc(s.avoidWhen)]);
+  if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(forHitter(s.useWhen, s))]);
+  if (s.avoidWhen) rows.push(['Not when', esc(forHitter(s.avoidWhen, s))]);
   rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed && !efb.other ? ' <span class="hint">in this rotation</span>' : ''}${efb.other || (s.group === 'backrow' && fb.group !== 'backrow') ? ` <span class="hint">to the front-row ${esc(availability(fb, state.rotation).hitter || fb.hitter)} — ${hitterView ? 'not you' : 'not this hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
   if (!s.modifier) rows.push(['Rotations', esc(rotationsText(s))]);
   $('.content', el).innerHTML =
@@ -2105,7 +2155,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>

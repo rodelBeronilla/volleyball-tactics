@@ -16,7 +16,8 @@ Next to it, **Rotation 1–6** sets where the setter is. Nothing about the 5-1 i
 app derives it from the lineup in service order (`SYSTEM.lineup`, setter serving from zone 1 in
 rotation 1). In rotations 1–3 the setter is back row, so the opposite is front row and the 5, Red
 and Back 2 are the opposite's balls. In rotations 4–6 the setter is front row: the 5 and Red have no
-hitter and are switched off, the Back 2 becomes a middle running behind the setter, and the opposite
+hitter and are switched off, the Back 2 becomes a middle running behind the setter (drawn from the
+middle's start at centre, with the middle's start note and the 2 as its fallback), and the opposite
 attacks the C and D from the back row. Outside and middle front-row balls, and the back-row outside's
 A, B and Pipe, exist in every rotation; the libero plays for the back-row middle. The mini court shows
 who is where, sets that are off in the current rotation are dimmed in the name strip, and each card
