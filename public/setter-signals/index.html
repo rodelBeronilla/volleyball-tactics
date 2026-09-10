@@ -346,6 +346,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <div class="toolbar">
         <button class="toggle" id="v3-bic" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>BIC tempo</span></button>
         <button class="toggle" id="v3-net" aria-pressed="false"><span class="sw" aria-hidden="true"></span><span>Women's net</span></button>
+        <div class="seg reach" role="group" aria-label="Hitter reach" id="v3-reach" title="How high the hitters contact the ball above the net. Hang times stay the same; the ball is set higher for hitters who reach higher."><button data-reach="club">Club</button><button data-reach="college">College</button><button data-reach="pro">Pro</button></div>
         <span class="hint">Swipe sideways to orbit · pinch to zoom</span>
       </div>
       <div class="scene-wrap"><div id="v3-scene"></div>
@@ -424,7 +425,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       </div>
       <div class="qbox"><div class="rules" id="checks-rules"></div></div>
       <div class="scene-wrap spec-wrap"><table class="spec" id="checks-spec"></table></div>
-      <p class="hint">Hang time and apex come from a gravity model: the ball leaves the setter's hands just above the tape and is contacted above the net at the landing spot. Tempo is read from where the hitter is when the setter touches the ball: minus, already leaving the floor; first, planting; second, mid-approach; third, waiting for the set. A hitter starting outside the sideline takes a full 1.0 s approach; one starting inside the court (a middle, or the opposite on a Back 2) 0.75 s; a back-row run 1.2 s. Hang times are checked against measured Olympic set flight times, and the peak heights follow from them.</p>
+      <p class="hint">Hang time and apex come from a gravity model: the ball leaves the setter's hands just above the tape and is contacted above the net at the landing spot. Tempo is read from where the hitter is when the setter touches the ball: minus, already leaving the floor; first, planting; second, mid-approach; third, waiting for the set. A hitter starting outside the sideline takes a full 1.0 s approach; one starting inside the court (a middle, or the opposite on a Back 2) 0.75 s; a back-row run 1.2 s. Hang times are checked against measured Olympic set flight times, and the peak heights follow from them and from the hitters' reach (the Club / College / Pro control in the 3D view; checks are graded at club reach).</p>
     </section>
   </main>
 
@@ -610,24 +611,50 @@ const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };
    spot is in court fractions (x: left sideline → right, y: net → end line); release is metres above the tape
    (a jump set on a perfect pass, a standing set further off); lift is extra height the setter adds when
    setting from further away; allow lists the pass grades of the sets that can be run. */
+const PASS_TARGET = { x: SETTER_X, y: 0.9 / 9 };   // the setter's target on the net
+/* Pass quality is the distance the ball lands from the target: on target (≤ 0.5 m), good (≤ 1.5 m), off (≤ 3 m),
+   shank (further). The direction is a zone (or a tapped spot on the court). Each grade fixes how the setter sets
+   it: release height above the tape (jump set on target, standing further off, a bump set on a shank), the
+   extra height they add, and which balls are still on. */
 const PASSES = [
-  { id: 'perfect', label: 'Perfect', spot: { x: SETTER_X, y: 0.5 / 9 }, release: 0.10, lift: 0, allow: ['perfect', 'good', 'any'], hint: 'On target at the net: the setter jump-sets and the whole menu is on.' },
-  { id: 'good', label: 'Good', spot: { x: SETTER_X - 0.05, y: 1.5 / 9 }, release: 0.0, lift: 0.1, allow: ['good', 'any'], hint: 'A metre and a half off the net, a step left of target: the setter moves to it and sets standing. The quicks and the flat pin balls are off.' },
-  { id: 'off', label: 'Off', spot: { x: 0.5, y: 3.0 / 9 }, release: -0.3, lift: 0.5, allow: ['any'], hint: 'In the middle at the 3-m line: the setter runs it down and lofts a high ball. Out-of-system menu only.' }
+  { id: 'perfect', label: 'Perfect', maxM: 0.5, dist: 0, release: 0.10, lift: 0, allow: ['perfect', 'good', 'any'], hint: 'On target at the net: the setter jump-sets and the whole menu is on.' },
+  { id: 'good', label: 'Good', maxM: 1.5, dist: 1.2, release: 0.0, lift: 0.1, allow: ['good', 'any'], hint: 'Within 1.5 m of target: the setter moves to it and sets standing. The quicks and the flat pin balls are off.' },
+  { id: 'off', label: 'Off', maxM: 3.0, dist: 2.5, release: -0.3, lift: 0.5, allow: ['any'], hint: 'Within 3 m of target: the setter runs it down and lofts a high ball. Out-of-system menu only.' },
+  { id: 'shank', label: 'Shank', maxM: Infinity, dist: 4.5, release: -0.6, lift: 0.8, allow: ['any'], hitters: ['OH', 'OPP'], hint: 'More than 3 m from target: whoever gets there bump-sets a high ball to a pin. No middle ball.' }
 ];
-const passOf = id => PASSES.find(p => p.id === id) || PASSES[0];   // court fraction (net → end line) where a back-row ball is contacted
+const ZONE_CENTRE = { 4: { x: 1 / 6, y: 0.17 }, 3: { x: 0.5, y: 0.17 }, 2: { x: 5 / 6, y: 0.17 }, 5: { x: 1 / 6, y: 0.67 }, 6: { x: 0.5, y: 0.67 }, 1: { x: 5 / 6, y: 0.67 } };
+const passOf = id => PASSES.find(p => p.id === id) || PASSES[0];
+const passDistM = spot => Math.hypot((spot.x - PASS_TARGET.x) * WORLD.courtW, (spot.y - PASS_TARGET.y) * WORLD.courtD);
+const passGradeOf = spot => { const m = passDistM(spot); return PASSES.find(p => m <= p.maxM) || PASSES[PASSES.length - 1]; };
+/* Where a pass of this grade lands when it goes toward a zone: `dist` metres from the target along the line to the zone centre, kept on the court. */
+function passSpotFor(q, zone) {
+  if (q.dist === 0) return { x: PASS_TARGET.x, y: PASS_TARGET.y };
+  const c = ZONE_CENTRE[zone] || ZONE_CENTRE[6];
+  const dx = (c.x - PASS_TARGET.x) * WORLD.courtW, dy = (c.y - PASS_TARGET.y) * WORLD.courtD, len = Math.hypot(dx, dy) || 1;
+  const spot = { x: PASS_TARGET.x + q.dist * dx / len / WORLD.courtW, y: PASS_TARGET.y + q.dist * dy / len / WORLD.courtD };
+  spot.x = Math.min(0.97, Math.max(0.03, spot.x)); spot.y = Math.min(0.97, Math.max(0.03, spot.y));
+  return spot;
+}
+/* The pass in play: grade + landing spot (+ zone it went toward). */
+function currentPass() {
+  const q = passOf(state.pass);
+  const spot = state.passSpot || passSpotFor(q, state.passZone);
+  return Object.assign({}, q, { spot, zone: state.passZone, distM: passDistM(spot) });
+}
+function resolvedPass(id) { const q = passOf(id); return Object.assign({}, q, { spot: passSpotFor(q, state.passZone), zone: state.passZone, distM: q.dist }); }
 
 /* Real-world flight model — metres and seconds. Tweak here if your gym or level differs. */
 const WORLD = {
   courtW: 9, courtD: 9,
   netHeights: { men: 2.43, women: 2.24 },
-  releaseY: 0.5,               // setter stands this far off the net
+  releaseY: 0.9,               // setter's target is about 3 ft off the net (coaching references: 2–4 ft), so the setter is not in the net
   releaseAboveTape: 0.10,      // hands release the ball this far above the tape
-  contactAboveTape: 0.35,      // hitter contacts a front-row ball this far above the tape
+  contactAboveTape: 0.35,      // reference reach: the data is defined for hitters contacting a front-row ball this far above the tape (club level)
+  reach: { club: 0.35, college: 0.60, pro: 1.00 },   // how far above the net the hitters contact the ball: club, college, pro (elite men spike-reach ≈ 3.5 m on a 2.43 net; elite women ≈ 3.2 m on 2.24)
   contactOffNet: [0.45, 0.6],  // front-row contact distance off the net = base + peak × range: a quick 0.5 m off, a high ball about a metre off
   flatOffNet: 0.35,            // flat / pushed balls are hit a foot off the net
   peakMax: 2.3,                // peak = 1 (a 4 or 5) reaches this far above the release point: 2.4 m (8 ft) above the net, a 1.3 s hang — the slow tail of measured Olympic set flight times
-  backrow: { peak: 0.75, bicPeak: 0.59, contactAboveTape: 0.40 },   // pipe 1.8 m above the net (a metre above the antenna, 1.1 s); BIC 1.45 m (1.0 s), lower and faster
+  backrow: { peak: 0.75, bicPeak: 0.41, contactAboveTape: 0.40 },   // pipe 1.8 m above the net (a metre above the antenna, 1.1 s); BIC about 1.05 m (0.8 s), the back-row quick
   tempoPhases: { minus: 0.78, '1st': 0.5, '2nd': 0.3 }   // how far into the approach the hitter is at setter contact (0 = first step, 1 = takeoff)
 };
 const G = 9.81;
@@ -756,11 +783,15 @@ const state = {
   diag: 'net',
   selected: null,
   hidden: new Set(),
-  pass: (function () { try { const r = localStorage.getItem('setterSignals.pass'); if (['perfect', 'good', 'off'].includes(r)) return r; } catch (e) { /* ignore */ } return 'perfect'; })(),
+  pass: (function () { try { const r = localStorage.getItem('setterSignals.pass'); if (['perfect', 'good', 'off', 'shank'].includes(r)) return r; } catch (e) { /* ignore */ } return 'perfect'; })(),
+  passZone: (function () { try { const z = Number(localStorage.getItem('setterSignals.passZone')); if (z >= 1 && z <= 6) return z; } catch (e) { /* ignore */ } return 6; })(),
+  passSpot: null,
+  placing: false,
   row: (function () { try { const r = localStorage.getItem('setterSignals.row'); if (['front', 'back', 'both'].includes(r)) return r; } catch (e) { /* ignore */ } return 'both'; })(),
   bic: false,
   zone: null,
   netH: 2.43,
+  reach: (function () { try { const r = localStorage.getItem('setterSignals.reach'); if (['club', 'college', 'pro'].includes(r)) return r; } catch (e) { /* ignore */ } return 'club'; })(),
   slow: false,
   cam: { yaw: 0.2, pitch: 0.58, dist: 18, preset: 'coach' },
   v3drag: false,
@@ -794,21 +825,30 @@ function roleHas(s) {   // could this role ever hit it (any rotation)?
   if (s.hitter === state.role) return true;
   return [1, 2, 3, 4, 5, 6].some(r => availability(s, r).hitter === state.role);
 }
-function passOk(s) { return passOf(state.pass).allow.includes(s.modifier ? 'perfect' : s.pass); }
+function passOk(s) { const q = passOf(state.pass); return q.allow.includes(s.modifier ? 'perfect' : s.pass) && (!q.hitters || s.modifier || q.hitters.includes(s.hitter)); }
 function offWhy(s) {   // why a set is not live right now: rotation first, then the pass
   const a = availability(s, state.rotation);
   if (!a.ok) return `Not in rotation ${state.rotation}: ${a.why}`;
-  if (!passOk(s)) return `Needs a ${s.modifier ? 'perfect' : s.pass} pass — this is ${state.pass === 'off' ? 'an off' : 'a ' + state.pass} pass`;
+  if (!passOk(s)) { const q = passOf(state.pass); return q.hitters && !q.hitters.includes(s.hitter) && !s.modifier ? `Not off a shank — only a high ball to a pin` : `Needs a ${s.modifier ? 'perfect' : s.pass} pass — this is ${state.pass === 'off' ? 'an off' : 'a ' + state.pass} pass`; }
   return '';
 }
 function recommended() {   // the call on this pass: the outside's high ball off an off pass, nothing special otherwise
-  if (state.pass !== 'off') return null;
+  if (state.pass !== 'off' && state.pass !== 'shank') return null;
   return roleSets().find(s => s.hitter === 'OH' && s.pass === 'any' && s.group !== 'backrow') || roleSets().find(s => s.pass === 'any') || null;
 }
-function setPass(id) {
+function setPass(id, zone, spot) {
   state.pass = id;
-  try { localStorage.setItem('setterSignals.pass', id); } catch (e) { /* ignore */ }
+  if (zone) state.passZone = zone;
+  state.passSpot = spot || null;
+  state.placing = false;
+  try { localStorage.setItem('setterSignals.pass', id); localStorage.setItem('setterSignals.passZone', String(state.passZone)); } catch (e) { /* ignore */ }
   renderRoleBar(); renderTab();
+}
+/* A tapped spot on the court: its distance from target decides the grade, the zone it is in the direction. */
+function placePass(spot) {
+  const q = passGradeOf(spot);
+  const zone = spot.x < 1 / 3 ? (spot.y < 1 / 3 ? 4 : 5) : spot.x < 2 / 3 ? (spot.y < 1 / 3 ? 3 : 6) : (spot.y < 1 / 3 ? 2 : 1);
+  setPass(q.id, zone, q.dist === 0 ? null : spot);
 }
 function roleHasNow(s) {   // is it on in this rotation, for this role, on this pass?
   const a = availability(s, state.rotation);
@@ -861,12 +901,13 @@ function renderRoleBar() {
   const mine = roleSets().filter(s => !s.modifier);
   const front = mine.filter(s => s.group !== 'backrow').map(s => s.name), back = mine.filter(s => s.group === 'backrow').map(s => s.name);
   const where = `Rotation ${rot.r}: setter in zone ${rot.setterZone}, ${rot.setterFront ? 'front' : 'back'} row · front ${rot.front.join(' ')} · back ${rot.back.join(' ')}`;
-  const pass = passOf(state.pass), rec = recommended();
-  const passText = pass.id === 'perfect' ? '' : ` ${pass.hint}${rec ? ` Best call: the ${rec.name}.` : ''}`;
+  const pass = currentPass(), rec = recommended();
+  const passText = pass.id === 'perfect' ? '' : ` ${pass.label} pass, ${pass.distM.toFixed(1)} m from target toward zone ${pass.zone}. ${pass.hint}${rec ? ` Best call: the ${rec.name}.` : ''}`;
   const hint = (state.role === 'setter' ? `${where}. ${rot.setterFront ? 'Two front-row hitters: the opposite attacks from the back row and you can dump.' : 'Three front-row hitters plus the back-row outside.'}` : `${where}. Your balls now — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`) + passText;
   $('#rolebar').innerHTML = `<span class="lab">I am the</span><div class="seg" role="group" aria-label="Role">${ROLES.map(r => `<button data-role="${r.id}" aria-pressed="${state.role === r.id}">${r.label}</button>`).join('')}</div>` +
     `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}` +
     `<span class="lab">Pass</span><div class="seg pass" role="group" aria-label="Pass quality">${PASSES.map(p => `<button data-pass="${p.id}" aria-pressed="${state.pass === p.id}" title="${esc(p.hint)}">${p.label}</button>`).join('')}</div>` +
+    (pass.id !== 'perfect' ? `<span class="lab">toward</span><div class="seg rot zone" role="group" aria-label="Pass direction">${[4, 3, 2, 5, 6, 1].map(z => `<button data-passzone="${z}" aria-pressed="${!state.passSpot && state.passZone === z}">${z}</button>`).join('')}</div>` : '') +
     `<span class="hint">${esc(hint)}</span>`;
 }
 function howLabel(s) {
@@ -879,7 +920,7 @@ function timeline(fl) {
   const approachSec = fl.approachSec || WORLD.approach.OH;
   const takeoffAt = fl.T - WORLD.riseSec, startAt = takeoffAt - approachSec;
   // on an off pass the setter first runs from the target to the ball, arriving as it does (t = 0)
-  const pass = fl.pass || passOf('perfect');
+  const pass = fl.pass || resolvedPass('perfect');
   const moveM = Math.hypot((pass.spot.x - SETTER_X) * WORLD.courtW, pass.spot.y * WORLD.courtD - WORLD.releaseY);
   const moveSec = pass.id === 'perfect' ? 0 : 0.25 + moveM / 3.5;
   return { T: fl.T, startAt, takeoffAt, approachSec, phase: -startAt / approachSec, moveSec, moveM };
@@ -932,7 +973,7 @@ const nx = (L, x) => L.ax0 + x * (L.ax1 - L.ax0);
 function netGeom(L, s) {
   const v = s.netView;
   const handsY = L.netY - L.fs * 1.1;
-  const sx = nx(L, passOf(state.pass).spot.x), sy = handsY;
+  const sx = nx(L, currentPass().spot.x), sy = handsY;
   const ex = nx(L, v.landX), ey = handsY - L.fs * 0.35;
   const apexY = handsY - v.peak * (handsY - L.topY);
   const c = (apexY - (sy + ey) / 8) / 0.75;          // both control points at this y ⇒ apex exactly at apexY
@@ -987,7 +1028,7 @@ function netSetMarkup(L, s, opts) {
 function netScene(L, sets, opts) {
   const handsY = L.netY - L.fs * 1.1;
   const span = handsY - L.topY;
-  const pass = passOf(state.pass);
+  const pass = currentPass();
   const setterX = nx(L, pass.spot.x), baseX = nx(L, SETTER_X);
   let o = `<svg class="scene" viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="Side view of the net with set trajectories">`;
   o += `<defs><pattern id="mesh" width="${L.fs * 0.5}" height="${L.fs * 0.5}" patternUnits="userSpaceOnUse"><path d="M0 0H${L.fs * 0.5}V${L.fs * 0.5}" fill="none" stroke="#3a4157" stroke-width="1"/></pattern>`;
@@ -1068,7 +1109,7 @@ const cx = x => CL.x0 + x * CL.cw;
 const cy = y => CL.y0 + y * CL.ch;
 function courtSetPath(s, bic) {
   const v = s.courtView;
-  const ps = passOf(state.pass).spot, sx = cx(ps.x), sy = cy(ps.y);
+  const ps = currentPass().spot, sx = cx(ps.x), sy = cy(ps.y);
   const isBack = s.group === 'backrow';
   const fl = isBack ? null : flight(s);
   const ty = isBack ? (bic ? BACKROW_TARGET_Y.bic : BACKROW_TARGET_Y.normal) : (fl ? fl.p1.y / WORLD.courtD : v.y);
@@ -1204,13 +1245,17 @@ function courtScene(sets, opts) {
          `<rect class="hitz" x="${r1(rx)}" y="${r1(ry)}" width="${r1(CL.cw / 3)}" height="${r1(rh)}"/>` +
          `<text x="${r1(zx)}" y="${r1(zy)}" font-size="${row === 0 ? 40 : 64}" text-anchor="middle" dominant-baseline="middle">${z}</text></g>`;
   });
+  // pass tolerance rings around the setter's target: good ≤ 1.5 m, off ≤ 3 m, shank beyond
+  { const tx = cx(PASS_TARGET.x), ty = cy(PASS_TARGET.y), mx = CL.cw / WORLD.courtW;
+    [[1.5, 'good'], [3.0, 'off']].forEach(([m, k]) => { o += `<circle class="tol tol-${k}" cx="${r1(tx)}" cy="${r1(ty)}" r="${r1(m * mx)}" fill="none" stroke="#8b93ab" stroke-width="1.2" stroke-dasharray="3 5" opacity="${state.placing || state.pass !== 'perfect' ? 0.7 : 0.25}"/>`; if (!opts.noLabels && (state.placing || state.pass !== 'perfect')) o += `<text x="${r1(tx - m * mx + 6)}" y="${r1(ty + CL.fs * 0.55)}" font-size="${r1(CL.fs * 0.5)}" fill="#8b93ab">${m} m</text>`; });
+    if (state.placing) o += `<rect class="placer" data-passtap x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${CL.ch}" fill="#4da3ff" opacity=".08" style="cursor:crosshair"/>`; }
   // setter, at the pass; a dotted run from the target when the pass is off
-  const pass = passOf(state.pass), sx = cx(pass.spot.x), sy = cy(pass.spot.y);
+  const pass = currentPass(), sx = cx(pass.spot.x), sy = cy(pass.spot.y);
   if (pass.id !== 'perfect') {
-    const bx = cx(SETTER_X), by = cy(0.05);
+    const bx = cx(PASS_TARGET.x), by = cy(PASS_TARGET.y);
     o += `<g class="smove-g"><circle cx="${r1(bx)}" cy="${r1(by)}" r="${r1(CL.fs * 0.5)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>` +
          `<path d="M${r1(bx)} ${r1(by)} L${r1(sx)} ${r1(sy)}" stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6" fill="none"/>` +
-         (opts.noLabels ? '' : `<text x="${r1(sx + CL.fs * 0.7)}" y="${r1(sy + CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab">${esc(pass.label)} pass · setter ${(Math.hypot((pass.spot.x - SETTER_X) * WORLD.courtW, (pass.spot.y - 0.05) * WORLD.courtD)).toFixed(1)} m from target</text>`) + `</g>`;
+         (opts.noLabels ? '' : `<text x="${r1(sx + CL.fs * 0.7)}" y="${r1(sy + CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab">${esc(pass.label)} pass · ${pass.distM.toFixed(1)} m from target</text>`) + `</g>`;
   }
   o += `<g aria-label="Setter"><circle cx="${r1(sx)}" cy="${r1(sy)}" r="${r1(CL.fs * 0.5)}" fill="#e8ebf5"/><text x="${r1(sx)}" y="${r1(sy + CL.fs * 0.28)}" font-size="${r1(CL.fs * 0.65)}" font-weight="800" fill="#0f1117" text-anchor="middle">S</text></g>`;
   const labelPos = courtLabelPositions(sets);
@@ -1230,11 +1275,11 @@ function renderCourt() {
   renderFilters('court-filters', pool);
   $('#bic-toggle').setAttribute('aria-pressed', String(state.bic));
   $('#bic-hint').textContent = state.bic
-    ? 'BIC: same spots, lower and faster — the hitter is on the second step when the ball is set. At high levels every back-row set is run at BIC tempo.'
+    ? 'BIC: same spots, a third of a second faster and almost a metre lower — the hitter is planting when the ball is set. At high levels every back-row set is run at BIC tempo.'
     : 'Normal back-row ball: set deeper and higher than a front-row ball, about a metre above the antenna. At high levels every back-row set is run at BIC tempo.';
-  $('#court-zonechips').innerHTML = [4, 3, 2, 5, 6, 1].map(z =>
+  $('#court-zonechips').innerHTML = `<button class="chip${state.placing ? ' active' : ''}" data-place aria-pressed="${state.placing}">📍 Place the pass</button>` + [4, 3, 2, 5, 6, 1].map(z =>
     `<button class="chip${state.zone === z ? ' active' : ''}" data-zone="${z}" aria-pressed="${state.zone === z}">Zone ${z}</button>`).join('') +
-    (state.zone ? `<span class="hint">Showing sets that land in zone ${state.zone}. Tap again to clear.</span>` : `<span class="hint">Tap a zone to highlight every set that lands there.</span>`);
+    (state.placing ? `<span class="hint">Tap the court where the pass lands: within 1.5 m of target is good, within 3 m is off, further is a shank.</span>` : state.zone ? `<span class="hint">Showing sets that land in zone ${state.zone}. Tap again to clear.</span>` : `<span class="hint">Tap a zone to highlight every set that lands there.</span>`);
   applySelection();
 }
 
@@ -1244,7 +1289,7 @@ function renderCourt() {
 function flight(s, o) {
   o = o || {};
   const netH = o.netH || state.netH;
-  const pass = passOf(o.pass || state.pass);
+  const pass = o.pass ? resolvedPass(o.pass) : currentPass();
   const p0 = { x: pass.spot.x * WORLD.courtW, y: pass.spot.y * WORLD.courtD, z: netH + pass.release };
   let p1, peak;
   if (s.group === 'backrow') {
@@ -1256,27 +1301,31 @@ function flight(s, o) {
     p1 = { x: v.landX * WORLD.courtW, y: v.flat ? WORLD.flatOffNet : WORLD.contactOffNet[0] + v.peak * WORLD.contactOffNet[1], z: netH + WORLD.contactAboveTape };
     peak = v.peak;
   } else return null;
-  const d = p1.z - p0.z;
-  const peakH = Math.max(peak * WORLD.peakMax + pass.lift, d + 0.05);
+  let d = p1.z - p0.z;
+  let peakH = Math.max(peak * WORLD.peakMax + pass.lift, d + 0.05);
   const A = 4 * peakH - 2 * d;
   const k = (A + Math.sqrt(Math.max(0, A * A - 4 * d * d))) / 2;   // z(t) = z0 + d·t + k·t(1−t)
   const T = Math.sqrt(2 * k / G);
+  // Hitters who reach higher meet the same ball (same hang time, k fixed by T) higher up, so the ball is set higher.
+  const reachM = WORLD.reach[o.reach || state.reach]; if (reachM == null) throw new Error('unknown reach');
+  const extra = reachM - WORLD.contactAboveTape;
+  if (extra !== 0) { p1 = Object.assign({}, p1, { z: p1.z + extra }); d = p1.z - p0.z; peakH = (d + k) * (d + k) / (4 * k); }
   const at = t => ({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t, z: p0.z + d * t + k * t * (1 - t) });
   const apex = at(0.5 + d / (2 * k));
   const horiz = Math.hypot(p1.x - p0.x, p1.y - p0.y);
   const hitter = o.hitter || (s.hitter === 'Back row' ? 'OH' : (availability(s, o.rotation || state.rotation).hitter || s.hitter));
-  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH, aboveNet: apex.z - netH, hitter, approachSec: approachSecFor(s, hitter), pass };
+  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH, aboveNet: apex.z - netH, hitter, approachSec: approachSecFor(s, hitter), pass, reach: reachM };
 }
 function tempoFromPhase(p) { const b = WORLD.tempoPhases; return p >= b.minus ? 'minus' : p >= b['1st'] ? '1st' : p >= b['2nd'] ? '2nd' : '3rd'; }
 function tempoOf(s, o) {
-  if (s.modifier) { const ref = SETS.find(x => x.group === 'backrow' && !x.modifier); const f = ref && flight(ref, { bic: true, netH: WORLD.netHeights.men, pass: 'perfect' }); return f ? tempoFromPhase(timeline(f).phase) : '1st'; }
-  const f = flight(s, Object.assign({ netH: WORLD.netHeights.men, pass: 'perfect' }, o || {})); if (!f) return '2nd';
+  if (s.modifier) { const ref = SETS.find(x => x.group === 'backrow' && !x.modifier); const f = ref && flight(ref, { bic: true, netH: WORLD.netHeights.men, pass: 'perfect', reach: 'club' }); return f ? tempoFromPhase(timeline(f).phase) : '1st'; }
+  const f = flight(s, Object.assign({ netH: WORLD.netHeights.men, pass: 'perfect', reach: 'club' }, o || {})); if (!f) return '2nd';
   return tempoFromPhase(timeline(f).phase);
 }
 function tempoMeta(id) { return TEMPOS.find(t => t.id === id) || { id, label: id, short: id, hint: '' }; }
 /* The hint on a tempo chip carries the derived height band: the lowest and highest apex above the net among the sets in that class. */
 function tempoHint(t) {
-  const hs = SETS.filter(s => !s.modifier && tempoOf(s) === t.id).map(s => flight(s, { netH: WORLD.netHeights.men, pass: 'perfect' })).filter(Boolean).map(f => f.aboveNet);
+  const hs = SETS.filter(s => !s.modifier && tempoOf(s) === t.id).map(s => flight(s, { netH: WORLD.netHeights.men, pass: 'perfect', reach: state.reach })).filter(Boolean).map(f => f.aboveNet);
   if (!hs.length) return t.hint;
   const lo = Math.min(...hs), hi = Math.max(...hs);
   const band = hi - lo < 0.15 ? `${lo.toFixed(1)} m` : `${lo.toFixed(1)}–${hi.toFixed(1)} m`;
@@ -1390,7 +1439,7 @@ function v3Scene(L, sets, opts) {
   o += line({ x: 0, y: 0, z: netH }, { x: W, y: 0, z: netH }, 'stroke="#e8ebf5" stroke-width="4" stroke-linecap="round"');
   [0, W].forEach(x => { o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#ff4d4d" stroke-width="5" stroke-linecap="round"'); o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#fff" stroke-width="5" stroke-dasharray="10 10"'); });
   // setter, where the pass takes them; a dotted run from the target when the pass is off
-  const pass = passOf(state.pass);
+  const pass = currentPass();
   const rel = { x: pass.spot.x * W, y: pass.spot.y * D, z: netH + pass.release };
   if (pass.id !== 'perfect') {
     const base = { x: SETTER_X * W, y: WORLD.releaseY, z: 0 };
@@ -1473,6 +1522,7 @@ function render3D() {
   $$('#v3-presets button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-cam') === state.cam.preset)));
   $('#v3-bic').setAttribute('aria-pressed', String(state.bic));
   $('#v3-net').setAttribute('aria-pressed', String(state.netH === WORLD.netHeights.women));
+  $$('#v3-reach button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-reach') === state.reach)));
   applySelection();
 }
 function v3Orbit() {
@@ -1801,7 +1851,7 @@ const RULES = [
     }) },
   { name: 'Tempo classes follow from timing', why: 'Tempo is derived from where the hitter is at setter contact: minus (leaving the floor), first (planting), second (mid-approach), third (starts on the set). The named sets must land in the classes the game gives them.',
     run: () => {
-      const expect = { one: 'minus', push1: 'minus', back1: 'minus', shoot: '1st', slide: '1st', two: '2nd', back2: '2nd', rip: '2nd', go: '2nd', red: '2nd', hut: '3rd', four: '3rd', five: '3rd', A: '2nd', B: '2nd', pipe: '2nd', C: '2nd', D: '2nd', bic: '2nd' };
+      const expect = { one: 'minus', push1: 'minus', back1: 'minus', shoot: '1st', slide: '1st', two: '2nd', back2: '2nd', rip: '2nd', go: '2nd', red: '2nd', hut: '3rd', four: '3rd', five: '3rd', A: '2nd', B: '2nd', pipe: '2nd', C: '2nd', D: '2nd', bic: '1st' };
       return Object.keys(expect).filter(id => byId(id)).map(id => { const s = byId(id), t = tempoOf(s), f = s.modifier ? null : flight(s, { netH: WORLD.netHeights.men }); const ph = f ? timeline(f).phase : null; return { id, ok: t === expect[id], level: 'err', msg: `${tempoMeta(t).label}${ph != null ? ` (${Math.round(ph * 100)}% through the approach at contact)` : ''}${t === expect[id] ? '' : `, expected ${tempoMeta(expect[id]).label}`}` }; });
     } },
   { name: 'Hang times match measured set flight times', why: 'Height and hang time are the same thing under gravity, so each set is graded on flight time (setter release to hitter contact) against measured data: in Olympic men\'s finals, quick sets flew 0.40–0.49 s and sets to the outside averaged 1.12 s in 2000 and 0.97 s in 2021 (Papers on Anthropology, 2022). A Go is the fast end of that outside range, a Hut the 2000 average, a 4 the slow tail. Coaching descriptions (quick 1–2 ft, 2 about a metre, Go 3–4 ft, Pipe a metre above the antenna) sit inside the same bands.',
@@ -1813,20 +1863,43 @@ const RULES = [
         const ok = f.T >= lo && f.T <= hi;
         return { id, ok, level: 'err', msg: `${f.T.toFixed(2)} s hang (band ${lo.toFixed(2)}–${hi.toFixed(2)} s) · peaks ${f.aboveNet.toFixed(2)} m / ${(f.aboveNet / FT).toFixed(1)} ft above the net` };
       });
-      const pipe = byId('pipe'); if (pipe) { const fb = flight(pipe, { bic: true, netH: WORLD.netHeights.men }), fp = flight(pipe, { netH: WORLD.netHeights.men }); const ok = fb.T >= 0.85 && fb.T <= 1.05 && fb.aboveNet < fp.aboveNet - 0.2; out.push({ id: 'bic', ok, level: 'err', msg: `BIC ${fb.T.toFixed(2)} s, ${fb.aboveNet.toFixed(2)} m vs Pipe ${fp.T.toFixed(2)} s, ${fp.aboveNet.toFixed(2)} m above the net` }); }
+      const pipe = byId('pipe'); if (pipe) { const fb = flight(pipe, { bic: true, netH: WORLD.netHeights.men }), fp = flight(pipe, { netH: WORLD.netHeights.men }); const ok = fb.T >= 0.70 && fb.T <= 0.90 && fp.T - fb.T >= 0.25; out.push({ id: 'bic', ok, level: 'err', msg: `BIC ${fb.T.toFixed(2)} s, ${fb.aboveNet.toFixed(2)} m vs Pipe ${fp.T.toFixed(2)} s, ${fp.aboveNet.toFixed(2)} m above the net` }); }
+      return out;
+    } },
+  { name: 'Source claims cross-check against physics and each other', why: 'No single source is trusted on its own. Each published claim is tested against the gravity model and the measured flight times; claims that fail are recorded as rejected so the reasoning stays visible.',
+    run: () => {
+      const F = id => flight(byId(id), { netH: WORLD.netHeights.men, pass: 'perfect', reach: 'club' });
+      const one = F('one'), two = F('two'), go = F('go'), hut = F('hut'), four = F('four'), pipe = F('pipe'), bic = flight(byId('pipe'), { netH: WORLD.netHeights.men, pass: 'perfect', reach: 'club', bic: true }), slide = F('slide'), shoot = F('shoot');
+      const ft = m => m / 0.3048;
+      const out = [];
+      const claim = (id, ok, text) => out.push({ id, ok, level: 'err', msg: text });
+      claim('one', one.T >= 0.40 && one.T <= 0.49 && one.aboveNet - (one.p1.z - one.netH) < 0.25, `quick: Olympic finals measured 0.40–0.49 s; coaching says it barely rises above the hitter's contact — ${one.T.toFixed(2)} s, ${(one.aboveNet - (one.p1.z - one.netH)).toFixed(2)} m above contact`);
+      claim('shoot', ft(shoot.aboveNet) >= 1 && ft(shoot.aboveNet) <= 2.2, `31: "1–2 ft above the net" — ${ft(shoot.aboveNet).toFixed(1)} ft`);
+      claim('slide', ft(slide.aboveNet) >= 1 && ft(slide.aboveNet) <= 3.3, `slide: "1–3 ft" — ${ft(slide.aboveNet).toFixed(1)} ft`);
+      claim('two', Math.abs(two.aboveNet - 1.0) <= 0.25, `2: "about one metre" / "2–3 ft" — ${two.aboveNet.toFixed(2)} m`);
+      claim('go', ft(go.aboveNet) >= 3 && ft(go.aboveNet) <= 4.2 && go.T <= 0.97, `Go: "3–4 ft", faster than the 2021 outside average (0.97 s) — ${ft(go.aboveNet).toFixed(1)} ft, ${go.T.toFixed(2)} s`);
+      claim('hut', Math.abs(hut.T - 1.12) <= 0.06, `Hut: the 2000 outside average was 1.12 s — ${hut.T.toFixed(2)} s (the "8–10 ft" claim would be 1.35–1.5 s and is rejected: slower than the measured average for a medium ball)`);
+      claim('four', four.T >= 1.2 && four.T <= 1.5, `4: slow tail of measured outside sets, 1.2–1.5 s — ${four.T.toFixed(2)} s (the "10–12 ft" claim would be 1.6 s+, slower than anything measured, and is rejected)`);
+      claim('pipe', Math.abs(pipe.aboveNet - 1.8) <= 0.3, `Pipe: "about a metre above the antenna" (antenna tops 0.8 m above the net) — ${pipe.aboveNet.toFixed(2)} m`);
+      claim('bic', pipe.T - bic.T >= 0.25 && bic.T <= 0.9, `BIC: "the back-row quick, lower and faster than a Pipe" — ${bic.T.toFixed(2)} s vs ${pipe.T.toFixed(2)} s`);
+      claim(null, Math.abs(WORLD.releaseY - 0.9) <= 0.3 && Math.abs(SETTER_X * WORLD.courtW - 5.9) <= 0.4, `setter target: "5 ft right of centre, 2–4 ft off the net" — ${(SETTER_X * WORLD.courtW).toFixed(1)} m from the left antenna, ${WORLD.releaseY.toFixed(1)} m off`);
+      claim(null, Math.abs(Math.sqrt(2 * WORLD.jumpHeight / G) - WORLD.riseSec) <= 0.05, `rise to the ball: a ${WORLD.jumpHeight} m jump peaks after ${Math.sqrt(2 * WORLD.jumpHeight / G).toFixed(2)} s — riseSec ${WORLD.riseSec} s`);
+      claim(null, WORLD.approach.full >= 0.9 && WORLD.approach.full <= 1.3 && WORLD.approach.short >= 0.6 && WORLD.approach.short <= 0.9, `approach times: four-step ≈ 1.0–1.2 s, last two steps ≈ 0.6 s (biomechanics) — full ${WORLD.approach.full} s, short ${WORLD.approach.short} s`);
+      claim(null, WORLD.reach.pro >= 0.9 && WORLD.reach.pro <= 1.15 && WORLD.reach.club <= 0.5, `reach: elite men spike-reach ≈ 3.5 m on a 2.43 m net (≈ 1.0 m above) — pro ${WORLD.reach.pro} m, club ${WORLD.reach.club} m`);
       return out;
     } },
   { name: 'Pass quality gates the menu the way a 5-1 setter would call it', why: 'A perfect pass turns everything on. A good pass keeps the balls that survive a setter setting standing a metre or so off the net, and an off pass leaves only the out-of-system balls, with a high ball to the outside always available. The setter is drawn where the pass takes them.',
     run: () => {
       const out = [];
       PASSES.forEach(p => {
-        const live = SETS.filter(s => !s.modifier && p.allow.includes(s.pass));
-        const inside = p.spot.x >= 0 && p.spot.x <= 1 && p.spot.y >= 0 && p.spot.y <= 1 && p.release >= -0.4 && p.release <= 0.2;
+        const live = SETS.filter(s => !s.modifier && p.allow.includes(s.pass) && (!p.hitters || p.hitters.includes(s.hitter)));
+        const inside = [1, 2, 3, 4, 5, 6].every(z => { const sp = passSpotFor(p, z); return sp.x >= 0 && sp.x <= 1 && sp.y >= 0 && sp.y <= 1 && (p.dist === 0 || Math.abs(passDistM(sp) - p.dist) < 0.05 || passDistM(sp) > 0.5); }) && p.release >= -0.7 && p.release <= 0.2;
         const oh = live.some(s => s.hitter === 'OH' && s.group !== 'backrow' && s.pass === 'any');
         const bad = [];
         if (!inside) bad.push('spot or release height is not plausible');
         if (!oh) bad.push('no high ball for the outside');
-        if (p.id === 'off' && live.some(s => s.pass !== 'any')) bad.push('an off pass should leave only the out-of-system balls');
+        if ((p.id === 'off' || p.id === 'shank') && live.some(s => s.pass !== 'any')) bad.push('an off pass should leave only the out-of-system balls');
+        if (p.id === 'shank' && live.some(s => s.hitter === 'MB')) bad.push('a shank should not go to the middle');
         if (p.id === 'perfect' && live.length !== SETS.filter(s => !s.modifier).length) bad.push('a perfect pass should turn everything on');
         if (p.id === 'good' && live.some(s => s.pass === 'perfect')) bad.push('a good pass should not allow perfect-pass balls');
         out.push({ id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${p.label} pass: ${live.length} sets on (${live.map(s => s.name).join(', ')})` });
@@ -1834,14 +1907,14 @@ const RULES = [
       return out;
     } },
   { name: 'BIC is a tempo modifier, not a location', why: 'It is signalled with a zone signal and means "run it fast and low"; it has no spot of its own.',
-    run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && tempoOf(b) === '2nd' && WORLD.backrow.bicPeak < WORLD.backrow.peak; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry; lower and faster than a Pipe, still a second-tempo (2nd/3rd-step) ball' : 'should be modifier: true with no netView / courtView, group backrow, lower than the Pipe, and derive as second tempo' }]; } },
+    run: () => { const b = byId('bic'); if (!b) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = b.modifier && !b.netView && !b.courtView && b.group === 'backrow' && tempoOf(b) === '1st' && WORLD.backrow.bicPeak < WORLD.backrow.peak; return [{ id: 'bic', ok, level: 'err', msg: ok ? 'modifier with no geometry; the back-row quick — a third of a second faster than a Pipe, first tempo' : 'should be modifier: true with no netView / courtView, group backrow, well below the Pipe, and derive as first tempo' }]; } },
   { name: 'Front-row balls are contacted above the net, back-row balls behind the line', why: 'Sanity check on the 3D model: contact heights above the tape, contact depth in metres.',
     run: sets => sets.filter(s => !s.modifier).map(s => { const f = flight(s, { netH: WORLD.netHeights.men }); if (!f) return { id: s.id, ok: true, msg: 'no flight' }; const isBack = s.group === 'backrow'; const ok = f.p1.z > f.netH && f.apex.z >= f.p1.z && (isBack ? f.p1.y > 2 : f.p1.y < 1.5); return { id: s.id, ok, level: 'err', msg: `contact ${(f.p1.z - f.netH).toFixed(2)} m above the tape, ${f.p1.y.toFixed(1)} m off the net` }; }) }
 ];
 function runChecks() {
-  const savedPass = state.pass; state.pass = 'perfect';   // the data is graded as set off a perfect pass
+  const savedPass = state.pass, savedReach = state.reach; state.pass = 'perfect'; state.reach = 'club';   // the data is graded as set off a perfect pass at the reference reach
   const results = RULES.map(r => { let f; try { f = r.run(SETS); } catch (e) { f = [{ id: null, ok: false, level: 'err', msg: 'rule crashed: ' + e.message }]; } return { rule: r, findings: f }; });
-  state.pass = savedPass;
+  state.pass = savedPass; state.reach = savedReach;
   const all = results.flatMap(r => r.findings);
   const errs = all.filter(f => !f.ok && f.level !== 'warn').length, warns = all.filter(f => !f.ok && f.level === 'warn').length;
   return { results, errs, warns, total: all.length };
@@ -1934,9 +2007,9 @@ function renderDetail() {
     const z = zonesOf(s).join(' / ');
     where = s.group === 'backrow'
       ? `Zone ${z}: contact ${fl.p1.y.toFixed(1)} m off the net, ${fl.p1.x.toFixed(1)} m from the left sideline. Take off behind the 3-m line.`
-      : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net. Peaks ${fl.aboveNet.toFixed(1)} m (${(fl.aboveNet * 3.28).toFixed(0)} ft) above the net; contact ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
+      : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net. Peaks ${fl.aboveNet.toFixed(1)} m (${(fl.aboveNet * 3.28).toFixed(0)} ft) above the net for ${state.reach} hitters contacting ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
     where += ` Hang ${fl.T.toFixed(2)} s · ${tempoLabel(s, { bic: state.bic && s.group === 'backrow' }).toLowerCase()}${s.netView && s.netView.flat ? ' · flat' : ''}.`;
-    if (state.pass !== 'perfect') where += ` Set from ${fl.p0.y.toFixed(1)} m off the net on this ${state.pass} pass.`;
+    if (state.pass !== 'perfect') where += ` Set from ${fl.p0.y.toFixed(1)} m off the net, ${currentPass().distM.toFixed(1)} m from target, on this ${state.pass} pass.`;
   }
   const bicRow = s.group === 'backrow' && !s.modifier ? (() => { const n = flight(s, { bic: false }), b = flight(s, { bic: true }); return `<span class="cmp"><b>Normal</b> ${n.T.toFixed(2)} s · ${n.aboveNet.toFixed(2)} m above the net</span><span class="cmp"><b>BIC</b> ${b.T.toFixed(2)} s · ${b.aboveNet.toFixed(2)} m, ${(n.T - b.T).toFixed(2)} s faster</span> <button class="chip${state.bic ? ' active' : ''}" data-bic-toggle aria-pressed="${state.bic}">${state.bic ? 'Showing BIC' : 'Show BIC'}</button>`; })() : '';
   const bicCard = s.modifier ? (() => { const ref = byId('pipe') || SETS.find(x => x.group === 'backrow' && !x.modifier); if (!ref) return ''; const n = flight(ref, { bic: false }), b = flight(ref, { bic: true }); return `${esc(ref.name)} normal: ${n.T.toFixed(2)} s hang, ${n.aboveNet.toFixed(2)} m above the net. ${esc(ref.name)} at BIC tempo: ${b.T.toFixed(2)} s, ${b.aboveNet.toFixed(2)} m — ${(n.T - b.T).toFixed(2)} s faster, ${(n.aboveNet - b.aboveNet).toFixed(2)} m lower. Same rule for A, B, C and D.`; })() : '';
@@ -2061,7 +2134,7 @@ function play() {
     ball.setAttribute('transform', `translate(${r1(pt.x)} ${r1(pt.y)})`);
     if (smove && tl.moveSec) {   // the setter runs from the target to the pass, arriving as the ball does
       const f = Math.max(0, Math.min(1, (t + tl.moveSec) / tl.moveSec));
-      const bx = isCourt ? cx(SETTER_X) : hands.x + (nx(netLayout(), SETTER_X) - nx(netLayout(), fl.pass.spot.x)), by = isCourt ? cy(0.05) : hands.y;
+      const bx = isCourt ? cx(PASS_TARGET.x) : hands.x + (nx(netLayout(), SETTER_X) - nx(netLayout(), fl.pass.spot.x)), by = isCourt ? cy(PASS_TARGET.y) : hands.y;
       const q = { x: bx + (hands.x - bx) * f, y: by + (hands.y - by) * f };
       smove.style.opacity = t < 0.05 ? 1 : 0; smove.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
     }
@@ -2208,7 +2281,7 @@ function showTab(id) {
   window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-pass],[data-bic-toggle],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-pass],[data-passzone],[data-place],[data-passtap],[data-bic-toggle],[data-reach],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-diag')) { showTab(t.getAttribute('data-diag')); return; }
@@ -2236,6 +2309,11 @@ document.addEventListener('click', e => {
     return;
   }
   if (t.hasAttribute('data-select')) { const id = t.getAttribute('data-select'); select(state.selected === id ? null : id, { silent: !!t.closest('#checks-spec') }); return; }
+  if (t.hasAttribute('data-passtap')) {   // placing the pass: convert the tap to court fractions
+    const svg = t.closest('svg'); const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+    placePass({ x: Math.min(1, Math.max(0, (q.x - CL.x0) / CL.cw)), y: Math.min(1, Math.max(0, (q.y - CL.y0) / CL.ch)) });
+    return;
+  }
   if (t.hasAttribute('data-zone') && !t.closest('#quiz-box')) {
     const z = Number(t.getAttribute('data-zone'));
     state.zone = state.zone === z ? null : z;
@@ -2248,6 +2326,9 @@ document.addEventListener('click', e => {
   if (t.hasAttribute('data-mode')) { state.quiz.mode = t.getAttribute('data-mode'); state.quiz.queue = []; quizNext(); return; }
   if (t.hasAttribute('data-row')) { setRow(t.getAttribute('data-row')); return; }
   if (t.hasAttribute('data-pass')) { setPass(t.getAttribute('data-pass')); return; }
+  if (t.hasAttribute('data-passzone')) { setPass(state.pass, Number(t.getAttribute('data-passzone'))); return; }
+  if (t.hasAttribute('data-reach')) { state.reach = t.getAttribute('data-reach'); try { localStorage.setItem('setterSignals.reach', state.reach); } catch (err) { /* ignore */ } renderTab(); return; }
+  if (t.hasAttribute('data-place')) { state.placing = !state.placing; renderCourt(); return; }
   if (t.hasAttribute('data-bic-toggle')) { state.bic = !state.bic; renderTab(); return; }
   if (t.hasAttribute('data-qanswer')) { quizAnswer(t.getAttribute('data-qanswer')); return; }
   if (t.hasAttribute('data-qnext')) { quizNext(); return; }
@@ -2300,7 +2381,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>

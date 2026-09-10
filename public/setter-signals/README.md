@@ -43,24 +43,28 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 
 ## Pass quality
 
-Next to the rotation, **Pass: Perfect / Good / Off** says where the ball arrives, and the app does
-what a 5-1 setter would do with it. A perfect pass is on target at the net and the whole menu is
-on. A good pass lands a metre and a half off the net, a step left of target: the setter moves to it
-and sets standing, so the quicks and the flat pin balls (1, Push 1, Back 1, Go, Red, BIC) are off
-and the 2, 3, 32, Back 2, Slide, Hut, 4, 5 and the back-row balls stay on. An off pass lands in the
-middle at the 3-m line: the setter runs it down and lofts a high ball, only the out-of-system balls
-(2, 4, 5) are on, and the 4 is starred as the best call. Every view draws the setter where the pass
-takes them, with a dotted run from the target, and ▶ shows the setter run to the ball before the
-set. Sets that are off on the current pass stay in the name strip, dimmed, with the reason; select
-one and the card says which ball to run instead. Flight paths are recomputed from the new release
-point, so an off-pass 4 is set from 3 m off the net, lofted higher, and lands in the same place.
-Tempo classes and the Checks tab are always graded off a perfect pass.
+Next to the rotation, **Pass** grades the pass by how far it lands from the setter's target, and
+**toward** says which zone it went to. Perfect is within half a metre of target: the setter
+jump-sets and the whole menu is on. Good is within 1.5 m: the setter moves to it and sets standing,
+so the quicks and the flat pin balls (1, Push 1, Back 1, Go, Red, BIC) are off and the 2, 3, 32,
+Back 2, Slide, Hut, 4, 5 and the back-row balls stay on. Off is within 3 m: the setter runs it down
+and lofts a high ball, only the out-of-system balls (2, 4, 5) are on, and the 4 is starred as the
+best call. Shank is anything further: whoever gets there bump-sets a high ball to a pin (4 or 5),
+no middle ball. The landing spot is the grade's distance from target along the line toward the
+chosen zone, or exactly where you tap: on the Court view, **📍 Place the pass** then tap the court,
+and the 1.5 m and 3 m tolerance rings around the target show which grade you are in. Every view
+draws the setter where the pass takes them, with a dotted run from the target, and ▶ shows the
+setter run to the ball before the set. Sets that are off on the current pass stay in the name
+strip, dimmed, with the reason; select one and the card says which ball to run instead. Flight
+paths are recomputed from the new release point (lower and lofted the further off it is) and land
+in the same place. Tempo classes and the Checks tab are always graded off a perfect pass.
 
 ## BIC, side by side
 
 Selecting a back-row ball in 3D draws the other tempo of the same ball as a faint dashed ghost with
-its hang time, and the card lists both ("Normal 1.13 s · 1.83 m", "BIC 0.99 s · 1.46 m, 0.14 s
-faster") with a Show BIC toggle. The BIC signal card itself has "Pipe at BIC tempo in 3D".
+its hang time, and the card lists both ("Normal 1.13 s · 1.83 m", "BIC 0.80 s · 1.04 m, 0.33 s
+faster") with a Show BIC toggle. The BIC signal card itself has "Pipe at BIC tempo in 3D". The BIC
+is the back-row quick: a third of a second faster and almost a metre lower than the Pipe.
 
 ## Filters
 
@@ -122,10 +126,40 @@ set on this ("Hang times match measured set flight times"):
 | Slide | 0.67 s | 0.79 m (2.6 ft) | "1–3 ft", one-foot takeoff |
 | 2, Back 2, 32 | 0.79 s | 1.0 m (3.3 ft) | "2–3 ft" / "one metre", hitter on the second step |
 | Go, Red | 0.88 s | 1.18 m (3.9 ft), flat | fast end of the outside range (0.97 s in 2021); "3–4 ft" |
-| BIC | 0.99 s | 1.46 m (4.8 ft) | lower and faster than a Pipe, still a 2nd/3rd-step ball |
+| BIC | 0.80 s | 1.04 m (3.4 ft) | the back-row quick: lower and faster than a Pipe |
 | Pipe, A, B, C, D | 1.13 s | 1.83 m (6 ft) | "about a metre above the antenna" |
 | Hut | 1.12 s | 1.76 m (5.8 ft) | the 2000 outside average; hitter on the first step |
 | 4, 5 | 1.33 s | 2.4 m (7.9 ft), a metre off the net | slow tail of the outside range; the out-of-system ball |
+
+Those heights are for club-level hitters contacting the ball 0.35 m above the tape. Hitters who
+reach higher meet the same ball higher up, so the **Club / College / Pro** control in the 3D view
+keeps every hang time fixed and re-derives the heights for hitters reaching 0.35, 0.6 or 1.0 m
+above the net (elite men spike-reach about 3.5 m on a 2.43 m net). At pro reach a 1 peaks about a
+metre above the net and a 4 about 2.75 m.
+
+## Sources, and how each was validated
+
+Nothing here is taken from a single source on faith. Each quantity is cross-checked against the
+gravity model, against the measured flight times, and against the other sources; the Checks tab
+re-runs these cross-checks ("Source claims cross-check against physics and each other") and
+records the claims that failed.
+
+| Quantity | Source | Cross-check | Verdict |
+| --- | --- | --- | --- |
+| Set flight times | Olympic men's finals 2000 and 2021, 327 sets, video-timed (Papers on Anthropology, 2022): quick 0.40–0.49 s, sets to zone 4 averaged 1.12 s then 0.97 s | Physics: 0.45 s is a ball that barely rises above the hitter's contact; 1.1 s is a ball peaking about 1.75 m above the net. Both match how coaches describe a quick and a medium ball. Single study, elite men only. | Used as the anchor. Its weakest use is the 4, which is extrapolated as the slow tail (1.2–1.5 s). |
+| Quick 1–2 ft, 31 1–2 ft, 2 "2–3 ft" or "one metre", Go 3–4 ft, Slide 1–3 ft | coaching sites (Improve Your Volley, Pakmen, Volleyball Expert, Coaching Volleyball) | All sit inside the measured flight-time bands at club reach | Accepted |
+| Hut 8–10 ft, 4 10–12 ft | Improve Your Volley | 8–10 ft is a 1.35–1.5 s ball, 10–12 ft is 1.6 s+; both slower than the measured 2000 average for an ordinary outside set. Internally inconsistent with the same site's "fastest set 3–4 ft" | Rejected; Hut set to the measured 1.12 s, 4 to the slow tail |
+| Go = 2nd-step, Hut and 5 = 1st-step or slower, 1 = 3rd/4th-step, Pipe and Bic = 2nd/3rd-step, D = 2nd-step | Gold Medal Squared, Volleyball World | Reproduced by the timing model with route-derived approach times | Accepted; these decide the tempo classes |
+| Pipe "about a metre above the antenna", "traditional pipe two metres above the net" | Art of Coaching, Volleyball Hub Pro | Antenna tops 0.8 m above the net, so 1.8 m; hang 1.13 s sits in the measured band | Accepted (modern pipe) |
+| Pipe "1.5–2 m off the net" | Sportplan | A back-row hitter must take off behind the 3 m line; with a half-metre broad jump the ball is met about 2.5–2.7 m off | Rejected as contact depth; 2.7 m used |
+| Bic "lower, faster version of a Pipe", "the back-row quick" | Gold Medal Squared, Coaching Volleyball | A 2nd/3rd-step ball on a back-row run is about 0.8 s; a third of a second faster than the Pipe | Accepted |
+| 31 "lands 4–5 ft in front of the setter" | Improve Your Volley | Contradicts the nine-zone numbering (zone 3 is 2–3 m from the left antenna, Coaching Volleyball). That description is what this app calls the Push 1 | Noted; 3/Shoot follows the zone numbering |
+| Slide "2–3 ft behind the setter" | Improve Your Volley | Describes a short slide; the modern slide runs to the right antenna (NCAA) | Antenna slide used |
+| Setter target 5 ft right of centre, 2–4 ft (3–5 ft) off the net | How to Coach Volleyball, Volleyballmag | Two independent sources agree | Accepted: 5.9 m from the left antenna, 0.9 m off |
+| Approach times: full four-step ≈ 1.0–1.2 s, last two steps ≈ 0.6 s | spike biomechanics (four-step vs step-close studies) | Consistent with the model's 1.0 s full and 0.75 s short approach; uncertainty about ±0.2 s moves only the borderline classes (Hut, 32) | Accepted with that caveat |
+| Rise to the ball 0.35 s | Physics: a 0.5 m jump peaks after 0.32 s; elite spike jumps 0.5–0.7 m | Consistent | Accepted |
+| Hitter reach: elite men ≈ 3.5 m spike reach on a 2.43 m net, elite women ≈ 3.2 m on 2.24 | spike-jump biomechanics | About a metre above the net at the top level; a third of a metre at club level | Used for the Club / College / Pro levels |
+| Net heights 2.43 / 2.24 m, court 9 × 9 m, 3 m line, nine 1 m zones along the net | FIVB rules, Coaching Volleyball | Rules | Accepted |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
