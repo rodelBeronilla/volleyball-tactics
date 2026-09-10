@@ -418,7 +418,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       </div>
       <div class="qbox"><div class="rules" id="checks-rules"></div></div>
       <div class="scene-wrap spec-wrap"><table class="spec" id="checks-spec"></table></div>
-      <p class="hint">Hang time and apex come from a gravity model: the ball leaves the setter's hands just above the tape and is contacted above the net at the landing spot. Tempo bands: 1st under 0.85 s, 2nd 0.85 to 1.45 s, 3rd above.</p>
+      <p class="hint">Hang time and apex come from a gravity model: the ball leaves the setter's hands just above the tape and is contacted above the net at the landing spot. Tempo is read from where the hitter is when the setter touches the ball: minus, already leaving the floor; first, planting; second, mid-approach; third, waiting for the set. A hitter starting outside the sideline takes a full 1.0 s approach; one starting inside the court (a middle, or the opposite on a Back 2) 0.75 s; a back-row run 1.2 s.</p>
     </section>
   </main>
 
@@ -460,48 +460,48 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
 const SETS = [
   // ---- Quick (1st tempo) ----
   { id: 'one', name: '1', aliases: ['Quick', 'Front quick'], group: 'quick', color: '#ff4d4d', hitter: 'MB',
-    call: 'One', how: 'signal', pass: 'perfect', approach: [{ x: 0.50, y: 0.30 }], startNote: 'Centre of the net, a step left of the setter, about 3 m off.', useWhen: 'Tight, in-system pass and you are up early — it freezes their middle.', avoidWhen: 'Pass drifts more than a metre off the net.', fallback: 'two',
+    call: 'One', how: 'signal', pass: 'perfect', approach: [{ x: 0.54, y: 0.30 }], startNote: 'Centre of the net, a step left of the setter, about 3 m off.', useWhen: 'Tight, in-system pass and you are up early — it freezes their middle.', avoidWhen: 'Pass drifts more than a metre off the net.', fallback: 'two',
     signal: { glyph: '☝️', description: 'Index finger up' },
-    coachingNote: 'Middle is already in the air when the ball leaves my hands — half a metre above the tape, right in front of me.',
-    netView: { landX: 0.56, peak: 0.15, flat: false, label: { dx: 0, dy: -0.15 } },
-    courtView: { x: 0.56, y: 0.08, label: { dx: 0.9 } } },
+    coachingNote: 'Middle is already in the air when the ball leaves my hands — the ball barely rises above the tape, right in front of me.',
+    netView: { landX: 0.60, peak: 0.10, flat: false, label: { dx: 0, dy: -0.15 } },
+    courtView: { x: 0.60, y: 0.08, label: { dx: 0.9 } } },
   { id: 'push1', name: 'Push 1', aliases: ['Push', 'Wide 1'], group: 'quick', color: '#ff7a45', hitter: 'MB',
-    call: 'Push', how: 'signal', pass: 'perfect', approach: [{ x: 0.51, y: 0.32 }], startNote: 'Centre, drifting left as the pass goes up.', useWhen: 'Their middle leans toward the 1 — attack the seam between their middle and left blocker.', avoidWhen: 'Pass off the net.', fallback: 'two',
+    call: 'Push', how: 'signal', pass: 'perfect', approach: [{ x: 0.55, y: 0.32 }], startNote: 'Centre, drifting left as the pass goes up.', useWhen: 'Their middle leans toward the 1 — attack the seam between their middle and left blocker.', avoidWhen: 'Pass off the net.', fallback: 'two',
     signal: { glyph: 'P1', description: 'Index finger up, bent / hooked' },
     coachingNote: 'Same tempo as the 1, but I push it a step further left so the middle attacks moving into the seam.',
-    netView: { landX: 0.47, peak: 0.18, flat: false, label: { dx: -1.5, dy: 0 } },
-    courtView: { x: 0.47, y: 0.08 } },
+    netView: { landX: 0.51, peak: 0.13, flat: false, label: { dx: -1.5, dy: 0 } },
+    courtView: { x: 0.51, y: 0.08 } },
   { id: 'back1', name: 'Back 1', aliases: ['Back quick', 'Tight back'], group: 'quick', color: '#ff2d55', hitter: 'MB',
-    call: 'Back one', how: 'signal', pass: 'perfect', approach: [{ x: 0.55, y: 0.30 }], startNote: 'Centre, just left of the setter; cross behind as the ball arrives.', useWhen: 'Their middle commits to the front quick.', avoidWhen: 'Pass is past the setter.', fallback: 'two',
+    call: 'Back one', how: 'signal', pass: 'perfect', approach: [{ x: 0.59, y: 0.30 }], startNote: 'Centre, just left of the setter; cross behind as the ball arrives.', useWhen: 'Their middle commits to the front quick.', avoidWhen: 'Pass is past the setter.', fallback: 'two',
     signal: { glyph: 'B1', description: 'Pinky finger up' },
     coachingNote: 'Mirror image of the 1: the middle is up behind me and I put the ball just over the top of my head.',
-    netView: { landX: 0.68, peak: 0.15, flat: false, label: { dx: 1.2, dy: 0 } },
-    courtView: { x: 0.68, y: 0.08 } },
+    netView: { landX: 0.72, peak: 0.10, flat: false, label: { dx: 1.2, dy: 0 } },
+    courtView: { x: 0.72, y: 0.08 } },
   { id: 'shoot', name: '3 / Shoot', aliases: ['3', 'Shoot', '31'], group: 'quick', color: '#ffa500', hitter: 'MB',
-    call: 'Three', how: 'signal', pass: 'good', approach: [{ x: 0.54, y: 0.34 }], startNote: 'Centre, 3 m off the net; run a wide route left along the net.', useWhen: 'Their middle is slow moving left; a medium pass is fine.', avoidWhen: 'Pass tight on the net.', fallback: 'two',
+    call: 'Three', how: 'signal', pass: 'good', approach: [{ x: 0.58, y: 0.34 }], startNote: 'Centre, 3 m off the net; run a wide route left along the net.', useWhen: 'Their middle is slow moving left; a medium pass is fine.', avoidWhen: 'Pass tight on the net.', fallback: 'two',
     signal: { glyph: '3', description: 'Three fingers, or an index-finger-and-thumb "gun"' },
     coachingNote: 'Fast and flat halfway to the left antenna — the middle runs a wide route and the ball has to beat their middle blocker.',
-    netView: { landX: 0.28, peak: 0.22, flat: true },
+    netView: { landX: 0.28, peak: 0.20, flat: true },
     courtView: { x: 0.28, y: 0.08 } },
 
   // ---- Medium (2nd tempo) ----
   { id: 'two', name: '2', aliases: ['Front 2', 'Middle 2'], group: 'medium', color: '#4da3ff', hitter: 'MB',
-    call: 'Two', how: 'both', pass: 'any', approach: [{ x: 0.51, y: 0.32 }], startNote: 'Centre, 3 m off the net.', useWhen: 'Any in-system pass; you get a beat to read the block. The safe middle ball.', avoidWhen: '', fallback: null,
+    call: 'Two', how: 'both', pass: 'any', approach: [{ x: 0.55, y: 0.32 }], startNote: 'Centre, 3 m off the net.', useWhen: 'Any in-system pass; you get a beat to read the block. The safe middle ball.', avoidWhen: '', fallback: null,
     signal: { glyph: '✌️', description: 'Two fingers (peace sign)' },
     coachingNote: 'A loopy ball in the middle of the net for a hitter who needs a beat to see it — my safe option when the pass is off.',
-    netView: { landX: 0.53, peak: 0.45, flat: false, label: { dx: -0.6, dy: 0 } },
-    courtView: { x: 0.53, y: 0.08, label: { dx: 0.9 } } },
+    netView: { landX: 0.58, peak: 0.30, flat: false, label: { dx: -0.6, dy: 0 } },
+    courtView: { x: 0.58, y: 0.08, label: { dx: 0.9 } } },
   { id: 'back2', name: 'Back 2', aliases: ['Back set', 'Over-the-head 2'], group: 'medium', color: '#7cc4ff', hitter: 'OPP',
-    call: 'Back two', how: 'both', pass: 'good', approach: [{ x: 0.88, y: 0.36 }], startNote: 'Right side, inside the sideline at the 3-m line; come in at an angle.', useWhen: 'Pass is a little behind the setter, or the opposite is hot.', avoidWhen: 'Pass well off the net.', fallback: 'five',
+    call: 'Back two', how: 'both', pass: 'good', approach: [{ x: 0.92, y: 0.36 }], startNote: 'Right side, inside the sideline at the 3-m line; come in at an angle.', useWhen: 'Pass is a little behind the setter, or the opposite is hot.', avoidWhen: 'Pass well off the net.', fallback: 'five',
     signal: { glyph: 'B2', description: 'Ring + pinky fingers up' },
     coachingNote: 'Same loop as the 2, set over my shoulder for the opposite or a middle running behind me.',
-    netView: { landX: 0.75, peak: 0.45, flat: false, label: { dx: 0.4, dy: 0 } },
-    courtView: { x: 0.75, y: 0.08 } },
+    netView: { landX: 0.78, peak: 0.30, flat: false, label: { dx: 0.4, dy: 0 } },
+    courtView: { x: 0.78, y: 0.08 } },
   { id: 'rip', name: '32 / Rip', aliases: ['32', 'Rip', 'Gap'], group: 'medium', color: '#2f6fff', hitter: 'MB',
-    call: 'Thirty-two', how: 'signal', pass: 'good', approach: [{ x: 0.54, y: 0.34 }], startNote: 'Centre, 3 m off; long route left.', useWhen: 'You want to pull their middle blocker away from your outside.', avoidWhen: 'Tight pass.', fallback: 'two',
+    call: 'Thirty-two', how: 'signal', pass: 'good', approach: [{ x: 0.58, y: 0.34 }], startNote: 'Centre, 3 m off; long route left.', useWhen: 'You want to pull their middle blocker away from your outside.', avoidWhen: 'Tight pass.', fallback: 'two',
     signal: { glyph: '⌒', description: 'Hand cupped into an arch' },
     coachingNote: 'Lands halfway between the middle and the left antenna and pulls the opposing middle blocker away from your middle.',
-    netView: { landX: 0.25, peak: 0.50, flat: false, label: { dx: -0.3, dy: 0 } },
+    netView: { landX: 0.25, peak: 0.30, flat: false, label: { dx: -0.3, dy: 0 } },
     courtView: { x: 0.25, y: 0.08 } },
 
   // ---- Outside (left antenna) ----
@@ -509,41 +509,41 @@ const SETS = [
     call: 'Four', how: 'both', pass: 'any', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Any pass from anywhere — the out-of-system ball. Watch the set go up, then go.', avoidWhen: '', fallback: null,
     signal: { glyph: '4', description: 'Four fingers' },
     coachingNote: 'Highest, widest ball on the board — all the way to the antenna, giving the outside time for a full approach.',
-    netView: { landX: 0.07, peak: 1.00, flat: false },
-    courtView: { x: 0.07, y: 0.08 } },
+    netView: { landX: 0.11, peak: 1.00, flat: false },
+    courtView: { x: 0.11, y: 0.08 } },
   { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', hitter: 'OH',
     call: 'Hut', how: 'both', pass: 'good', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In-system pass and you want to see the block before you commit.', avoidWhen: 'Pass off the net.', fallback: 'four',
     signal: { glyph: '/', description: 'One slash across the chest' },
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
-    netView: { landX: 0.07, peak: 0.75, flat: false },
-    courtView: { x: 0.07, y: 0.08 } },
+    netView: { landX: 0.11, peak: 0.57, flat: false },
+    courtView: { x: 0.11, y: 0.08 } },
   { id: 'go', name: 'Go', aliases: ['Quick outside'], group: 'outside', color: '#a3e635', hitter: 'OH',
     call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
-    netView: { landX: 0.07, peak: 0.40, flat: true },
-    courtView: { x: 0.07, y: 0.08 } },
+    netView: { landX: 0.11, peak: 0.37, flat: true },
+    courtView: { x: 0.11, y: 0.08 } },
 
   // ---- Right side (right antenna) ----
   { id: 'five', name: '5', aliases: ['High right side', 'High back'], group: 'rightside', color: '#a78bfa', hitter: 'OPP',
     call: 'Five', how: 'both', pass: 'any', approach: [{ x: 1.05, y: 0.36 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Out-of-system ball to the right side.', avoidWhen: '', fallback: null,
     signal: { glyph: '🖐️', description: 'Open hand, five fingers' },
     coachingNote: 'The high right-side ball — same height as a 4, to the right antenna for the opposite.',
-    netView: { landX: 0.93, peak: 1.00, flat: false },
-    courtView: { x: 0.93, y: 0.08 } },
+    netView: { landX: 0.89, peak: 1.00, flat: false },
+    courtView: { x: 0.89, y: 0.08 } },
   { id: 'red', name: 'Red', aliases: ['Right-side Go'], group: 'rightside', color: '#e879f9', hitter: 'OPP',
     call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 1.05, y: 0.36 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
-    netView: { landX: 0.93, peak: 0.45, flat: true },
-    courtView: { x: 0.93, y: 0.08 } },
+    netView: { landX: 0.89, peak: 0.37, flat: true },
+    courtView: { x: 0.89, y: 0.08 } },
   { id: 'slide', name: 'Slide', aliases: ['Back slide', 'Slide behind'], group: 'rightside', color: '#fbbf24', hitter: 'MB',
-    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, routeShape: 'j', turn: { x: 0.65, y: 0.12 }, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot near the right antenna.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
+    call: 'Slide', how: 'signal', pass: 'good', approachAlways: true, routeShape: 'j', turn: { x: 0.69, y: 0.12 }, takeoffLabel: 'one-foot takeoff', timingNote: 'Already running behind the setter when the ball is touched; take off on one foot near the right antenna.', startNote: 'Centre, in front of the setter; run behind as the pass goes up.', useWhen: 'Their middle is slow moving right, or has committed to the 1.', avoidWhen: 'Pass past the setter.', fallback: 'two',
     signal: { glyph: '🤙', description: 'Shaka (thumb + pinky)' },
     coachingNote: 'Middle starts centre, runs behind me toward the right antenna and takes off on one foot — I push the ball out in front of the run.',
-    netView: { landX: 0.88, peak: 0.30, flat: true, label: { at: 'apex', dx: 0, dy: 0 } },
-    courtView: { x: 0.88, y: 0.08 },
-    approach: [{ x: 0.50, y: 0.25 }] },
+    netView: { landX: 0.85, peak: 0.23, flat: true, label: { at: 'apex', dx: 0, dy: 0 } },
+    courtView: { x: 0.85, y: 0.08 },
+    approach: [{ x: 0.54, y: 0.25 }] },
 
   // ---- Back row (Part 2) — takeoff behind the 3-metre / 10-foot line ----
   { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', hitter: 'OH',
@@ -598,7 +598,7 @@ const ROWS = [
 ];
 /* `group` is an internal family used by the colour scheme and the data checks; it is never shown as a filter. The UI classifies by tempo and by row. */
 const GROUPS = ['quick', 'medium', 'outside', 'rightside', 'backrow'];
-const SETTER_X = 0.62;   // setter's target: right of centre, 5.6 m from the left antenna (between zones 3 and 2)
+const SETTER_X = 0.66;   // setter's target: about 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2
 const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };   // court fraction (net → end line) where a back-row ball is contacted
 
 /* Real-world flight model — metres and seconds. Tweak here if your gym or level differs. */
@@ -608,15 +608,23 @@ const WORLD = {
   releaseY: 0.5,               // setter stands this far off the net
   releaseAboveTape: 0.10,      // hands release the ball this far above the tape
   contactAboveTape: 0.35,      // hitter contacts a front-row ball this far above the tape
-  contactOffNet: [0.45, 0.5],  // front-row contact distance off the net = base + peak × range
+  contactOffNet: [0.45, 0.75], // front-row contact distance off the net = base + peak × range: a quick 0.5 m off, a high ball about 1.2 m (4 ft) off
   flatOffNet: 0.4,             // flat / pushed balls are hit tight to the net
   peakMax: 3.0,                // peak = 1 (a 4 or 5) reaches this far above the release point
   backrow: { peak: 0.55, bicPeak: 0.30, contactAboveTape: 0.40 },
-  tempoPhases: { minus: 0.78, '1st': 0.5, '2nd': 0.2 }   // how far into the approach the hitter is at setter contact (0 = first step, 1 = takeoff)
+  tempoPhases: { minus: 0.78, '1st': 0.5, '2nd': 0.3 }   // how far into the approach the hitter is at setter contact (0 = first step, 1 = takeoff)
 };
 const G = 9.81;
 /* Hitter timing model: a full approach takes approachSec from first step to takeoff; the ball is contacted riseSec after takeoff. */
-WORLD.approachSec = 1.1; WORLD.riseSec = 0.35; WORLD.jumpHeight = 0.5;
+WORLD.approach = { full: 1.0, short: 0.75, back: 1.2, slide: 1.0 };   // seconds from first step to takeoff. Derived from the route: a start outside the sideline is a full four-step approach; a start inside the court (a middle, or the opposite on a Back 2) is two or three steps; back-row and slide runs are longer
+WORLD.riseSec = 0.35; WORLD.jumpHeight = 0.5;
+function approachSecFor(s, hitter) {
+  if (s.group === 'backrow') return WORLD.approach.back;
+  const src = routeSource(s, hitter);
+  if (src.routeShape === 'j') return WORLD.approach.slide;
+  const start = src.approach && src.approach[0];
+  return start && start.x >= 0 && start.x <= 1 ? WORLD.approach.short : WORLD.approach.full;
+}
 WORLD.jumpFront = 0.6; WORLD.jumpBack = 0.5; WORLD.jumpSlide = 0.8;   // metres from takeoff to the ball, along the line of approach
 /* The 5-1, derived from one fact: the lineup in service order, rotation 1 = setter serving from zone 1.
    Rotating moves every player one zone down (2→1, 1→6, 6→5, 5→4, 4→3, 3→2). Front row is zones 2, 3, 4.
@@ -811,7 +819,7 @@ function renderFilters(id, pool) {
   const chips = TEMPOS.filter(t => rowSets.some(s => tempoOf(s) === t.id)).map(t => {
     const on = !state.hidden.has(t.id);
     const sw = rowSets.filter(s => tempoOf(s) === t.id).map(s => `<i style="background:${s.color}"></i>`).join('');
-    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(t.hint)}"><span class="sw" aria-hidden="true">${sw}</span><span class="l">${t.label}</span><span class="s">${t.short}</span></button>`;
+    return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(tempoHint(t))}"><span class="sw" aria-hidden="true">${sw}</span><span class="l">${t.label}</span><span class="s">${t.short}</span></button>`;
   }).join('');
   el.innerHTML = seg + `<div class="chips tempo" aria-label="Tempo">${chips || '<span class="hint">No sets in this row for you.</span>'}</div>`;
 }
@@ -832,8 +840,9 @@ function howLabel(s) {
   return `Signalled, or called ${c}`;
 }
 function timeline(fl) {
-  const takeoffAt = fl.T - WORLD.riseSec, startAt = takeoffAt - WORLD.approachSec;
-  return { T: fl.T, startAt, takeoffAt, phase: -startAt / WORLD.approachSec };
+  const approachSec = fl.approachSec || WORLD.approach.OH;
+  const takeoffAt = fl.T - WORLD.riseSec, startAt = takeoffAt - approachSec;
+  return { T: fl.T, startAt, takeoffAt, approachSec, phase: -startAt / approachSec };
 }
 function timingText(s, tl) {
   if (s.timingNote) return s.timingNote;
@@ -847,7 +856,7 @@ function timingText(s, tl) {
 }
 function hitterPhase(t, tl) {
   if (t < tl.startAt) return { mode: 'wait', f: 0 };
-  if (t < tl.takeoffAt) return { mode: 'run', f: (t - tl.startAt) / WORLD.approachSec };
+  if (t < tl.takeoffAt) return { mode: 'run', f: (t - tl.startAt) / tl.approachSec };
   return { mode: 'jump', f: Math.min(1, (t - tl.takeoffAt) / WORLD.riseSec) };
 }
 function timelineSvg(tl, color) {
@@ -999,7 +1008,7 @@ function renderNet() {
   $('#net-legend').innerHTML = TEMPOS.filter(t => legendSets.some(s => tempoOf(s) === t.id)).map(t => {
     const items = legendSets.filter(s => tempoOf(s) === t.id).map(s =>
       `<button class="lg" data-select="${s.id}" data-set="${s.id}" ${state.hidden.has(t.id) ? 'aria-disabled="true"' : ''}><i style="background:${s.color}"></i><span>${esc(s.name)} <small>· ${esc(effectiveHitter(s))}</small></span></button>`).join('');
-    return `<h4>${t.label} · ${t.hint}</h4>${items}`;
+    return `<h4>${t.label} · ${esc(tempoHint(t))}</h4>${items}`;
   }).join('');
   applySelection();
 }
@@ -1200,7 +1209,8 @@ function flight(s, o) {
   const at = t => ({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t, z: p0.z + d * t + k * t * (1 - t) });
   const apex = at(0.5 + d / (2 * k));
   const horiz = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH };
+  const hitter = o.hitter || (s.hitter === 'Back row' ? 'OH' : (availability(s, o.rotation || state.rotation).hitter || s.hitter));
+  return { p0, p1, k, T, at, apex, peakH, horiz, speed: horiz / T, netH, aboveNet: apex.z - netH, hitter, approachSec: approachSecFor(s, hitter) };
 }
 function tempoFromPhase(p) { const b = WORLD.tempoPhases; return p >= b.minus ? 'minus' : p >= b['1st'] ? '1st' : p >= b['2nd'] ? '2nd' : '3rd'; }
 function tempoOf(s, o) {
@@ -1209,12 +1219,20 @@ function tempoOf(s, o) {
   return tempoFromPhase(timeline(f).phase);
 }
 function tempoMeta(id) { return TEMPOS.find(t => t.id === id) || { id, label: id, short: id, hint: '' }; }
+/* The hint on a tempo chip carries the derived height band: the lowest and highest apex above the net among the sets in that class. */
+function tempoHint(t) {
+  const hs = SETS.filter(s => !s.modifier && tempoOf(s) === t.id).map(s => flight(s, { netH: WORLD.netHeights.men })).filter(Boolean).map(f => f.aboveNet);
+  if (!hs.length) return t.hint;
+  const lo = Math.min(...hs), hi = Math.max(...hs);
+  const band = hi - lo < 0.15 ? `${lo.toFixed(1)} m` : `${lo.toFixed(1)}–${hi.toFixed(1)} m`;
+  return `${t.hint} · ball peaks ${band} above the net`;
+}
 function tempoLabel(s, o) { return tempoMeta(tempoOf(s, o)).label; }
 function flightMs(s) { const f = flight(s, { bic: state.bic }); return (f ? f.T * 1000 : 1000) * (state.slow ? 2.5 : 1); }
 function flightSummary(s) {
   const f = flight(s, { bic: state.bic && s.group === 'backrow' });
   if (!f) return '';
-  return `Hang <b>${f.T.toFixed(2)} s</b> · apex <b>+${f.peakH.toFixed(2)} m</b> above the tape · contact <b>${f.p1.x.toFixed(1)} m</b> from the left antenna, <b>${f.p1.y.toFixed(1)} m</b> off the net · <b>${f.speed.toFixed(1)} m/s</b> across`;
+  return `Hang <b>${f.T.toFixed(2)} s</b> · apex <b>+${f.aboveNet.toFixed(2)} m</b> above the net · contact <b>${f.p1.x.toFixed(1)} m</b> from the left antenna, <b>${f.p1.y.toFixed(1)} m</b> off the net · <b>${f.speed.toFixed(1)} m/s</b> across`;
 }
 
 /* ============================================================
@@ -1492,14 +1510,14 @@ const RULES = [
   { name: 'Medium sets loop at mid height', why: 'A 2 / Back 2 / 32 sits between the quicks and the high balls so the hitter has a beat to see it.',
     run: sets => sets.filter(s => s.group === 'medium').map(s => {
       const bad = [];
-      if (s.netView && !(s.netView.peak >= 0.35 && s.netView.peak <= 0.6)) bad.push(`peak ${s.netView.peak} is outside 0.35–0.6`);
+      if (s.netView && !(s.netView.peak >= 0.28 && s.netView.peak <= 0.6)) bad.push(`peak ${s.netView.peak} is outside 0.28–0.6`);
       if (tempoOf(s) !== '2nd') bad.push(`derives as ${tempoLabel(s)}; a medium ball should be second tempo`);
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'mid-height, second tempo' };
     }) },
   { name: 'Outside sets go to the left antenna for the OH', why: 'The 4, Hut and Go are the same spot at different heights; only height separates them.',
     run: sets => sets.filter(s => s.group === 'outside').map(s => {
       const bad = [];
-      if (s.netView && s.netView.landX > 0.1) bad.push(`lands at ${s.netView.landX}, not at the left antenna (≤ 0.1)`);
+      if (s.netView && s.netView.landX > 0.12) bad.push(`lands at ${s.netView.landX}, more than a metre inside the left antenna`);
       if (s.hitter !== 'OH') bad.push(`hitter is ${s.hitter}, expected OH`);
       return { id: s.id, ok: !bad.length, level: 'err', msg: bad.join('; ') || 'left antenna, OH' };
     }) },
@@ -1548,7 +1566,7 @@ const RULES = [
   { name: 'Go, Red, Shoot and Slide are flat, pushed balls', why: 'These are drawn dashed and asymmetric; the hitter is already moving when the setter contacts the ball.',
     run: () => ['go', 'red', 'shoot', 'slide'].map(byId).filter(Boolean).map(s => ({ id: s.id, ok: !!s.netView.flat, level: 'err', msg: s.netView.flat ? 'flat' : 'not marked flat' })) },
   { name: '32 / Rip lands between the middle and the left antenna, above a 2', why: 'It pulls the opposing middle blocker away; it must be wider than a 2 and higher than a 2.',
-    run: () => { const rip = byId('rip'), two = byId('two'); if (!rip || !two) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = rip.netView.landX > 0.15 && rip.netView.landX < 0.4 && rip.netView.peak > two.netView.peak; return [{ id: 'rip', ok, level: 'err', msg: ok ? `lands at ${rip.netView.landX}, peak ${rip.netView.peak} > 2's ${two.netView.peak}` : 'placement or height is wrong relative to the 2' }]; } },
+    run: () => { const rip = byId('rip'), two = byId('two'); if (!rip || !two) return [{ id: null, ok: true, msg: 'skipped' }]; const ok = rip.netView.landX > 0.15 && rip.netView.landX < 0.4 && rip.netView.peak >= two.netView.peak; return [{ id: 'rip', ok, level: 'err', msg: ok ? `lands at ${rip.netView.landX}, a 2-height ball (${rip.netView.peak}) in zone 3` : 'placement or height is wrong relative to the 2' }]; } },
   { name: '1, Push 1 and Back 1 sit around the setter', why: 'The 1 is just in front, the Push 1 a step further left, the Back 1 mirrors the 1 behind the setter, all at the lowest height.',
     run: () => {
       const one = byId('one'), push = byId('push1'), back = byId('back1'); if (!one) return [{ id: null, ok: true, msg: 'skipped' }];
@@ -1624,7 +1642,7 @@ const RULES = [
       if (s.netView) {
         if (m(/halfway to the left antenna/i, ballText)) claim(Math.abs(nv.landX - SETTER_X / 2) < 0.06, 'halfway to the left antenna', `lands at ${(nv.landX * 9).toFixed(1)} m, halfway is ${(SETTER_X / 2 * 9).toFixed(1)} m`);
         if (m(/halfway between the middle and the left antenna/i, ballText)) claim(Math.abs(nv.landX - 0.25) < 0.06, 'halfway between the middle and the left antenna', `lands at ${(nv.landX * 9).toFixed(1)} m`);
-        if (m(/all the way to the antenna|to the (left )?antenna\b/i, ballText) && s.group === 'outside') claim(nv.landX <= 0.1, 'to the left antenna', `lands ${(nv.landX * 9).toFixed(1)} m from it`);
+        if (m(/all the way to the antenna|to the (left )?antenna\b/i, ballText) && s.group === 'outside') claim(nv.landX <= 0.12, 'to the left antenna', `lands ${(nv.landX * 9).toFixed(1)} m inside it (a pin ball is set about a metre inside the antenna)`);
         if (m(/to the right antenna/i, ballText)) claim(nv.landX >= 0.85, 'to the right antenna', `lands ${((1 - nv.landX) * 9).toFixed(1)} m from it`);
         if (m(/over my shoulder|behind me|over the top of my head|toward the right antenna/i, ballText)) claim(nv.landX > SETTER_X, 'behind the setter', `lands at ${(nv.landX * 9).toFixed(1)} m, setter at ${(SETTER_X * 9).toFixed(1)} m`);
         if (m(/middle of the net/i, ballText)) claim(Math.abs(nv.landX - 0.5) <= 0.08, 'middle of the net', `lands at ${(nv.landX * 9).toFixed(1)} m`);
@@ -1635,7 +1653,7 @@ const RULES = [
         if (m(/faster than a 4/i, ballText) && byId('four')) claim(f.T < flight(byId('four'), { netH: WORLD.netHeights.men }).T, 'faster than a 4', `${f.T.toFixed(2)} s`);
         if (m(/flat/i, ballText) && m(/flat and fast|flat, fast|fast and flat/i, ballText)) claim(!!nv.flat, 'flat', nv.flat ? 'drawn flat' : 'not marked flat');
         const above = m(/(half a metre|a foot|(\d+(?:\.\d+)?) m) above the tape/i, ballText);
-        if (above) { const want = above[1].toLowerCase() === 'half a metre' ? 0.5 : above[1].toLowerCase() === 'a foot' ? 0.3 : parseFloat(above[2]); claim(Math.abs(f.peakH - want) <= 0.2, `${above[1]} above the tape`, `apex is ${f.peakH.toFixed(2)} m above the tape`); }
+        if (above) { const want = above[1].toLowerCase() === 'half a metre' ? 0.5 : above[1].toLowerCase() === 'a foot' ? 0.3 : parseFloat(above[2]); claim(Math.abs(f.aboveNet - want) <= 0.2, `${above[1]} above the tape`, `apex is ${f.aboveNet.toFixed(2)} m above the tape`); }
         if (m(/second step/i, ballText)) claim(tl.phase >= 0.3 && tl.phase < 0.65, 'on the second step at contact', timingText(s, tl));
         if (m(/already in the air/i, ballText)) claim(tl.phase >= 0.8, 'already in the air at contact', timingText(s, tl));
         if (m(/one foot/i, ballText)) claim(/one-foot/i.test(s.takeoffLabel || ''), 'takes off on one foot', s.takeoffLabel || 'no takeoff label');
@@ -1749,7 +1767,7 @@ function renderChecks() {
     const st = bad.length ? (bad.some(x => x.level !== 'warn') ? 'err' : 'warn') : 'ok';
     const z = zonesOf(s).join('/') || '–';
     return `<tr data-set="${s.id}" data-select="${s.id}" tabindex="0"><td><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</td><td class="m-hide">${rowOf(s) === 'back' ? 'Back row' : 'Front row'}${s.modifier ? ' · modifier' : ''}</td><td>${esc(s.hitter)}</td><td>${esc(tempoMeta(tempoOf(s)).short)}</td>` +
-      `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num m-hide">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.peakH.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td class="m-hide">${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
+      `<td class="num">${f ? f.p1.x.toFixed(1) + ' m' : '–'}</td><td>${z}</td><td class="num m-hide">${f ? f.p1.y.toFixed(1) + ' m' : '–'}</td><td class="num">${f ? '+' + f.aboveNet.toFixed(2) + ' m' : '–'}</td><td class="num">${f ? f.T.toFixed(2) + ' s' : '–'}</td><td class="m-hide">${esc(s.signal.description)}</td><td><span class="status ${st}">${st === 'ok' ? '✓' : st === 'warn' ? '⚠' : '✗'}</span></td></tr>`;
   }).join('');
   $('#checks-spec').innerHTML = `<thead><tr><th>Set</th><th class="m-hide">Row</th><th>Hitter</th><th>Tempo</th><th class="num">Lands</th><th>Zone</th><th class="num m-hide">Off net</th><th class="num">Apex</th><th class="num">Hang</th><th class="m-hide">Signal</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
   applySelection();
@@ -1815,7 +1833,7 @@ function renderDetail() {
     const z = zonesOf(s).join(' / ');
     where = s.group === 'backrow'
       ? `Zone ${z}: contact ${fl.p1.y.toFixed(1)} m off the net, ${fl.p1.x.toFixed(1)} m from the left sideline. Take off behind the 3-m line.`
-      : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net, ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
+      : `Zone ${z}: ${fl.p1.x.toFixed(1)} m from the left antenna, ${fl.p1.y.toFixed(1)} m off the net. Peaks ${fl.aboveNet.toFixed(1)} m (${(fl.aboveNet * 3.28).toFixed(0)} ft) above the net; contact ${(fl.p1.z - fl.netH).toFixed(2)} m above the tape.`;
     where += ` Hang ${fl.T.toFixed(2)} s · ${tempoLabel(s, { bic: state.bic && s.group === 'backrow' }).toLowerCase()}${s.netView && s.netView.flat ? ' · flat' : ''}.`;
   }
   const rows = [];

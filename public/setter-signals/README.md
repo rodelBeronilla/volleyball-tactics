@@ -78,22 +78,34 @@ time: the hitter's route, the pass arriving, the set, and the jump meeting the b
 Heights in the side view are relative (`peak` 0 → 1). The 3D view and the Checks tab turn them into
 metres with the constants in `WORLD` (just below `SETS`): net height, where the setter releases the
 ball, how far above the tape a hitter contacts it, and how high a `peak = 1` ball goes. Hang time comes
-from gravity alone, so a 1 hangs about 0.5 s and a 4 about 1.5 s. Hitter timing follows from it:
-a full approach takes `WORLD.approachSec` (1.1 s) and the ball is met `WORLD.riseSec` (0.35 s)
-after takeoff, so the card can say where the hitter is when the setter touches the ball.
+from gravity alone, so a 1 hangs about 0.35 s and a 4 about 1.5 s. Hitter timing follows from it:
+the approach time is derived from the route (`WORLD.approach`): a hitter who starts outside the
+sideline takes a full four-step approach (1.0 s); one who starts inside the court (a middle, or the
+opposite on a Back 2) is already close and takes two or three steps (0.75 s); a back-row run is
+1.2 s and the slide 1.0 s. The ball is met `WORLD.riseSec` (0.35 s) after takeoff, so the card can
+say where the hitter is when the setter touches the ball.
 
-The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is right of
-centre, 5.6 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half a metre in front
-of it, the Back 1 half a metre behind, the Push 1 about 1.4 m in front, the 2 about 0.8 m in front
-and the Back 2 about 1.2 m behind. Pin sets (Go, Hut, 4, Red, 5) land 0.6 m inside the antenna, the
-Slide about a metre inside the right antenna, the 3/Shoot and 32 in zone 3 (2.3 to 2.5 m from the
-left antenna). Quicks are contacted half a metre off the net, flat balls 0.4 m, high balls 0.9 m.
-Back-row balls are contacted 2.7 m off the net (2.5 m for a BIC) with the takeoff behind the 3-m line.
+Peak heights above the net, as drawn, follow the usual coaching references: 1 and Back 1 0.4 m
+(a foot or so, the middle is already up); Push 1 0.5 m; 3/Shoot 0.7 m; Slide 0.8 m (1 to 3 ft); 2,
+Back 2 and 32 1.0 m (2 to 3 ft); Go and Red 1.2 m (4 ft, the hitter on the second step); Hut 1.8 m
+(6 ft, the hitter on the first step); the normal back-row balls 1.75 m; 4 and 5 3.1 m (10 ft). BIC
+drops a back-row ball to about 1 m.
+
+The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
+5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
+a metre in front of it, the Back 1 half a metre behind, the Push 1 about 1.3 m in front, the 2 about
+0.7 m in front and the Back 2 about 1.1 m behind. Pin sets (Go, Hut, 4, Red, 5) land a metre inside
+the antenna, the Slide about 1.4 m inside the right antenna, the 3/Shoot and 32 in zone 3 (2.3 to
+2.5 m from the left antenna). Quicks are contacted half a metre off the net, flat balls 0.4 m, the
+2 about 0.7 m, a Hut 0.9 m and a high ball 1.2 m (4 ft). Back-row balls are contacted 2.7 m off the
+net (2.5 m for a BIC) with the takeoff behind the 3-m line.
 
 **Tempo is derived, not typed.** It is how far through the approach the hitter is at setter contact
 (`WORLD.tempoPhases`): leaving the floor or already up is **minus tempo** (1, Push 1, Back 1);
-planting is **first tempo** (3/Shoot, Slide, any BIC ball); mid-approach is **second tempo** (2,
-Back 2, 32, Go, Red, A, B, Pipe, C, D); starting on the set is **third tempo** (Hut, 4, 5). The
+planting is **first tempo** (3/Shoot, Slide, any BIC ball); on the second step is **second
+tempo** (2, Back 2, 32, Go, Red, A, B, Pipe, C, D); on the first step or still waiting is **third
+tempo** (Hut, 4, 5). This matches the common "2nd-step tempo" (Go, Red) and "1st-step or slower"
+(Hut, 5) descriptions of those sets. The
 filters, the legend, the quiz and the cards all classify by tempo and by row, never by set type. Raise or lower a set's `peak` and its
 tempo class moves with it; the Checks tab confirms the named sets land where the game puts them. 
 
