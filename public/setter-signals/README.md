@@ -49,7 +49,7 @@ after it is a radius of error around that point: the landing spot is the grade's
 chosen bearing (off the net, off-left, off-right, left, right, tight), so a good pass can never be
 further than 1.5 m from target whichever way it goes, and bearings that would leave the court or
 cross into another grade's ring are not offered. Perfect is within half a metre of target: the
-setter jump-sets and the whole menu is on. Good is within 1.5 m: the setter moves to it and sets standing,
+setter jump-sets and the whole menu is on (the 3 / 2 / 1 / 0 passing scale, by distance). Good is within 1.5 m: the setter moves to it and sets standing,
 so the quicks and the flat pin balls (1, Push 1, Back 1, Go, Red, BIC) are off and the 2, 3, 32,
 Back 2, Slide, Hut, 4, 5 and the back-row balls stay on. Off is within 3 m: the setter runs it down
 and lofts a high ball, only the out-of-system balls (2, 4, 5) are on, and the 4 is starred as the
@@ -95,15 +95,34 @@ hands, so nothing about it can steer the setter before that: they release toward
 reaction (0.3 s) after the server's contact, and when the passer contacts the ball they need
 another 0.3 s to read it before they can turn toward wherever it is going, from wherever they are
 at that moment. The chase is a straight run at 4 m/s from that point, and whether they arrive
-before the ball comes down is a result, not an assumption. In rotation 1 the setter has covered
-4.0 m of the 5.6 m release when the pass can be read and reaches the target with half a second to
-spare; a 2.5 m off pass is reached with 0.28 s to spare; a shank 4.5 m off is 0.2–0.45 s late in
-every rotation, which is exactly the case coaches describe as "whoever gets there sets it". The
-views draw the release to the read point, a small ring where the pass is read, and the chase from
-there to the ball; the card row "Your run" (or "Setter" for a hitter) gives the numbers. The
-Checks tab verifies that the setter's position up to the read is identical whatever the pass
-turns out to be, that the chase starts from the read point and never from the target, and it
-lists the passes the setter cannot reach in time in each rotation. The 3D and Court views draw the formation, every player's dotted route, the serve and the pass,
+before the ball comes down is a result, not an assumption. The views draw the release to the
+read point, a small ring where the pass is read, and the chase from there to the ball; the card
+row "Your run" (or "Setter" for a hitter) gives the numbers. The Checks tab verifies that the
+setter's position up to the read is identical whatever the pass turns out to be and that the
+chase starts from the read point, never from the target.
+
+How the second ball is set follows from the arrival. The pass is passed higher the worse it is
+(coaches teach a 15 ft apex for a ball the setter has to chase, "go higher to buy time"; in
+system it is a little lower to a jump-setting setter), so it hangs 1.26 s (perfect), 1.33 s
+(good), 1.42 s (off) or 1.51 s (shank), from the passer's platform at 1.0 m to jump-set height.
+The setter's margin at that moment decides the set: with 0.35 s or more to spare on a pass
+within 1.5 m of target they stop, load and jump-set, releasing 0.10 m above the tape; with 0.1 s
+or more they plant and set standing, 0.20 m below the tape (elite setters jump 28.8 cm on a
+set); with less than that they set on the run, 0.35 m below the tape, and only the high balls
+survive. If they are late the same ball keeps falling along its line and is taken where it is:
+still above the forehead (1.9 m) is a set on the run, above the waist (1.0 m) is a bump set and
+only a high ball to a pin is on. Below that the setter cannot get there and whoever else can
+reach the ball while it is still above the waist takes it, running from wherever they are when
+the pass can be read: the libero (bumping it if they are inside the attack line, since a libero
+may not finger-set an attack from the front zone, FIVB 19.3.1.4) or the opposite, the usual
+setter-out choices, or nobody, which is a free ball. The clip shows the pass falling past its
+landing spot and the helper running to it. In rotation 1 a shank to the left pin is 0.22 s late
+for the setter, who is still on the way from the right-back corner, and the opposite hiding at
+the net in zone 4 takes it; in rotations 2–6 a 4.5 m shank is reached with 0.08 s to spare and
+set on the run. The Checks tab verifies the order of release heights, that a hand set is never
+taken below the forehead or a bump below the waist, that the contact is where the ball really
+is, that a helper is only used when the setter is late, and that nothing but a high ball is on
+from a set on the run, a bump, or a helper. The 3D and Court views draw the formation, every player's dotted route, the serve and the pass,
 and the role bar says who passes and why the setter starts where they do. The Checks tab verifies
 that every rotation is legal under all seven constraints, that the passers are the libero and both
 outsides in the 5–7.5 m band, and it flags every transition that is still on the way when the
@@ -112,7 +131,7 @@ route to the left pin and starts the approach inside; the card says so). The hit
 "Serve receive" row with the start, the lane or hiding spot, and the route.
 
 ▶ plays the whole rally by default: the opponent's serve (about a second in the air), the pass
-(about 1.2 s, apex around 3.5 m) into the setter's hands, everyone releasing and transitioning,
+(1.26–1.51 s, apex 3.8–4.6 m by pass grade) into the setter's hands, everyone releasing and transitioning,
 then the set and the approach. "Set only" on the card shortens the clip to the set; ½ speed
 doubles it. The side view starts at the pass, since it has no depth to show the serve.
 
@@ -226,6 +245,10 @@ records the claims that failed.
 | Receivers begin moving about 0.3 s after the server's contact; the serve reaches them in 0.6–1.1 s | serve-reception studies (Predicting Volleyball Serve-Reception, 2016; Volleyball 1 on 1 split-step timing) | A 1.0 s float serve sits inside the measured window | Accepted: 0.3 s reaction for the release and the same beat to read the pass |
 | Setters and liberos run 20 m in about 3.7 s (junior female players) | anthropometric and physical-characteristics study of young female volleyball players by position | 5.4 m/s average from a standing start over 20 m; the first metres are slower and a chase has to end under control | Accepted at 4 m/s for the setter's run; hitters transition at 3.5 m/s |
 | Passing scale 3 / 2 / 1 / 0: a 3 gives the setter every option, a 2 mostly two, a 1 one option or a non-setter sets, a 0 is an ace or a shank that hands the ball back | The Art of Coaching Volleyball (pass rating explanation), Coaching Volleyball, Smarter Volley | The app's Perfect / Good / Off / Shank tiers are the same scale by distance from target; a playable "shank" is the top of the 0 band | Accepted; used by the plan model |
+| Pass apex: "aim for an apex around 15 feet, that height gives your setter time to get under the ball"; "when the pass is shanky, you go higher to buy time"; the target is 2–3 ft off the net, slightly right of centre | Better at Beach (passing guide), coaching consensus | 4.6 m apex from a 1.0 m platform to 2.5 m hands is a 1.5 s ball; a quicker in-system pass to a jump-setting setter sits lower | Accepted: apex 3.8 m (perfect) to 4.6 m (shank); hang time follows from the apex |
+| Elite setters jump 28.8 ± 3.6 cm on a set (match data); a hand set is taken above the forehead, as high as possible; a bump set is taken around waist height on the forearms | Jump Performance During Official Matches in Elite Volleyball Players (2019), Coaching Volleyball (setter hand position), Better at Beach (bump set) | Standing release 0.29 m below a jump-set release; a moving setter cannot take the ball above the forehead once it is below 1.9 m; a platform contact around 1.0 m | Accepted: jump +0.10 m, standing −0.20 m, on the run −0.35 m relative to the tape; forehead 1.9 m, waist 1.0 m |
+| Setter-out: "most coaches use the libero, playing in left back, to take the second ball"; the right side / opposite was the traditional choice; a libero may not finger-set an attack from the front zone (FIVB 19.3.1.4) but may bump-set anywhere | Coaching Volleyball (second contact when setter-out), PrepVolleyball, FIVB rules | The app picks whoever can reach the ball while it is still above the waist; in rotation 1 that is the opposite hiding in zone 4 for a shank to the left pin | Accepted |
+| Time to stop and load a jump about 0.35 s, to plant and square up about 0.1 s | Estimate (countermovement-jump propulsion takes about a third of a second) | Only decides jump versus standing set at the margin | Estimate, marked as such |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
