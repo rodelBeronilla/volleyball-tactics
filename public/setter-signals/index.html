@@ -533,13 +533,13 @@ const SETS = [
     netView: { landX: 0.11, peak: 1.00, flat: false },
     courtView: { x: 0.11, y: 0.08 } },
   { id: 'hut', name: 'Hut', aliases: ['Medium outside'], group: 'outside', color: '#22c55e', hitter: 'OH',
-    call: 'Hut', how: 'both', pass: 'good', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In-system pass and you want to see the block before you commit.', avoidWhen: 'Pass off the net.', fallback: 'four',
+    call: 'Hut', how: 'both', pass: 'any', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Out of system: the high first-step ball the outside can still run off any pass — slower than a Go, faster than a 4.', avoidWhen: '', fallback: 'four',
     signal: { glyph: '/', description: 'One slash across the chest' },
     coachingNote: 'Higher than a Go so the hitter can see the ball before committing, but faster than a 4.',
     netView: { landX: 0.11, peak: 0.72, flat: false },
     courtView: { x: 0.11, y: 0.08 } },
   { id: 'go', name: 'Go', aliases: ['Quick outside'], group: 'outside', color: '#a3e635', hitter: 'OH',
-    call: 'Go', how: 'both', pass: 'perfect', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'Perfect pass and their left-side blocker is late.', avoidWhen: 'Any pass off the net.', fallback: 'hut',
+    call: 'Go', how: 'both', pass: 'good', approach: [{ x: -0.05, y: 0.36 }], startNote: 'Outside the left sideline, level with the 3-m line.', useWhen: 'In system — a 3 or a 2 pass — and their left-side blocker is late.', avoidWhen: 'Pass more than 1.5 m from target.', fallback: 'hut',
     signal: { glyph: 'Go', description: '"Gun" with index + middle finger and thumb' },
     coachingNote: 'Flat and fast to the antenna — the outside is on the second step of the approach when I contact the ball.',
     netView: { landX: 0.11, peak: 0.47, flat: true },
@@ -553,7 +553,7 @@ const SETS = [
     netView: { landX: 0.89, peak: 1.00, flat: false },
     courtView: { x: 0.89, y: 0.08 } },
   { id: 'red', name: 'Red', aliases: ['Right-side Go'], group: 'rightside', color: '#e879f9', hitter: 'OPP',
-    call: 'Red', how: 'both', pass: 'perfect', approach: [{ x: 1.05, y: 0.36 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'Perfect pass; the right-side version of the Go.', avoidWhen: 'Pass off the net.', fallback: 'five',
+    call: 'Red', how: 'both', pass: 'good', approach: [{ x: 1.05, y: 0.36 }], startNote: 'Outside the right sideline, level with the 3-m line.', useWhen: 'In system — a 3 or a 2 pass; the right-side version of the Go.', avoidWhen: 'Pass more than 1.5 m from target.', fallback: 'five',
     signal: { glyph: '✊', description: 'Closed fist' },
     coachingNote: 'The right-side version of a Go: flat, fast and straight to the right antenna.',
     netView: { landX: 0.89, peak: 0.47, flat: true },
@@ -568,31 +568,31 @@ const SETS = [
 
   // ---- Back row (Part 2) — takeoff behind the 3-metre / 10-foot line ----
   { id: 'A', name: 'A', aliases: ['Left back', 'Zone 5 attack'], group: 'backrow', color: '#22d3ee', hitter: 'OH',
-    call: 'A', how: 'call', pass: 'good', startNote: 'Left back, zone 5, about 5 m off the net.', useWhen: 'Whenever you are back row; the third attacker on the left when the setter is front row.', avoidWhen: 'Pass off the net.', fallback: 'four',
+    call: 'A', how: 'call', pass: 'any', startNote: 'Left back, zone 5, about 5 m off the net.', useWhen: 'Whenever you are back row; the third attacker on the left when the setter is front row. Off a bad pass it is the salvage ball: set higher, so wait for it.', avoidWhen: '', fallback: 'four',
     signal: { glyph: 'A', description: 'Line drawn across the upper chest near one shoulder (the A side)' },
     coachingNote: 'Left-back attack from zone 5 — set deeper and higher than a quick; take off behind the 10-foot line, land in front of it if you like.',
     courtView: { x: 0.15, y: 0.30, zones: [5] },
     approach: [{ x: 0.15, y: 0.55 }] },
   { id: 'B', name: 'B', aliases: ['Left-centre back'], group: 'backrow', color: '#06b6d4', hitter: 'OH',
-    call: 'B', how: 'call', pass: 'good', startNote: 'Between zones 5 and 6, about 5 m off the net.', useWhen: 'Their middle blocker is drawn to the pin; you come from the seam.', avoidWhen: 'Pass off the net.', fallback: 'four',
+    call: 'B', how: 'call', pass: 'any', startNote: 'Between zones 5 and 6, about 5 m off the net.', useWhen: 'Their middle blocker is drawn to the pin; you come from the seam. Off a bad pass it is the salvage ball: set higher, so wait for it.', avoidWhen: '', fallback: 'four',
     signal: { glyph: 'B', description: 'Line drawn down the chest between the A spot and centre' },
     coachingNote: 'Splits zones 5 and 6 — a deeper, higher ball for the left-side hitter drifting toward the middle; takeoff stays behind the line.',
     courtView: { x: 0.33, y: 0.30, zones: [5, 6] },
     approach: [{ x: 0.33, y: 0.55 }] },
   { id: 'pipe', name: 'Pipe', aliases: ['Middle back'], group: 'backrow', color: '#0ea5e9', hitter: 'OH',
-    call: 'Pipe', how: 'call', pass: 'good', startNote: 'Middle back, zone 6, about 5 m off the net.', useWhen: 'Your ball from zone 6 whenever you are back row — the go-to third attacker when the setter is front row.', avoidWhen: 'Pass off the net.', fallback: 'four',
+    call: 'Pipe', how: 'call', pass: 'any', startNote: 'Middle back, zone 6, about 5 m off the net.', useWhen: 'Your ball from zone 6 whenever you are back row — the go-to third attacker when the setter is front row. Off a bad pass it is the salvage ball: set higher, so wait for it.', avoidWhen: '', fallback: 'four',
     signal: { glyph: '|', description: 'Line drawn straight down the centre of the chest' },
     coachingNote: 'Straight down the middle from zone 6, usually the outside hitter once they rotate back — deeper and higher than a quick, takeoff behind the 10-foot line.',
     courtView: { x: 0.50, y: 0.30, zones: [6] },
     approach: [{ x: 0.50, y: 0.55 }] },
   { id: 'C', name: 'C', aliases: ['Right-centre back'], group: 'backrow', color: '#2dd4bf', hitter: 'OPP',
-    call: 'C', how: 'call', pass: 'good', startNote: 'Between zones 6 and 1, about 5 m off the net.', useWhen: 'Setter front row, opposite in the back row, their block leaning left.', avoidWhen: 'Pass off the net.', fallback: 'five',
+    call: 'C', how: 'call', pass: 'any', startNote: 'Between zones 6 and 1, about 5 m off the net.', useWhen: 'Setter front row, opposite in the back row, their block leaning left. Off a bad pass it is the salvage ball: set higher, so wait for it.', avoidWhen: '', fallback: 'five',
     signal: { glyph: 'C', description: 'Line drawn down the chest between centre and the D spot' },
     coachingNote: 'Between zones 6 and 1, the mirror of the B — deeper and higher than a quick, takeoff behind the line.',
     courtView: { x: 0.67, y: 0.30, zones: [6, 1] },
     approach: [{ x: 0.67, y: 0.55 }] },
   { id: 'D', name: 'D', aliases: ['Right back', 'Zone 1 attack'], group: 'backrow', color: '#67e8f9', hitter: 'OPP',
-    call: 'D', how: 'call', pass: 'good', startNote: 'Right back, zone 1, about 5 m off the net.', useWhen: 'Setter front row: the opposite\'s ball from zone 1 — our main back-row attack.', avoidWhen: 'Pass off the net.', fallback: 'five',
+    call: 'D', how: 'call', pass: 'any', startNote: 'Right back, zone 1, about 5 m off the net.', useWhen: 'Setter front row: the opposite\'s ball from zone 1 — our main back-row attack. Off a bad pass it is the salvage ball: set higher, so wait for it.', avoidWhen: '', fallback: 'five',
     signal: { glyph: 'D', description: 'Line drawn across the upper chest near the opposite shoulder' },
     coachingNote: 'Right-back attack from zone 1 — our opposite\'s ball in the back row; same rules, set deeper and higher, takeoff behind the 10-foot line.',
     courtView: { x: 0.85, y: 0.30, zones: [1] },
@@ -635,7 +635,7 @@ const PASSES = [
   { id: 'perfect', label: 'Perfect', maxM: 0.5, dist: 0, allow: ['perfect', 'good', 'any'], hint: 'On target at the net: the setter jump-sets and the whole menu is on.' },
   { id: 'good', label: 'Good', maxM: 1.5, dist: 1.2, allow: ['good', 'any'], hint: 'Within 1.5 m of target: the setter moves to it. The front quicks (1, Push 1, Back 1) and the flat pin balls (Go, Red) are off.' },
   { id: 'off', label: 'Off', maxM: 3.0, dist: 2.5, allow: ['any'], hint: 'Within 3 m of target: the setter runs it down and lofts a high ball. Out-of-system menu only.' },
-  { id: 'shank', label: 'Shank', maxM: Infinity, dist: 4.5, allow: ['any'], hitters: ['OH', 'OPP'], hint: 'More than 3 m from target: a high ball to a pin from whoever gets there — the setter on the run, or the libero or the opposite when the setter cannot.' }
+  { id: 'shank', label: 'Shank', maxM: Infinity, dist: 4.5, allow: ['any'], hitters: ['OH', 'OPP'], pinsOnly: true, hint: 'More than 3 m from target: a high ball to a pin from whoever gets there — the setter on the run, or the libero or the opposite when the setter cannot.' }
 ];
 /* Where a bad pass goes: a bearing from the target. The landing spot is the grade's radius along that bearing, so a
    good pass can never be further than 1.5 m from target whichever way it goes. A tight pass is pinned to the net. */
@@ -877,7 +877,7 @@ function roleHas(s) {   // could this role ever hit it (any rotation)?
 }
 const asSet = s => s.modifier ? { pass: 'perfect', hitter: 'OH' } : s;   // the BIC modifier is judged like a perfect-pass back-row ball
 const tightNow = () => { const q = currentPass(); return q.dir === 'tight' && q.id !== 'perfect'; };   // the ball comes down at the tape and the setter is in the net
-function passOk(s) { const q = passOf(state.pass), run = setterRun(currentPass()); return q.allow.includes(s.modifier ? 'perfect' : s.pass) && (!q.hitters || s.modifier || q.hitters.includes(s.hitter)) && MODE_MENU[run.mode](asSet(s)) && !(s.tight === false && tightNow()); }
+function passOk(s) { const q = passOf(state.pass), run = setterRun(currentPass()); return q.allow.includes(s.modifier ? 'perfect' : s.pass) && (!q.hitters || s.modifier || q.hitters.includes(s.hitter)) && !(q.pinsOnly && s.group === 'backrow') && MODE_MENU[run.mode](asSet(s)) && !(s.tight === false && tightNow()); }
 function offWhy(s) {   // why a set is not live right now: rotation first, then the pass
   const a = availability(s, state.rotation);
   if (!a.ok) return `Not in rotation ${state.rotation}: ${a.why}`;
@@ -891,9 +891,9 @@ function offWhy(s) {   // why a set is not live right now: rotation first, then 
   { const to = transitionOk(s); if (!to.ok) return `Not from serve receive in rotation ${state.rotation}: ${to.why}`; }
   return '';
 }
-function recommended() {   // the call on this pass: the outside's high ball off an off pass, nothing special otherwise
-  if (state.pass !== 'off' && state.pass !== 'shank') return null;
-  return roleSets().find(s => s.hitter === 'OH' && s.pass === 'any' && s.group !== 'backrow') || roleSets().find(s => s.pass === 'any') || null;
+function recommended() {   // the first look on this pass in this rotation: the plan's primary call
+  const pl = plan(state.rotation, currentPass());
+  return pl.primary ? pl.primary.set : null;
 }
 function setPass(id, dir, spot) {
   state.pass = id;
@@ -993,11 +993,11 @@ function transitionInfo(p, s, o, fl) {
   return { ball, hitter: f.hitter, goes, moveM, isPasser, leave, arrive, startAt, takeoffAt, late: Math.max(0, arrive - startAt), tooLate: arrive > takeoffAt };
 }
 /* The serve-receive gate: a ball whose hitter cannot get from their receive start to its approach start before the takeoff is off in this rotation on this pass. */
-function transitionOk(s, r) {
+function transitionOk(s, r, pass) {
   r = r || state.rotation;
   if (s.modifier) return { ok: true, late: 0 };
   const p = receiverFor(s, r); if (!p) return { ok: true, late: 0 };
-  const ti = transitionInfo(p, s); if (!ti) return { ok: true, late: 0 };
+  const ti = transitionInfo(p, s, pass ? { passObj: pass, rotation: r } : null); if (!ti) return { ok: true, late: 0 };
   if (ti.tooLate) return { ok: false, late: ti.late, why: `the ${roleLabel(ti.hitter).toLowerCase()} is ${ti.isPasser ? 'passing' : 'starting'} ${ti.moveM.toFixed(1)} m from the ${s.name}'s start and cannot get there before the takeoff` };
   return { ok: true, late: ti.late };
 }
@@ -1036,7 +1036,7 @@ const setterRunCache = {};
 const MODE_TEXT = { jump: 'jump set', stand: 'standing set', run: 'set on the run', bump: 'bump set', help: 'someone else sets', over: 'free ball' };
 /* What each way of setting leaves on the menu: a jump or standing set keeps whatever the pass grade allows; a set on the
    run only the high balls; a bump set or a helper only a high ball to a pin; a free ball nothing. */
-const MODE_MENU = { jump: () => true, stand: () => true, run: s => s.pass === 'any', bump: s => s.pass === 'any' && s.hitter !== 'MB', help: s => s.pass === 'any' && s.hitter !== 'MB', over: () => false };
+const MODE_MENU = { jump: () => true, stand: () => true, run: s => s.pass === 'any', bump: s => s.pass === 'any' && s.hitter !== 'MB' && s.group !== 'backrow', help: s => s.pass === 'any' && s.hitter !== 'MB' && s.group !== 'backrow', over: () => false };
 function setterRun(pass, r, netH) {
   r = r || state.rotation; netH = netH || state.netH;
   const key = r + '|' + pass.id + '|' + pass.spot.x.toFixed(4) + ',' + pass.spot.y.toFixed(4) + '|' + netH + '|' + JSON.stringify(RECV) + '|' + JSON.stringify(WORLD.rally) + '|' + JSON.stringify(WORLD.setter) + '|' + SETTER_X + '|' + WORLD.releaseY;
@@ -1098,6 +1098,75 @@ function setterRun(pass, r, netH) {
   setterRunCache[key] = out;
   return out;
 }
+/* Why a ball is off for a given pass in a given rotation ('' when it is on); rotation availability is the caller's. */
+function menuGate(s, pass, r) {
+  const q = passOf(pass.id), run = setterRun(pass, r);
+  if (!q.allow.includes(s.modifier ? 'perfect' : s.pass)) return `needs a ${s.modifier ? 'perfect' : s.pass} pass`;
+  if ((q.hitters && !s.modifier && !q.hitters.includes(s.hitter)) || (q.pinsOnly && s.group === 'backrow')) return 'only a pin ball off a shank';
+  if (!MODE_MENU[run.mode](asSet(s))) return run.mode === 'over' ? 'free ball — nobody reaches the pass' : `not from a ${run.modeText}`;
+  if (s.tight === false && pass.dir === 'tight' && pass.id !== 'perfect') return 'not on a tight pass';
+  const to = transitionOk(s, r, pass); if (!to.ok) return to.why;
+  return '';
+}
+/* ---------- The plan: the optimal ball for every position, in every rotation, on every pass ----------
+   Nothing per rotation is typed. For each position the app takes the balls that are on (rotation, pass grade, how the
+   second ball is set, the tight-pass rule, the serve-receive gate) and ranks them: the faster in-system tempo first
+   (Gold Medal Squared: the Go is the in-system 2nd-step ball, the Hut the high out-of-system 1st-step ball), then the
+   shorter set from where the second contact really is, a penalty for a hitter who is late for a full approach, a
+   penalty for a middle ball that would have to be set the wrong way round from there, a small bonus for the ball a hitter
+   transitions toward from serve receive (their own lane), and at club level a penalty for a back-row salvage ball (the
+   pipe off a bad pass is a top-level habit). The primary call is the best across
+   positions: the middle first on a perfect pass (a 3-pass is the one that lets the setter use the quick), the pins
+   first on anything worse ("give your best hitter a high ball"). A coach can override any cell in PLAN_OVERRIDES. */
+const PLAN_POSITIONS = [
+  { key: 'FOH', label: 'Outside', short: 'OH', role: 'OH', front: true },
+  { key: 'MB', label: 'Middle', short: 'MB', role: 'MB', front: true },
+  { key: 'FOPP', label: 'Opposite', short: 'OPP', role: 'OPP', front: true },
+  { key: 'BOPP', label: 'Opposite, back row', short: 'OPP·back', role: 'OPP', front: false },
+  { key: 'BOH', label: 'Outside, back row', short: 'OH·back', role: 'OH', front: false }
+];
+const PLAN_OVERRIDES = {};   // `${r}|${grade}|${bearing}|${position key or 'primary'}` → set id, coach-editable
+const TEMPO_RANK = { minus: 0, '1st': 1, '2nd': 2, '3rd': 3 };
+const planCache = {};
+function plan(r, passLike) {
+  r = r || state.rotation;
+  const pass = passLike || currentPass();
+  const key = r + '|' + pass.id + '|' + (pass.dir || '') + '|' + pass.spot.x.toFixed(4) + ',' + pass.spot.y.toFixed(4) + '|' + state.reach + '|' + state.netH + '|' + JSON.stringify(PLAN_OVERRIDES) + '|' + SETS.map(x => x.id + ':' + x.pass).join(',') + '|' + JSON.stringify(RECV) + JSON.stringify(WORLD.rally) + JSON.stringify(WORLD.setter);
+  if (planCache[key]) return planCache[key];
+  const rot = rotation(r), run = setterRun(pass, r), grade = pass.id, bearing = pass.dir || 'off';
+  const level = { club: 2, college: 1, pro: 0 }[state.reach] || 0;
+  const positions = PLAN_POSITIONS.filter(p => p.key === 'FOH' || p.key === 'MB' || p.key === 'BOH' || (p.key === 'FOPP' ? !rot.setterFront : rot.setterFront));
+  const cells = positions.map(pos => {
+    const options = SETS.filter(s => !s.modifier).map(s => {
+      const a = availability(s, r); if (!a.ok || a.hitter !== pos.role || (s.group === 'backrow') === pos.front) return null;
+      const offWhy = menuGate(s, pass, r);
+      const fl = flight(s, { passObj: pass, rotation: r }); if (!fl) return null;
+      const rp = receiverFor(s, r), ti = rp ? transitionInfo(rp, s, { passObj: pass, rotation: r }) : null, late = ti ? ti.late : 0;
+      const tempo = tempoOf(s), isBack = !!(s.netView && s.netView.landX > SETTER_X);
+      const wrongWay = pos.role === 'MB' && !!s.netView && (isBack ? fl.p1.x < fl.p0.x - 0.3 : fl.p1.x > fl.p0.x + 0.3);
+      const salvage = s.group === 'backrow' && grade !== 'perfect' && grade !== 'good';
+      const home = !!(rp && transitionBall(rp) === s);   // the ball this hitter transitions toward from serve receive: they are already lined up for it
+      // tempo first (the faster in-system ball), then the shorter set, a back set a shade behind a front one, a late hitter, a middle ball set the wrong way round, and at club level the back-row salvage ball
+      const score = TEMPO_RANK[tempo] + fl.horiz / 6 + (isBack ? 0.25 : 0) - (home ? 0.3 : 0) + late * 2 + (wrongWay ? 3 : 0) + (salvage ? level : 0);
+      const why = offWhy ? offWhy : [`${tempoMeta(tempo).label.toLowerCase()}`, `${fl.horiz.toFixed(1)} m set${isBack ? ' behind' : ''}`, late > 0.05 ? `${late.toFixed(1)} s late, shortened approach` : '', home ? 'their own lane' : '', wrongWay ? 'set the wrong way round from here' : '', salvage ? 'salvage ball' : ''].filter(Boolean).join(' · ');
+      return { set: s, on: !offWhy, offWhy, score, late, tooLate: !!(ti && ti.tooLate), tempo, horiz: fl.horiz, why };
+    }).filter(Boolean).sort((a, b) => (a.on === b.on ? a.score - b.score : a.on ? -1 : 1));
+    const ov = PLAN_OVERRIDES[`${r}|${grade}|${bearing}|${pos.key}`];
+    let best = options.find(o => o.on) || null, overridden = false;
+    if (ov) { const o = options.find(x => x.set.id === ov && x.on); if (o) { best = o; overridden = true; } }
+    const hitter = rot.players.find(p => p.code === pos.role && p.front === pos.front);
+    return { pos, hitter, options, best, overridden };
+  });
+  // the first look: on a 3-pass the middle (the pass that lets the setter use the quick); on anything worse the pins, the outside first ("give your best hitter a high ball"), the middle only when no pin can be set; back-row balls behind the pins, further behind at club level
+  const bias = grade === 'perfect' ? { FOH: 0, MB: -1.5, FOPP: 0.5, BOPP: 1.5, BOH: 1.5 } : { FOH: 0, MB: 3, FOPP: 0.75, BOPP: 1.5 + level, BOH: 1.5 + level };
+  let primary = null;
+  cells.forEach(c => { if (!c.best) return; const v = c.best.score + bias[c.pos.key]; if (!primary || v < primary.v - 1e-9) primary = { cell: c, set: c.best.set, v }; });
+  const pov = PLAN_OVERRIDES[`${r}|${grade}|${bearing}|primary`];
+  if (pov) { const c = cells.find(x => x.options.some(o => o.set.id === pov && o.on)); if (c) primary = { cell: c, set: byId(pov), v: 0, overridden: true }; }
+  const out = { r, pass, run, grade, bearing, cells, primary, text: cells.map(c => `${c.pos.short} ${c.best ? c.best.set.name : '—'}`).join(' · ') + (primary ? ` — first look: ${primary.set.name}` : run.mode === 'over' ? ' — free ball' : '') };
+  planCache[key] = out;
+  return out;
+}
 function roleHasNow(s) {   // is it on in this rotation, for this role, on this pass?
   const a = availability(s, state.rotation);
   if (!a.ok || !passOk(s) || !transitionOk(s).ok) return false;
@@ -1153,7 +1222,8 @@ function renderRoleBar() {
   const recvText = ` Serve receive: ${form.passers.map(p => p.code).join(', ')} pass; setter starts ${form.setter.y > 4.5 ? 'deep' : form.setter.y > 1.5 ? 'at the 3-m line' : 'at the net'} ${form.setter.x < 3 ? 'on the left' : form.setter.x < 5 ? 'left of centre' : form.setter.x > 7.5 ? 'in the right corner' : 'on the right'}${form.setter.why.length ? ` (${form.setter.why.join(', ')})` : ''} and runs ${form.runM.toFixed(1)} m to target on the serve; ${run.passer.code} takes this serve in the ${run.passer.lane} lane.`;
   const whoTakes = run.who === 'L' ? 'libero' : roleLabel(run.who).toLowerCase();
   const chaseText = run.mode === 'jump' && run.chaseM <= 0.05 ? '' : ` The setter ${run.chaseM > 0.05 ? `reads it ${run.chaseM.toFixed(1)} m away and ` : ''}${run.mode === 'jump' ? `jump-sets with ${run.slack.toFixed(2)} s to spare` : run.mode === 'stand' ? `sets standing with ${run.slack.toFixed(2)} s to spare` : run.mode === 'run' ? `sets on the run (${run.slack >= 0 ? `${run.slack.toFixed(2)} s to spare` : `${run.late.toFixed(2)} s late`}) — high ball only` : run.mode === 'bump' ? `is ${run.late.toFixed(2)} s late and bump-sets — high ball to a pin` : run.mode === 'help' ? `is ${run.late.toFixed(2)} s late and cannot get there — the ${whoTakes} sets a high ball` : 'cannot get there and nobody else can — free ball'}.`;
-  const passText = pass.id === 'perfect' ? chaseText : ` ${pass.label} pass, ${pass.distM.toFixed(1)} m ${dirOf(pass.dir).label.toLowerCase()} of target, landing in zone ${pass.zone}. ${pass.hint}${chaseText}${rec ? ` Best call: the ${rec.name}.` : ''}`;
+  const pl = plan(state.rotation, pass);
+  const passText = (pass.id === 'perfect' ? chaseText : ` ${pass.label} pass, ${pass.distM.toFixed(1)} m ${dirOf(pass.dir).label.toLowerCase()} of target, landing in zone ${pass.zone}. ${pass.hint}${chaseText}`) + ` Plan: ${pl.text}.`;
   const hint = (state.role === 'setter' ? `${where}. ${rot.setterFront ? 'Two front-row hitters: the opposite attacks from the back row and you can dump.' : 'Three front-row hitters plus the back-row outside.'}` : `${where}. Your balls now — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`) + recvText + passText;
   $('#rolebar').innerHTML = `<span class="lab">I am the</span><div class="seg" role="group" aria-label="Role">${ROLES.map(r => `<button data-role="${r.id}" aria-pressed="${state.role === r.id}">${r.label}</button>`).join('')}</div>` +
     `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}` +
@@ -1580,7 +1650,7 @@ function renderCourt() {
 function flight(s, o) {
   o = o || {};
   const netH = o.netH || state.netH;
-  const pass = o.pass ? resolvedPass(o.pass) : currentPass();
+  const pass = o.passObj || (o.pass ? resolvedPass(o.pass) : currentPass());
   const run = setterRun(pass, o.rotation || state.rotation, netH);   // where and how high the second contact really is
   const p0 = { x: run.contact.x, y: run.contact.y, z: run.contact.z };
   let p1, peak;
@@ -2224,6 +2294,32 @@ const RULES = [
       const lateText = late.length ? ` · long transitions: ${late.join('; ')}` : '';
       return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `R${r}: passers ${f.passers.map(p => `${p.code}(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' ')} · setter ${s.x.toFixed(1)},${s.y.toFixed(1)} ${s.why.length ? '— ' + s.why.join(', ') : ''} · runs ${f.runM.toFixed(1)} m${lateText}` };
     }) },
+  { name: 'The plan is derived and complete', why: 'For every rotation, pass grade and bearing the plan names the best ball for every position on court and one first look, all of them on for that pass; someone always has a ball while anyone can set it (in rotations 1 and 4 the outside who passed a serve to the right lane has none); off a bad pass the first look is a high ball; on a perfect pass it is an in-system ball; each cell is the lowest-scoring ball that is on, unless a coach overrode it; the same inputs give the same plan.',
+    run: () => [1, 2, 3, 4, 5, 6].flatMap(r => {
+      const sits = [resolvedPass('perfect')].concat(PASSES.filter(q => q.dist > 0).flatMap(q => PASS_DIRS.filter(d => passDirOk(q, d.id)).map(d => Object.assign({}, q, { spot: passSpotFor(q, d.id), dir: d.id, distM: q.dist }))));
+      return sits.map(sit => {
+        const pl = plan(r, sit), bad = [], lab = `${sit.label.toLowerCase()}${sit.dir ? ' ' + sit.dir : ''}`;
+        pl.cells.forEach(c => {
+          const on = c.options.filter(o => o.on);
+          if (on.length && !c.best) bad.push(`${c.pos.short}: has balls on but no best`);
+          if (c.best && !c.best.on) bad.push(`${c.pos.short}: best is off (${c.best.offWhy})`);
+          if (c.best && !c.overridden && on.length && c.best.score > Math.min(...on.map(o => o.score)) + 1e-9) bad.push(`${c.pos.short}: best is not the lowest-scoring ball on`);
+          if (c.best && c.best.tooLate) bad.push(`${c.pos.short}: best cannot be reached from serve receive`);
+          c.options.forEach(o => { if (o.on !== (menuGate(o.set, sit, r) === '')) bad.push(`${o.set.name}: on/off disagrees with the gate`); });
+        });
+        if (pl.run.mode !== 'over' && !pl.cells.some(c => c.best)) bad.push('nobody has a ball');
+        if (pl.run.mode !== 'over' && !pl.primary) bad.push('no first look');
+        if (pl.run.mode === 'over' && pl.primary) bad.push('a first look on a free ball');
+        if (pl.primary) {
+          const o = pl.primary.cell.options.find(x => x.set === pl.primary.set);
+          if (!o || !o.on) bad.push('the first look is off');
+          if ((sit.id === 'off' || sit.id === 'shank') && pl.primary.set.pass !== 'any') bad.push('the first look off a bad pass is not a high ball');
+          if (sit.id === 'perfect' && TEMPO_RANK[tempoOf(pl.primary.set)] > 2) bad.push('the first look on a perfect pass is not in system');
+        }
+        const again = plan(r, Object.assign({}, sit)); if (again.text !== pl.text) bad.push('not deterministic');
+        return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `R${r} ${lab}: ${pl.text}` };
+      });
+    }) },
   { name: 'Balls a hitter cannot reach from serve receive are off', why: 'A hitter leaves their receive spot when the ball is past them (after passing it, if they passed) and runs at 3.5 m/s to the start of the ball they are given. If they arrive after that ball\'s takeoff it is not on in that rotation on that pass, whatever the pass grade says; arriving after the approach should have begun is a shortened approach. In rotations 1 and 4 the front-row outside passes on the right, 8 m from the left pin, and cannot run the Go or the Hut.',
     run: () => [1, 2, 3, 4, 5, 6].map(r => {
       const bad = [], off = [], late = [];
@@ -2331,7 +2427,7 @@ const RULES = [
     run: () => {
       const out = [];
       PASSES.forEach(p => {
-        const live = SETS.filter(s => !s.modifier && p.allow.includes(s.pass) && (!p.hitters || p.hitters.includes(s.hitter)));
+        const live = SETS.filter(s => !s.modifier && p.allow.includes(s.pass) && (!p.hitters || p.hitters.includes(s.hitter)) && !(p.pinsOnly && s.group === 'backrow'));
         const inside = PASS_DIRS.some(d => passDirOk(p, d.id));
         const oh = live.some(s => s.hitter === 'OH' && s.group !== 'backrow' && s.pass === 'any');
         const bad = [];
@@ -2904,7 +3000,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, setterRun, passHang, leaveTau, MODE_MENU, transitionInfo, transitionOk, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, setterRun, passHang, leaveTau, MODE_MENU, transitionInfo, transitionOk, menuGate, plan, PLAN_OVERRIDES, PLAN_POSITIONS, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>

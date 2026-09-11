@@ -51,18 +51,62 @@ chosen bearing (off the net, off-left, off-right, left, right, tight — a tight
 tight), so a good pass can never be
 further than 1.5 m from target whichever way it goes, and bearings that would leave the court or
 cross into another grade's ring are not offered. Perfect is within half a metre of target: the
-setter jump-sets and the whole menu is on (the 3 / 2 / 1 / 0 passing scale, by distance). Good is within 1.5 m: the setter moves to it and sets standing,
-so the quicks and the flat pin balls (1, Push 1, Back 1, Go, Red, BIC) are off and the 2, 3, 32,
-Back 2, Slide, Hut, 4, 5 and the back-row balls stay on. Off is within 3 m: the setter runs it down
-and lofts a high ball, only the out-of-system balls (2, 4, 5) are on, and the 4 is starred as the
-best call. Shank is anything further: whoever gets there bump-sets a high ball to a pin (4 or 5),
-no middle ball. Or tap exactly where the pass lands: on the Court view, **📍 Place the pass** then tap the
+setter jump-sets and the whole menu is on (the 3 / 2 / 1 / 0 passing scale, by distance). Good is
+within 1.5 m, still in system: the quicks (1, Push 1, Back 1, BIC) are off, and the Go and Red (the
+in-system second-step pin balls, Gold Medal Squared's definition), the 2, 3, 32, Back 2, Slide, Hut,
+4, 5 and the back-row balls stay on. Off is within 3 m, out of system: only the balls that work off
+any pass are on — the Hut (the high out-of-system first-step ball), the 4 and 5, the 2, and the
+back-row balls as salvage balls set higher. Shank is anything further: a high ball to a pin from
+whoever gets there, no middle ball, no back-row ball. Or tap exactly where the pass lands: on the Court view, **📍 Place the pass** then tap the
 court, and the 1.5 m and 3 m tolerance rings around the target show which grade you are in. Every view
 draws the setter where the pass takes them, with the chase from the point where they read the
 pass, and ▶ shows the setter release on the serve and run to the ball before the set. Sets that are off on the current pass stay in the name
 strip, dimmed, with the reason; select one and the card says which ball to run instead. Flight
 paths are recomputed from the new release point (lower and lofted the further off it is) and land
 in the same place. Tempo classes and the Checks tab are always graded off a perfect pass.
+
+## The plan: the optimal ball for every position, in every rotation, on every pass
+
+Nothing per rotation is typed. For each rotation, pass grade and bearing the app lists the balls
+each position (front-row outside, middle, opposite or back-row opposite, back-row outside) can
+run: the rotation must allow it, the pass grade must allow it, the way the second ball is set
+must allow it (only high balls from a set on the run, only a pin ball from a bump or a helper),
+a tight pass switches off the balls whose notes say so, and the hitter must be able to reach the
+ball's start from their receive spot before its takeoff. The balls that are on are ranked: the
+faster in-system tempo first, then the shorter set from where the second contact really is, a
+back set a shade behind a front one, a penalty of two seconds' worth for every second a hitter
+is late for a full approach, a penalty for a middle ball that would have to be set the wrong way
+round from there, a small bonus for the ball the hitter is already transitioning toward, and at
+club level a penalty for the back-row salvage ball (setting the pipe off a bad pass is a
+top-level habit; the Club / College / Pro control is the level). The best ball per position is
+the lowest score that is on. The first look is the best across positions: on a perfect pass the
+middle (a 3-pass is the one that lets the setter use the quick), on anything worse the pins with
+the outside first ("when the pass is bad, give your best hitter a high ball"), the middle only
+when no pin can be set, back-row balls behind the pins. A coach can override any cell or the
+first look in `PLAN_OVERRIDES` (keyed by rotation, grade, bearing and position); an override is
+only honoured if that ball is on.
+
+What comes out, with a perfect pass straight to target, a good pass off the net, an off pass
+off the net and a shank off the net:
+
+| Rotation | Perfect | Good | Off | Shank |
+| --- | --- | --- | --- | --- |
+| 1 (setter zone 1) | OH 4 · MB **1** · OPP Back 2 · back OH Pipe | OH 4 · MB 3 · OPP **Back 2** · Pipe | OH 4 · MB 2 · OPP **5** · Pipe | OH 4 · OPP **5** · Pipe |
+| 2, 3 | OH Go · MB **1** · OPP Back 2 · Pipe | OH **Go** · MB 3 · OPP Back 2 · Pipe | OH **4** · MB 2 · OPP 5 · Pipe | OH **4** · OPP 5 · Pipe |
+| 4 (setter zone 4) | OH 4 · MB **1** · OPP D · Pipe | OH 4 · MB **3** · OPP D · Pipe | OH **4** · MB 2 · OPP D · Pipe | OH **4** · OPP D · Pipe |
+| 5, 6 | OH Go · MB **1** · OPP D · Pipe | OH **Go** · MB 3 · OPP D · Pipe | OH **4** · MB 2 · OPP D · Pipe | OH **4** · OPP D · Pipe |
+
+Bold is the first look. In rotations 1 and 4 the front-row outside passes on the right, 8 m
+from the left pin, so the Go and the Hut are off and the 4 is a shortened approach; when the
+serve goes to that outside (right-side bearings) they have no ball at all, which the plan says
+plainly. The bearing changes the answer where geometry says it should: a pass pulled right makes
+the 5 (rotations 1–3) or the 2 the first look, a pass pulled left makes the Hut the outside's
+ball and the B or A the back-row outside's; on a good pass pulled right the middle runs the
+Slide. The Checks tab verifies that every cell is on for that pass, that someone always has a
+ball while anyone can set it, that the first look off a bad pass is a high ball and on a perfect
+pass an in-system ball, that each cell is the lowest-scoring ball that is on unless overridden,
+and that the same inputs always give the same plan. The role bar shows the plan for the current
+rotation and pass; the star in the name strips marks the first look.
 
 ## Serve receive and the setter's route
 
@@ -260,6 +304,9 @@ records the claims that failed.
 | Setter-out: "most coaches use the libero, playing in left back, to take the second ball"; the right side / opposite was the traditional choice; a libero may not finger-set an attack from the front zone (FIVB 19.3.1.4) but may bump-set anywhere | Coaching Volleyball (second contact when setter-out), PrepVolleyball, FIVB rules | The app picks whoever can reach the ball while it is still above the waist; in rotation 1 that is the opposite hiding in zone 4 for a shank to the left pin | Accepted |
 | Time to stop and load a jump about 0.35 s, to plant and square up about 0.1 s | Estimate (countermovement-jump propulsion takes about a third of a second) | Only decides jump versus standing set at the margin | Estimate, marked as such |
 | Serve: receivers get 0.6–1.1 s from the server's contact; a float serve is the slow end | serve-reception studies, Volleyball 1 on 1 | Derived from a 0.3 m clearance over the tape (ball radius plus margin) to the passer's platform: 1.07 s to the centre passer, 1.1 s to a wing | Accepted, derived |
+| "Go": an in-system fast-paced 2nd-step set to the outside; "Hut": a high out-of-system 1st-step (or slower) set to the outside; "2": a higher 2nd-step ball in the middle | Gold Medal Squared (volleyball attack names) | The app's Go and Red need a 3 or 2 pass, the Hut and the 4 work off anything; the derived tempo classes match (Go second tempo, Hut third) | Accepted: the pass ladder was inverted before and is now Go/Red in system, Hut/4/5 out of system |
+| The pipe "is highly useful when the pass is off-target … a reliable option to salvage the play"; "at the highest levels offences cannot rely solely on the front row" | Volleyball Hub Pro (the pipe attack in modern volleyball) | Back-row balls are on off a bad pass, set higher from a standing or running setter; the plan penalises them at club level and not at pro level | Accepted |
+| "When the pass is bad, the decision is simple: give your best hitter a high ball they can take a full swing at"; a 3-pass "gives the setter all setting options" | Coaching Volleyball (setter decisions), The Art of Coaching Volleyball (pass rating) | The first look is the pins off a bad pass and the middle on a perfect pass | Accepted; coach-editable |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
