@@ -191,7 +191,7 @@ body.playing .recv-g .proute{opacity:.25}
 .drop3{opacity:.25;transition:opacity .2s}
 .set.sel .shadow3{opacity:.9}
 .set.sel .drop3{opacity:.9}
-@media (max-width:700px){ .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px} .toolbar .seg button{padding:0 10px;font-size:13px} }
+@media (max-width:700px){ .court-wrap svg{max-height:min(300px,45vh);display:block;margin:0 auto} .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px} .toolbar .seg button{padding:0 10px;font-size:13px} }
 .ruler text{fill:#6b7390}
 
 /* approach routes appear for the selected set */
@@ -290,6 +290,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   #detail{padding-top:10px}
   #detail .handle{display:block}
   #detail.peek .content>:not(.bar):not(.top):not(.acts){display:none}
+  #detail.peek .aliases{display:none}
   #detail h3{font-size:20px}
   .legend{grid-template-columns:1fr 1fr}
   .cards{grid-template-columns:1fr 1fr;gap:8px}
@@ -900,7 +901,7 @@ const formationCache = {};
    and the seven overlap constraints push them until legal, the least important job giving way first. */
 function receiveFormation(r) {
   r = r || state.rotation;
-  const key = r + '|' + SETTER_X + '|' + WORLD.releaseY;
+  const key = r + '|' + SETTER_X + '|' + WORLD.releaseY + '|' + WORLD.courtW + '|' + WORLD.courtD + '|' + JSON.stringify(RECV) + '|' + SETS.map(s => s.approach ? s.approach[0].x + ',' + s.approach[0].y : '').join(';');
   if (formationCache[key]) return formationCache[key];
   const rot = rotation(r), W = WORLD.courtW, D = WORLD.courtD, m = RECV.margin;
   const f = rot.players.map(p => ({ i: p.i, role: p.code, code: p.front || p.code !== 'MB' ? p.code : 'L', zone: p.zone, front: p.front }));
@@ -930,20 +931,33 @@ function receiveFormation(r) {
   s.why = OVERLAP.filter(([k, za, zb]) => (za === s.zone || zb === s.zone) && Math.abs((at(zb)[k] - m) - at(za)[k]) < 0.05).map(([k, za, zb]) => { const other = za === s.zone ? at(zb) : at(za); return k === 'x' ? `${za === s.zone ? 'left' : 'right'} of the ${other.code} in zone ${other.zone}` : `${za === s.zone ? 'in front of' : 'behind'} the ${other.code} in zone ${other.zone}`; });
   const legal = OVERLAP.every(([k, za, zb]) => at(za)[k] <= at(zb)[k] - m + 1e-6);
   // where everyone goes after the serve: the setter to the ball, hitters to their approach starts, passers off the net
-  f.forEach(p => { p.goes = transitionTarget(p, r); p.moveM = Math.hypot(p.goes.x - p.x, p.goes.y - p.y); });
+  f.forEach(p => { p.r = r; p.goes = transitionTarget(p, r); p.moveM = Math.hypot(p.goes.x - p.x, p.goes.y - p.y); });
   const out = { r, players: f, setter: s, passers, target: { x: tx, y: ty }, runM: Math.hypot(s.x - tx, s.y - ty), legal };
   formationCache[key] = out;
   return out;
 }
+/* When a player leaves their receive spot: hiders and the setter on the serve (after a reaction), passers once the ball is past them, the passer after passing. */
+function leaveTime(p, isPasser) { const R = WORLD.rally; return p.job === 'pass' ? (isPasser ? -R.passSec + RECV.reaction : -R.passSec - RECV.seesItPast) : -(R.serveSec + R.passSec) + RECV.reaction; }
+/* Where a hitter stands relative to their own ball: the ball they transition to, when they arrive, and whether the approach must be shortened. */
+function transitionInfo(p) {
+  const ball = transitionBall(p); if (!ball) return null;
+  const f = flight(ball, { netH: WORLD.netHeights.men, pass: 'perfect', reach: 'club', rotation: p.r }); if (!f) return null;
+  const tl = timeline(f), arrive = leaveTime(p, false) + p.moveM / RECV.hitterSpeed;
+  return { ball, arrive, startAt: tl.startAt, takeoffAt: tl.takeoffAt, late: Math.max(0, arrive - tl.startAt), tooLate: arrive > tl.takeoffAt };
+}
 /* After the serve each player transitions to where they attack from: the start of their own always-on ball (a 2 for the
    middle, a 4 for the outside, a 5 for the opposite; the Pipe or D from the back row). The libero stays home. */
+function transitionBall(p) {   // the ball a player transitions toward: their always-on ball in front, the D or the nearest A/B/Pipe from the back row
+  if (p.role === 'S' || p.code === 'L') return null;
+  const W = WORLD.courtW, back = !p.front;
+  const mine = SETS.filter(s => !s.modifier && s.approach && s.hitter === p.role && (s.group === 'backrow') === back);
+  return (back ? (p.role === 'OPP' ? (mine.find(s => s.id === 'D') || mine[0]) : mine.slice().sort((a, b) => Math.abs(a.approach[0].x * W - p.x) - Math.abs(b.approach[0].x * W - p.x))[0]) : (mine.find(s => s.pass === 'any') || mine[0])) || null;
+}
 function transitionTarget(p, r) {
   const W = WORLD.courtW, D = WORLD.courtD;
   if (p.role === 'S') return { x: SETTER_X * W, y: WORLD.releaseY };
   if (p.code === 'L') return { x: p.x, y: p.y };
-  const back = !p.front;
-  const mine = SETS.filter(s => !s.modifier && s.approach && s.hitter === p.role && (s.group === 'backrow') === back);
-  const ball = back ? mine.slice().sort((a, b) => Math.abs(a.approach[0].x * W - p.x) - Math.abs(b.approach[0].x * W - p.x))[0] : (mine.find(s => s.pass === 'any') || mine[0]);
+  const ball = transitionBall(p);
   if (!ball) return { x: p.x, y: p.y };
   const a = ball.approach[0];
   return { x: Math.min(W + 0.5, Math.max(-0.5, a.x * W)), y: a.y * D };
@@ -954,6 +968,7 @@ function receiverFor(s, r) {   // the player who hits this set, in the receive f
 }
 function passerFor(pass, r) {   // whoever passes: of the three passers, the one nearest the ball's line, back row preferred
   const f = receiveFormation(r), spot = pass.spot || pass, sx = spot.x * WORLD.courtW;
+  if (pass.id === 'perfect' || pass.dist === 0) return f.passers.find(p => p.lane === 'centre') || f.passers[0];
   return f.passers.slice().sort((a, b) => (Math.abs(a.x - sx) + (a.front ? 0.8 : 0)) - (Math.abs(b.x - sx) + (b.front ? 0.8 : 0)))[0];
 }
 function roleHasNow(s) {   // is it on in this rotation, for this role, on this pass?
@@ -1032,17 +1047,17 @@ function timeline(fl) {
   const form = receiveFormation(fl.rotation || state.rotation), W = WORLD.courtW, D = WORLD.courtD;
   const spot = { x: pass.spot.x * W, y: pass.spot.y * D };
   const runM = Math.hypot(spot.x - form.setter.x, spot.y - form.setter.y);
-  const runSec = Math.min(-serveAt - 0.1, runM / RECV.setterSpeed);   // the setter releases on the serve and is there before the pass arrives
+  const runSec = Math.min(-serveAt - RECV.reaction - 0.1, runM / RECV.setterSpeed);   // the setter releases on the serve (after a reaction) and is there before the pass arrives; on a shank they sprint
   const passer = passerFor(pass, form.r);
   const kServe = G * R.serveSec * R.serveSec / 2, kPass = G * R.passSec * R.passSec / 2;
   const pc = { x: passer.x, y: passer.y, z: R.passContactZ };
   const arc = (a, b, k, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f + k * f * (1 - f) });
   const ballAt = t => t < serveAt ? Object.assign({}, R.server) : t < passAt ? arc(R.server, pc, kServe, (t - serveAt) / R.serveSec) : t < 0 ? arc(pc, fl.p0, kPass, (t - passAt) / R.passSec) : fl.at(Math.min(1, t / fl.T));
-  const setterAt = t => { const f = Math.max(0, Math.min(1, (t - serveAt) / runSec)); return { x: form.setter.x + (spot.x - form.setter.x) * f, y: form.setter.y + (spot.y - form.setter.y) * f, z: 0 }; };
+  const setterAt = t => { const f = runSec > 0 ? Math.max(0, Math.min(1, (t - serveAt - RECV.reaction) / runSec)) : (t >= serveAt ? 1 : 0); return { x: form.setter.x + (spot.x - form.setter.x) * f, y: form.setter.y + (spot.y - form.setter.y) * f, z: 0 }; };
   // everyone else: hiders and the setter release on the serve; passers move once the ball is past them, the passer after passing
   const playerAt = (p, t) => {
     if (p.i === 0) return setterAt(t);
-    const leaveAt = p.job === 'pass' ? (p === passer ? passAt + RECV.reaction : passAt - RECV.seesItPast) : serveAt + RECV.reaction;
+    const leaveAt = leaveTime(p, p === passer);
     const sec = Math.max(0.2, p.moveM / RECV.hitterSpeed);
     const f = Math.max(0, Math.min(1, (t - leaveAt) / sec));
     return { x: p.x + (p.goes.x - p.x) * f, y: p.y + (p.goes.y - p.y) * f, z: 0 };
@@ -1701,7 +1716,6 @@ function v3Orbit() {
   wrap.addEventListener('pointerdown', e => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    try { wrap.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y), dist: state.cam.dist };
@@ -1741,7 +1755,8 @@ function v3Orbit() {
     if (drag && e.pointerId === drag.id) drag = null;
     if (!pointers.size || !pinch) setTimeout(() => { if (!drag || !drag.moved) state.v3drag = false; }, 0);
   };
-  wrap.addEventListener('pointerup', end); wrap.addEventListener('pointercancel', end); wrap.addEventListener('lostpointercapture', end);
+  const endKnown = e => { if (pointers.has(e.pointerId)) end(e); };   // a release anywhere ends a press that started on the scene, so nothing goes stale
+  window.addEventListener('pointerup', endKnown, true); window.addEventListener('pointercancel', endKnown, true); wrap.addEventListener('lostpointercapture', endKnown);
   v3Orbit.debug = () => ({ pointers: pointers.size, drag: !!drag, moved: drag && drag.moved, pinch: !!pinch, v3drag: state.v3drag, cam: Object.assign({}, state.cam) });
   wrap.addEventListener('wheel', e => { e.preventDefault(); state.cam.dist = Math.min(32, Math.max(9, state.cam.dist * (1 + Math.sign(e.deltaY) * 0.08))); state.cam.preset = null; rerender(); }, { passive: false });
 }
@@ -2066,8 +2081,10 @@ const RULES = [
       f.players.forEach(p => { if (p.x < 0.3 || p.x > WORLD.courtW - 0.3 || p.y < 0.3 || p.y > WORLD.courtD - 0.3) bad.push(`${p.code} starts off the court`); });
       const R = WORLD.rally; if (f.runM / RECV.setterSpeed > R.serveSec + R.passSec - 0.1) bad.push('setter cannot reach the target before the pass arrives');
       const front = rotation(r).setterFront; if (front && s.y > 1.5) bad.push('a front-row setter should start at the net'); if (!front && s.y < 1.4) bad.push('a back-row setter must start behind the front row');
-      f.players.forEach(p => { if (p.i && p.moveM / RECV.hitterSpeed > R.serveSec + R.passSec + 0.6) bad.push(`${p.code} cannot reach their attack start in time (${p.moveM.toFixed(1)} m)`); });
-      return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `R${r}: passers ${f.passers.map(p => `${p.code}(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' ')} · setter ${s.x.toFixed(1)},${s.y.toFixed(1)} ${s.why.length ? '— ' + s.why.join(', ') : ''} · runs ${f.runM.toFixed(1)} m` };
+      const late = [];
+      f.players.forEach(p => { if (!p.i) return; const ti = transitionInfo(p); if (!ti) return; if (ti.tooLate) bad.push(`${p.code} cannot even take off in time for the ${ti.ball.name} (${p.moveM.toFixed(1)} m, arrives ${ti.arrive.toFixed(1)} s after the setter's touch)`); else if (ti.late > 0) late.push(`${p.code} ${p.moveM.toFixed(1)} m to the ${ti.ball.name}, ${ti.late.toFixed(1)} s late for a full approach — starts inside, approach shortened`); });
+      const lateText = late.length ? ` · long transitions: ${late.join('; ')}` : '';
+      return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `R${r}: passers ${f.passers.map(p => `${p.code}(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' ')} · setter ${s.x.toFixed(1)},${s.y.toFixed(1)} ${s.why.length ? '— ' + s.why.join(', ') : ''} · runs ${f.runM.toFixed(1)} m${lateText}` };
     }) },
   { name: 'Pass bearings stay inside their grade\'s ring and on the court', why: 'A good pass is at most 1.5 m from target whichever way it goes, an off pass at most 3 m; a bearing that would leave the court or cross into another grade is not offered.',
     run: () => PASSES.filter(q => q.dist > 0).flatMap(q => PASS_DIRS.map(d => {
@@ -2178,7 +2195,7 @@ function canPlayNow(s) {
   if (!s || s.modifier) return false;
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
   const onNow = availability(s, state.rotation).ok && passOk(s);
-  return onNow && inScene && ((state.tab === 'net' && !!s.netView && !state.hidden.has(tempoOf(s))) || (state.tab === 'court' && !!s.courtView && shown(s)) || (state.tab === '3d' && shown(s)));
+  return onNow && inScene && ((state.tab === 'net' && !!s.netView && shown(s)) || (state.tab === 'court' && !!s.courtView && shown(s)) || (state.tab === '3d' && shown(s)));
 }
 function renderDetail() {
   const el = $('#detail');
@@ -2188,7 +2205,7 @@ function renderDetail() {
   const inScene = state.tab === 'net' || state.tab === 'court' || state.tab === '3d';
   const onNow = s.modifier ? passOk(s) : (availability(s, state.rotation).ok && passOk(s));
   document.body.classList.toggle('can-play', canPlayNow(s));
-  const canPlay = onNow && inScene && ((state.tab === 'net' && s.netView && !state.hidden.has(tempoOf(s))) || (state.tab === 'court' && s.courtView) || (state.tab === '3d' && !s.modifier && !state.hidden.has(tempoOf(s))));
+  const canPlay = canPlayNow(s);
   const fl = s.modifier ? null : flight(s, { bic: state.bic && s.group === 'backrow' });
   const tl = fl ? timeline(fl) : null;
   const hitterView = state.role !== 'setter';
@@ -2210,6 +2227,7 @@ function renderDetail() {
   const rows = [];
   rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
   if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(startNoteFor(s))]);
+  { const rp = !s.modifier && receiverFor(s); if (rp) { const ti = transitionInfo(rp); const from = `${rp.job === 'pass' ? `passing in the ${rp.lane} lane` : rp.job === 'hide' ? 'hiding at the net' : 'tucked short'}, ${rp.x.toFixed(1)} m across and ${rp.y.toFixed(1)} m off`; rows.push(['Serve receive', esc(`${hitterView ? 'You start' : 'Hitter starts'} ${from}, then ${rp.moveM < 0.3 ? 'stays put' : `moves ${rp.moveM.toFixed(1)} m to the approach start`}${ti && ti.late > 0 ? ` — ${ti.late.toFixed(1)} s late for a full approach on the ${ti.ball.name}, so start inside and shorten the approach` : ''}.`)]); } }
   if (tl) rows.push([hitterView ? 'Timing' : 'Hitter timing', `${esc(timingText(s, tl))}${timelineSvg(tl, s.color)}`]);
   if (where) rows.push(['Ball', esc(where)]);
   if (bicRow) rows.push(['BIC', bicRow]);
@@ -2248,19 +2266,18 @@ function select(id, opts) {
   if (id) state.zone = null;
   const nxt = id && byId(id);
   if (state.tab === '3d' && ((nxt && nxt.group === 'backrow') || (prev && prev.group === 'backrow'))) render3D();   // the BIC/normal ghost is drawn for the selected back-row ball only
+  if (!(opts && opts.silent)) {
+    // keep the selected set visible if its tempo is filtered out
+    const s = id && byId(id);
+    if (s && state.hidden.has(tempoOf(s)) && state.tab === 'net' && s.netView) { state.hidden.delete(tempoOf(s)); renderNet(); }
+    if (s && state.hidden.has(tempoOf(s)) && state.tab === '3d') { state.hidden.delete(tempoOf(s)); render3D(); }
+  }
   applySelection();
   renderDetail();
   if (id && narrow.matches && !(opts && opts.silent) && (state.tab === 'net' || state.tab === 'court' || state.tab === '3d')) {
     const wrap = $(`#tab-${state.tab} .scene-wrap`);
     if (wrap) wrap.scrollIntoView({ block: 'start', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
   }
-  if (!(opts && opts.silent)) {
-    // keep the selected set visible in the net view if its group is filtered out
-    const s = id && byId(id);
-    if (s && state.hidden.has(tempoOf(s)) && state.tab === 'net' && s.netView) { state.hidden.delete(tempoOf(s)); renderNet(); }
-    if (s && state.hidden.has(tempoOf(s)) && state.tab === '3d') { state.hidden.delete(tempoOf(s)); render3D(); }
-  }
-
 }
 function applySelection() {
   const sel = state.selected;
@@ -2332,18 +2349,29 @@ function runSequence(s, frame, done) {
   }
   raf = requestAnimationFrame(step);
 }
+/* On a phone the sheet would cover the clip: collapse it and bring the scene (and its strip, when there is room) above it. */
+function phoneMakeRoom() {
+  if (narrow.matches) {
+    const sheet = $('#detail'); sheet.classList.add('peek');
+    const wrap = $(`#tab-${state.tab} .scene-wrap`);
+    if (wrap) requestAnimationFrame(() => {
+      const strip = wrap.parentElement.querySelector('.strip'), r = wrap.getBoundingClientRect(), sr = strip ? strip.getBoundingClientRect() : r, top = sheet.getBoundingClientRect().top;
+      const bottom = Math.max(r.bottom, sr.bottom), need = bottom - top + 8, room = r.top - 8;   // keep the scene top on screen; get the strip above the sheet when there is room
+      if (r.top < 0) window.scrollBy({ top: r.top - 8, behavior: 'auto' });
+      else if (need > 0) window.scrollBy({ top: Math.min(room, need), behavior: 'auto' });
+    });
+  }
+}
 function play() {
   const s = state.selected && byId(state.selected);
   if (!s || !canPlayNow(s)) return;
-  if (narrow.matches) {   // on a phone the sheet would cover the clip: collapse it and bring the scene above it
-    const sheet = $('#detail'); sheet.classList.add('peek');
-    const wrap = $(`#tab-${state.tab} .scene-wrap`);
-    if (wrap) requestAnimationFrame(() => { const r = wrap.getBoundingClientRect(), top = sheet.getBoundingClientRect().top; if (r.top < 0) window.scrollBy({ top: r.top - 8, behavior: 'auto' }); else if (r.bottom > top) window.scrollBy({ top: Math.min(r.top - 8, r.bottom - top + 8), behavior: 'auto' }); });
-  }
   if (state.tab === '3d') return play3D(s);
   const scene = state.tab === 'court' ? $('#court-scene') : $('#net-scene');
   const grp = scene && scene.querySelector(`[data-set="${s.id}"]`);
   if (!grp) return;
+  const fl0 = flight(s, { bic: state.bic && s.group === 'backrow' }); if (!fl0) return;
+  const tl0 = timeline(fl0);
+  phoneMakeRoom();
   const path = grp.querySelector('.traj'), approach = grp.querySelector('.approach');
   const ball = scene.querySelector('.ball'), hitter = scene.querySelector('.hitter');
   const len = path.getTotalLength(), alen = approach ? approach.getTotalLength() : 0;
@@ -2384,8 +2412,7 @@ function play() {
       else { const a = approach.getPointAtLength(alen); const tgt = state.tab === 'court' ? end : { x: end.x, y: a.y }; q = { x: a.x + (tgt.x - a.x) * h.f, y: a.y + (tgt.y - a.y) * h.f }; }
       hitter.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
     }
-  }, () => { ball.style.opacity = 0; hitter.style.opacity = 0; if (smove) smove.style.opacity = 0; tokens.forEach(tk => { tk.style.opacity = ''; const pl = tl0 && tl0.form.players[Number(tk.dataset.player)]; if (pl) { const q = toScreen({ x: pl.x, y: pl.y }); tk.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`); } }); });
-  const tl0 = timeline(flight(s, { bic: state.bic && s.group === 'backrow' }));
+  }, () => { ball.style.opacity = 0; hitter.style.opacity = 0; if (smove) smove.style.opacity = 0; tokens.forEach(tk => { tk.style.opacity = ''; const pl = tl0.form.players[Number(tk.dataset.player)]; if (pl) { const q = toScreen({ x: pl.x, y: pl.y }); tk.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`); } }); });
 }
 const q3 = () => v3nodes || (v3nodes = { ball: $('#v3-scene .ball'), shadow: $('#v3-scene .shadowball'), hitter: $('#v3-scene .hitter'), smove: $('#v3-scene .smove'), tokens: $$('#v3-scene .ptoken') });
 function frame3D(s, ap, t, fl, tl) {
@@ -2422,7 +2449,10 @@ function frame3D(s, ap, t, fl, tl) {
 }
 function play3D(s) {
   const ap = approachWorld(s, 24);
-  runSequence(s, (t, fl, tl) => frame3D(s, ap, t, fl, tl), () => { const e = q3(); if (e.ball) { e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; if (e.smove) e.smove.style.opacity = 0; e.tokens.forEach(tk => { tk.style.opacity = ''; }); } drawV3Scene(); });
+  const fl0 = flight(s, { bic: state.bic && s.group === 'backrow' }); if (!fl0) return;
+  const tl0 = timeline(fl0);
+  phoneMakeRoom();
+  runSequence(s, (t, fl, tl) => frame3D(s, ap, t, fl, tl), () => { const e = q3(); if (!e.ball || !v3cam) return; e.ball.style.opacity = 0; e.shadow.style.opacity = 0; e.hitter.style.opacity = 0; if (e.smove) e.smove.style.opacity = 0; e.tokens.forEach(tk => { tk.style.opacity = ''; const pl = tl0.form.players[Number(tk.dataset.player)]; if (pl) { const q = v3cam.project({ x: pl.x, y: pl.y, z: 0 }); tk.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`); } }); });
 }
 
 /* ============================================================
@@ -2529,7 +2559,7 @@ function showTab(id) {
 }
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-pass],[data-passdir],[data-fromserve],[data-place],[data-passtap],[data-bic-toggle],[data-reach],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
-  if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.overlay')) { stopPlayback(); return; }   // a tap anywhere on the scene stops the clip
+  if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.overlay')) { stopPlayback(); e.stopImmediatePropagation(); e.preventDefault(); return; }   // a tap anywhere on the scene stops the clip, and does nothing else
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-diag')) { showTab(t.getAttribute('data-diag')); return; }
@@ -2631,7 +2661,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { state, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>

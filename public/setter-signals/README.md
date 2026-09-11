@@ -92,7 +92,10 @@ realistic speed and a hitter who is still on the way when their approach should 
 it. The 3D and Court views draw the formation, every player's dotted route, the serve and the pass,
 and the role bar says who passes and why the setter starts where they do. The Checks tab verifies
 that every rotation is legal under all seven constraints, that the passers are the libero and both
-outsides in the 5–7.5 m band, and that everyone reaches their spot in time.
+outsides in the 5–7.5 m band, and it flags every transition that is still on the way when the
+approach should begin (the front-row outside passing on the right in rotations 1 and 4 has an 8 m
+route to the left pin and starts the approach inside; the card says so). The hitter card carries a
+"Serve receive" row with the start, the lane or hiding spot, and the route.
 
 ▶ plays the whole rally by default: the opponent's serve (about a second in the air), the pass
 (about 1.2 s, apex around 3.5 m) into the setter's hands, everyone releasing and transitioning,
