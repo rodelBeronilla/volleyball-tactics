@@ -35,6 +35,7 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 
 | Tab | What it shows |
 | --- | --- |
+| Plan | The home screen: for the current rotation and pass, the first look (with ▶ to play it in 3D from the serve) and the best ball for every position with the balls that come next and the ones that are off, each with its reason; then the four passes at a glance for the rotation (tap a cell to switch to that pass and open the ball); and the serve-receive line. A hitter sees their own ball first and the setter's first look as a note. |
 | 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
 | Diagrams | The two flat views. **Net** is the side view: height and landing spot tell sets apart. **Court** is top-down: front-row landing spots along the net, back-row attacks with start point, dotted approach, takeoff behind the 3 m line and set target; tap a zone number to highlight sets landing there. |
 | Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show in 3D" / "Show on net" / "Show on court". |
@@ -105,8 +106,8 @@ ball and the B or A the back-row outside's; on a good pass pulled right the midd
 Slide. The Checks tab verifies that every cell is on for that pass, that someone always has a
 ball while anyone can set it, that the first look off a bad pass is a high ball and on a perfect
 pass an in-system ball, that each cell is the lowest-scoring ball that is on unless overridden,
-and that the same inputs always give the same plan. The role bar shows the plan for the current
-rotation and pass; the star in the name strips marks the first look.
+and that the same inputs always give the same plan. The Plan tab is the home screen and shows all of this; the role bar carries a one-line version
+and the star in the name strips marks the first look.
 
 ## Serve receive and the setter's route
 
