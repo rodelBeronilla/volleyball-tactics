@@ -68,6 +68,10 @@ p{margin:0}
 .sc.mini small{color:var(--muted);font-weight:500}
 .sc.mini b{color:#fbbf24;font-size:12px}
 .plan-recv .btn{vertical-align:middle;margin-left:6px}
+.more-list{display:flex;flex-direction:column;gap:10px}
+.btn.more{flex-direction:column;align-items:flex-start;gap:4px;padding:14px 16px;text-align:left;min-height:64px}
+.btn.more b{font-size:16px}
+.btn.more span{color:var(--muted);font-size:13px;font-weight:400}
 
 /* nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(15,17,23,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
@@ -93,7 +97,7 @@ p{margin:0}
 .kv .cmp{display:block}
 .kv .cmp b{color:var(--text);margin-right:6px}
 .smove-g text{font-family:inherit}
-.chips.dirs .chip{min-height:36px;padding:0 10px;font-size:13px}
+.chips.dirs .chip{min-height:44px;padding:0 12px;font-size:13px}
 .chips.dirs .chip[disabled]{opacity:.35}
 .recv-g{pointer-events:none}
 .recv-g .ptoken{transition:none}
@@ -238,8 +242,12 @@ body:not(.has-sel) .set[data-always] .approach-g{opacity:1}
 
 /* role bar */
 .rolebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.rolebar.sticky{position:sticky;top:0;z-index:20;background:var(--bg);box-shadow:-28px 0 0 var(--bg),28px 0 0 var(--bg),0 8px 12px -8px rgba(0,0,0,.6);padding:8px 0;margin-bottom:12px}
+.scene-wrap,.plan-first,.strip,.cards,.qbox{scroll-margin-top:calc(var(--sticky-h,0px) + 8px)}
+.sc.off{opacity:.5;border-style:dashed}
+.card.off{opacity:.5}
 .rolebar .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.rolebar .seg button{min-height:40px}
+.rolebar .seg button{min-height:44px}
 .rolebar .hint{flex-basis:100%;font-size:13px}
 
 .rolebar .seg.rot button{min-width:40px;padding:0 10px}
@@ -299,7 +307,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   .plan-pos{display:flex;gap:8px;align-items:baseline}
   .plan-first .btn{margin-left:0}
   .tab-head h2{font-size:20px}
-  .tab-head p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  .tab-head p{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
   .tab-head p.expanded{-webkit-line-clamp:unset;display:block}
   .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .chips::-webkit-scrollbar{display:none}
@@ -323,7 +331,11 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   .rolebar{margin-bottom:10px}
   .rolebar .lab,.rolebar .hint{display:none}
   .rolebar .seg{display:flex;width:100%}
-  .rolebar .seg button{flex:1;padding:0;min-height:40px}
+  .rolebar .seg button{flex:1;padding:0;min-height:44px}
+  .rolebar.sticky{box-shadow:-16px 0 0 var(--bg),16px 0 0 var(--bg),0 8px 12px -8px rgba(0,0,0,.6);padding:6px 0}
+  body.has-sel .rolebar.sticky{position:static;box-shadow:none}
+  body.has-sel .scene-wrap,body.has-sel .strip{scroll-margin-top:8px}
+  .rolebar.sticky .chips{margin:0;padding:2px 0}
   .rolebar .seg.rot{width:auto;flex:1}
   .rolebar .rotmini{width:78px;height:44px}
   #detail{padding-top:10px}
@@ -381,18 +393,15 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 12V4a1.5 1.5 0 0 1 3 0v8M14 12V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-2-2a1.4 1.4 0 0 0-2 2l4 6a5 5 0 0 0 4 2h2a5 5 0 0 0 5-5v-3"/></svg>
       <span>Signals</span>
     </button>
-    <button role="tab" data-tab="quiz" aria-selected="false" aria-controls="tab-quiz">
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>
-      <span>Quiz</span>
-    </button>
-    <button role="tab" data-tab="checks" aria-selected="false" aria-controls="tab-checks">
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
-      <span>Checks</span>
+    <button role="tab" data-tab="more" aria-selected="false" aria-controls="tab-more">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      <span>More</span>
     </button>
   </nav>
 
   <main class="main">
     <div class="rolebar" id="rolebar"></div>
+    <div class="rolebar sticky" id="rolebar-sticky"></div>
     <section class="tab" id="tab-plan" data-tab="plan" role="tabpanel">
       <div class="tab-head">
         <h2>Plan</h2>
@@ -454,6 +463,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <div class="scene-wrap court-wrap"><div id="court-scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play ball">▶ Play</button></div></div>
       <div class="strip" id="strip-court" aria-label="Select a set"></div>
       <div class="chips" id="court-zonechips"></div>
+      <p class="hint" id="court-zonehint" hidden></p>
     </section>
 
     <section class="tab" id="tab-signals" data-tab="signals" role="tabpanel" hidden>
@@ -466,6 +476,17 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <div id="cards-more"></div>
     </section>
 
+    <section class="tab" id="tab-more" data-tab="more" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>More</h2>
+        <p>Practice and verification.</p>
+      </div>
+      <div class="more-list">
+        <button class="btn more" data-goto="quiz"><b>Quiz</b><span>Signal → Set and Trajectory → Set, for your role.</span></button>
+        <button class="btn more" data-goto="checks"><b>Checks</b><span id="more-checks">Every set and every rule graded against the model.</span></button>
+      </div>
+      <p class="hint">Net height, hitter reach and BIC tempo are on the 3D Court tab. Made for a 5-1; nothing per rotation is typed in.</p>
+    </section>
     <section class="tab" id="tab-quiz" data-tab="quiz" role="tabpanel" hidden>
       <div class="tab-head">
         <h2>Quiz</h2>
@@ -1260,7 +1281,7 @@ function renderFilters(id, pool) {
     const sw = rowSets.filter(s => tempoOf(s) === t.id).map(s => `<i style="background:${s.color}"></i>`).join('');
     return `<button class="chip filter" data-group="${t.id}" aria-pressed="${on}" title="${esc(tempoHint(t))}"><span class="sw" aria-hidden="true">${sw}</span><span class="l">${t.label}</span><span class="s">${t.short}</span></button>`;
   }).join('');
-  el.innerHTML = seg + `<div class="chips tempo" aria-label="Tempo">${chips || '<span class="hint">No sets in this row for you.</span>'}</div>`;
+  el.innerHTML = seg + `<div class="chips tempo" aria-label="Tempo">${chips || `<span class="hint">${state.role === 'setter' ? 'No sets in this row on this pass.' : `No ball for you on this ${esc(state.pass)} pass in rotation ${state.rotation} — cover.`}</span>`}</div>`;
 }
 function renderRoleBar() {
   const rot = rotation(state.rotation);
@@ -1275,10 +1296,12 @@ function renderRoleBar() {
   const passText = (pass.id === 'perfect' ? chaseText : ` ${pass.label} pass, ${pass.distM.toFixed(1)} m ${dirOf(pass.dir).label.toLowerCase()} of target, landing in zone ${pass.zone}. ${pass.hint}${chaseText}`) + ` Plan: ${pl.text}.`;
   const hint = (state.role === 'setter' ? `${where}. ${rot.setterFront ? 'Two front-row hitters: the opposite attacks from the back row and you can dump.' : 'Three front-row hitters plus the back-row outside.'}` : `${where}. Your balls now — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`) + recvText + passText;
   $('#rolebar').innerHTML = `<span class="lab">I am the</span><div class="seg" role="group" aria-label="Role">${ROLES.map(r => `<button data-role="${r.id}" aria-pressed="${state.role === r.id}">${r.label}</button>`).join('')}</div>` +
-    `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}` +
-    `<span class="lab">Pass</span><div class="seg pass" role="group" aria-label="Pass quality">${PASSES.map(p => `<button data-pass="${p.id}" aria-pressed="${state.pass === p.id}" title="${esc(p.hint)}">${p.label}</button>`).join('')}</div>` +
-    (pass.id !== 'perfect' ? `<span class="lab">going</span><div class="chips dirs" role="group" aria-label="Pass direction">${PASS_DIRS.map(d => { const ok = passDirOk(pass, d.id); return `<button class="chip${!state.passSpot && pass.dir === d.id ? ' active' : ''}" data-passdir="${d.id}" aria-pressed="${!state.passSpot && pass.dir === d.id}" ${ok ? '' : 'disabled'} title="${ok ? esc(d.label) : 'would leave the court or the ' + pass.label.toLowerCase() + ' ring'}">${d.label}</button>`; }).join('')}</div>` : '') +
     `<span class="hint">${esc(hint)}</span>`;
+  const placed = state.passSpot ? `<button class="chip active" data-passdir="${pass.dir}" title="Placed on the court — tap to clear">📍 ${pass.distM.toFixed(1)} m, zone ${pass.zone} · ✕</button>` : '';
+  $('#rolebar-sticky').innerHTML = `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}` +
+    `<span class="lab">Pass</span><div class="seg pass" role="group" aria-label="Pass quality">${PASSES.map(p => `<button data-pass="${p.id}" aria-pressed="${state.pass === p.id}" title="${esc(p.hint)}">${p.label}</button>`).join('')}</div>` +
+    (pass.id !== 'perfect' ? `<span class="lab">going</span><div class="chips dirs" role="group" aria-label="Pass direction">${PASS_DIRS.map(d => { const ok = passDirOk(pass, d.id); return `<button class="chip${!state.passSpot && pass.dir === d.id ? ' active' : ''}" data-passdir="${d.id}" aria-pressed="${!state.passSpot && pass.dir === d.id}" ${ok ? '' : 'disabled'} title="${ok ? esc(d.label) : 'would leave the court or the ' + pass.label.toLowerCase() + ' ring'}">${d.label}</button>`; }).join('')}${placed}</div>` : '');
+  requestAnimationFrame(() => { const st = $('#rolebar-sticky'); if (st) document.documentElement.style.setProperty('--sticky-h', st.offsetHeight + 'px'); });
 }
 function howLabel(s) {
   const c = s.call ? `“${s.call}”` : '';
@@ -1688,8 +1711,8 @@ function renderCourt() {
     ? 'BIC: same spots, a third of a second faster and almost a metre lower — the hitter is planting when the ball is set. At high levels every back-row set is run at BIC tempo.'
     : 'Normal back-row ball: set deeper and higher than a front-row ball, about a metre above the antenna. At high levels every back-row set is run at BIC tempo.';
   $('#court-zonechips').innerHTML = `<button class="chip${state.placing ? ' active' : ''}" data-place aria-pressed="${state.placing}">📍 Place the pass</button>` + [4, 3, 2, 5, 6, 1].map(z =>
-    `<button class="chip${state.zone === z ? ' active' : ''}" data-zone="${z}" aria-pressed="${state.zone === z}">Zone ${z}</button>`).join('') +
-    (state.placing ? `<span class="hint">Tap the court where the pass lands: within 1.5 m of target is good, within 3 m is off, further is a shank.</span>` : state.zone ? `<span class="hint">Showing sets that land in zone ${state.zone}. Tap again to clear.</span>` : `<span class="hint">Tap a zone to highlight every set that lands there.</span>`);
+    `<button class="chip${state.zone === z ? ' active' : ''}" data-zone="${z}" aria-pressed="${state.zone === z}">Zone ${z}</button>`).join('');
+  { const h = $('#court-zonehint'); const txt = state.placing ? 'Tap the court where the pass lands: within 1.5 m of target is good, within 3 m is off, further is a shank.' : state.zone ? `Showing sets that land in zone ${state.zone}. Tap again to clear.` : 'Tap a zone to highlight every set that lands there.'; h.hidden = !txt; h.textContent = txt; }
   applySelection();
 }
 
@@ -2553,7 +2576,8 @@ function scrollStripsToSelection() {
    ============================================================ */
 function renderSignals() {
   const card = s => {
-    return `<div class="card" role="button" tabindex="0" data-select="${s.id}" data-set="${s.id}" style="--c:${s.color}" aria-pressed="${state.selected === s.id}">` +
+    const offNow = !s.modifier && !roleHasNow(s);
+    return `<div class="card${offNow ? ' off' : ''}" role="button" tabindex="0" data-select="${s.id}" data-set="${s.id}" style="--c:${s.color}" aria-pressed="${state.selected === s.id}" title="${offNow ? esc(offWhy(s) || 'not yours in this rotation') : ''}">` +
       glyphHtml(s, 'glyph') +
       `<div class="name">${esc(s.name)}</div>` +
       `<div class="desc">${esc(s.signal.description)}</div>` +
@@ -2649,6 +2673,10 @@ function renderDetail() {
   const rows = [];
   rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
   if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(startNoteFor(s))]);
+  if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}${!s.modifier && availability(s, state.rotation).ok ? (passOk(s) && transitionOk(s).ok ? ` <span class="badge">on now</span>` : ` <span class="badge">off on this ${esc(state.pass)} pass</span>`) : ''}`]);
+  if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(forHitter(s.useWhen, s))]);
+  if (s.avoidWhen) rows.push(['Not when', esc(forHitter(s.avoidWhen, s))]);
+  rows.push(['Fallback', s.modifier ? 'The same back-row ball at normal tempo — the Pipe, A, B, C or D it was flicked on.' : fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed && !efb.other ? ' <span class="hint">in this rotation</span>' : ''}${efb.other || (s.group === 'backrow' && fb.group !== 'backrow') ? ` <span class="hint">to the front-row ${esc(availability(fb, state.rotation).hitter || fb.hitter)} — ${hitterView ? 'not you' : 'not this hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
   { const rp = !s.modifier && availability(s, state.rotation).ok && receiverFor(s); if (rp) { const ti = transitionInfo(rp, s); const from = `${rp.job === 'pass' ? `passing in the ${rp.lane} lane` : rp.job === 'hide' ? 'hiding at the net' : rp.y > 4.5 ? 'tucked deep in the corner' : 'tucked short'}, ${rp.x.toFixed(1)} m across and ${rp.y.toFixed(1)} m off`; const mv = ti ? ti.moveM : rp.moveM; rows.push(['Serve receive', esc(`${hitterView ? 'You start' : 'Hitter starts'} ${from}, then ${mv < 0.3 ? 'stays put' : `moves ${mv.toFixed(1)} m to the ${s.name}'s start`}${ti && ti.tooLate ? ` — only after the takeoff, so this ball is off from serve receive${ti.isPasser ? ' (they are passing)' : ''}` : ti && ti.late > 0 ? ` — ${ti.late.toFixed(1)} s late for a full approach, so start inside and shorten the approach` : ''}.`)]); } }
   if (tl && tl.run) { const rn = tl.run, v = hitterView ? { rel: 'The setter releases', cov: 'has covered', at: 'is at target', run: 'runs' } : { rel: 'You release', cov: 'have covered', at: 'are at target', run: 'run' };
     const whoTakes = rn.who === 'L' ? 'libero' : roleLabel(rn.who).toLowerCase();
@@ -2663,10 +2691,6 @@ function renderDetail() {
   if (where) rows.push(['Ball', esc(where)]);
   if (bicRow) rows.push(['BIC', bicRow]);
   if (bicCard) rows.push(['Tempo', esc(bicCard)]);
-  if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
-  if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(forHitter(s.useWhen, s))]);
-  if (s.avoidWhen) rows.push(['Not when', esc(forHitter(s.avoidWhen, s))]);
-  rows.push(['Fallback', s.modifier ? 'The same back-row ball at normal tempo — the Pipe, A, B, C or D it was flicked on.' : fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed && !efb.other ? ' <span class="hint">in this rotation</span>' : ''}${efb.other || (s.group === 'backrow' && fb.group !== 'backrow') ? ` <span class="hint">to the front-row ${esc(availability(fb, state.rotation).hitter || fb.hitter)} — ${hitterView ? 'not you' : 'not this hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
   if (!s.modifier) rows.push(['Rotations', esc(rotationsText(s))]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
@@ -2788,8 +2812,9 @@ function phoneMakeRoom() {
     const wrap = $(`#tab-${state.tab} .scene-wrap`);
     if (wrap) requestAnimationFrame(() => {
       const strip = wrap.parentElement.querySelector('.strip'), r = wrap.getBoundingClientRect(), sr = strip ? strip.getBoundingClientRect() : r, top = sheet.getBoundingClientRect().top;
-      const bottom = Math.max(r.bottom, sr.bottom), need = bottom - top + 8, room = r.top - 8;   // keep the scene top on screen; get the strip above the sheet when there is room
-      if (r.top < 0) window.scrollBy({ top: r.top - 8, behavior: 'auto' });
+      const st = $('#rolebar-sticky'), top0 = (st && getComputedStyle(st).position === 'sticky' ? st.offsetHeight : 0) + 8;
+      const bottom = Math.max(r.bottom, sr.bottom), need = bottom - top + 8, room = r.top - top0;   // keep the scene top on screen below the sticky controls; get the strip above the sheet when there is room
+      if (r.top < top0) window.scrollBy({ top: r.top - top0, behavior: 'auto' });
       else if (need > 0) window.scrollBy({ top: Math.min(room, need), behavior: 'auto' });
     });
   }
@@ -2968,7 +2993,7 @@ function showTab(id) {
   stopPlayback();
   state.tab = id;
   if (id === 'net' || id === 'court') state.diag = id;
-  const navId = (id === 'net' || id === 'court') ? 'diagrams' : id;
+  const navId = (id === 'net' || id === 'court') ? 'diagrams' : (id === 'quiz' || id === 'checks') ? 'more' : id;
   $$('.nav [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === navId)));
   $$('.diag-seg button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-diag') === state.diag)));
   $$('.tab').forEach(t => { t.hidden = t.getAttribute('data-tab') !== id; });
@@ -2978,6 +3003,7 @@ function showTab(id) {
   if (id === 'checks') renderChecks();
   if (id === 'signals') renderSignals();
   if (id === 'plan') renderPlan();
+  if (id === 'more') { const c = runChecks(); const el = $('#more-checks'); if (el) el.textContent = c.errs ? `${c.errs} of ${c.total} checks failing — see why.` : `All ${c.total} checks pass.`; }
   if (id === 'quiz') { const q = state.quiz; if (!q.current || !quizPool().some(s => s.id === q.current)) { q.queue = []; quizNext(); } else renderQuiz(); }
   renderDetail();
   applySelection();
@@ -3099,7 +3125,7 @@ renderSignals();
 renderQuiz();
 showTab('plan');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, setterRun, passHang, leaveTau, MODE_MENU, transitionInfo, transitionOk, menuGate, plan, PLAN_OVERRIDES, PLAN_POSITIONS, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, setterRun, passHang, leaveTau, MODE_MENU, transitionInfo, transitionOk, menuGate, plan, PLAN_OVERRIDES, PLAN_POSITIONS, showTab, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>
