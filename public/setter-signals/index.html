@@ -34,6 +34,41 @@ p{margin:0}
 .tab-head p{color:var(--muted);font-size:14px;margin-top:4px}
 .brand{display:none}
 
+/* plan */
+.plan-cap{color:var(--muted);font-size:14px}
+.plan-first{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid #fbbf24;border-radius:var(--radius);padding:12px 14px}
+.plan-first .lab,.plan-row .lab,.alts .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.plan-first .who{font-weight:600}
+.plan-first .why,.plan-balls .why,.offrow .why{color:var(--muted);font-size:12px}
+.plan-first .btn{margin-left:auto}
+.plan-first .hint.wide{flex-basis:100%}
+.plan-rows{display:flex;flex-direction:column;gap:8px}
+.plan-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.plan-row.first{border-color:#fbbf24}
+.plan-pos b{display:block;font-size:14px}
+.plan-pos small{color:var(--muted);font-size:12px}
+.plan-balls{display:flex;flex-direction:column;gap:6px;min-width:0}
+.bestrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sc.pc .g{font-weight:800;font-size:15px}
+.sc.pc.big{min-height:48px;font-size:17px;padding:0 16px}
+.sc.pc.big .g{font-size:20px}
+.sc.pc.off{opacity:.5}
+.alts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.offs summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:32px;display:flex;align-items:center}
+.offrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:3px 0}
+.plan-h{font-size:16px;font-weight:700;margin-top:4px}
+.plan-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+.plan-table{border-collapse:separate;border-spacing:0 6px;min-width:100%}
+.plan-table th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:0 6px;white-space:nowrap}
+.plan-table td{padding:0 6px;white-space:nowrap}
+.plan-table tr.now td,.plan-table tr.now th{background:var(--panel2)}
+.plan-table tr.now td:first-child,.plan-table tr.now th:first-child{border-radius:10px 0 0 10px}
+.plan-table tr.now td:last-child{border-radius:0 10px 10px 0}
+.sc.mini{min-height:36px;padding:0 10px;font-size:13px;gap:6px}
+.sc.mini small{color:var(--muted);font-weight:500}
+.sc.mini b{color:#fbbf24;font-size:12px}
+.plan-recv .btn{vertical-align:middle;margin-left:6px}
+
 /* nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(15,17,23,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .nav button{flex:1;min-height:44px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;letter-spacing:.02em;border-radius:10px;transition:color .2s}
@@ -260,6 +295,9 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
 
 @media (max-width:899px){
   .tab{gap:12px}
+  .plan-row{grid-template-columns:1fr;gap:6px}
+  .plan-pos{display:flex;gap:8px;align-items:baseline}
+  .plan-first .btn{margin-left:0}
   .tab-head h2{font-size:20px}
   .tab-head p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
   .tab-head p.expanded{-webkit-line-clamp:unset;display:block}
@@ -327,7 +365,11 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
 <div class="app">
   <nav class="nav" role="tablist" aria-label="Views">
     <div class="brand">Setter Signals<small>&amp; Set Map</small></div>
-    <button role="tab" data-tab="3d" aria-selected="true" aria-controls="tab-3d">
+    <button role="tab" data-tab="plan" aria-selected="true" aria-controls="tab-plan">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M9 3h6v4H9zM8 12h8M8 16h5"/></svg>
+      <span>Plan</span>
+    </button>
+    <button role="tab" data-tab="3d" aria-selected="false" aria-controls="tab-3d">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
       <span>3D Court</span>
     </button>
@@ -351,7 +393,14 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
 
   <main class="main">
     <div class="rolebar" id="rolebar"></div>
-    <section class="tab" id="tab-3d" data-tab="3d" role="tabpanel">
+    <section class="tab" id="tab-plan" data-tab="plan" role="tabpanel">
+      <div class="tab-head">
+        <h2>Plan</h2>
+        <p>What to set to whom in this rotation, on this pass — derived, nothing typed per rotation. Tap a ball for its card; ▶ plays the first look in 3D from the serve.</p>
+      </div>
+      <div id="plan-body"></div>
+    </section>
+    <section class="tab" id="tab-3d" data-tab="3d" role="tabpanel" hidden>
       <div class="tab-head">
         <h2>Court in 3D</h2>
         <p>Real court in metres; every ball is a gravity parabola from the setter's hands. Filter by row and tempo, tap a path or a name below; the hitter's route appears with it.</p>
@@ -806,7 +855,7 @@ function setRotation(r) {
   state.rotation = r;
   try { localStorage.setItem('setterSignals.rotation', String(r)); } catch (e) { /* ignore */ }
   renderRoleBar(); renderSignals();
-  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt();
+  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'plan') renderPlan();
   renderDetail(); applySelection();
 }
 function rotationSvg(r) {
@@ -828,7 +877,7 @@ const STORE_KEY = 'setterSignals.quiz.v1';
 const state = {
   role: (function () { try { const r = localStorage.getItem('setterSignals.role'); if (['setter', 'OH', 'MB', 'OPP'].includes(r)) return r; } catch (e) { /* ignore */ } return 'setter'; })(),
   rotation: (function () { try { const r = Number(localStorage.getItem('setterSignals.rotation')); if (r >= 1 && r <= 6) return r; } catch (e) { /* ignore */ } return 1; })(),
-  tab: '3d',
+  tab: 'plan',
   diag: 'net',
   selected: null,
   hidden: new Set(),
@@ -1184,7 +1233,7 @@ function setRole(r) {
   if (sel && !roleHas(sel)) state.selected = null;
   state.quiz.queue = []; state.quiz.current = null;
   renderRoleBar(); renderSignals();
-  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'quiz') quizNext();
+  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'plan') renderPlan(); else if (state.tab === 'quiz') quizNext();
   renderDetail(); applySelection();
 }
 function setRow(r) {
@@ -1195,7 +1244,7 @@ function setRow(r) {
   renderTab();
 }
 function renderTab() {
-  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'signals') renderSignals(); else if (state.tab === 'quiz') { state.quiz.queue = []; quizNext(); }
+  if (state.tab === '3d') render3D(); else if (state.tab === 'net') renderNet(); else if (state.tab === 'court') renderCourt(); else if (state.tab === 'signals') renderSignals(); else if (state.tab === 'plan') renderPlan(); else if (state.tab === 'quiz') { state.quiz.queue = []; quizNext(); }
   renderDetail();
 }
 /* One filter bar for every tab: row toggle + tempo chips. `pool` is the list the tab draws from before filtering. */
@@ -2520,6 +2569,48 @@ function renderSignals() {
 }
 
 /* ============================================================
+   PLAN TAB — the derived plan for this rotation and pass
+   ============================================================ */
+function renderPlan() {
+  const el = $('#plan-body'); if (!el) return;
+  const r = state.rotation, rot = rotation(r), pass = currentPass(), pl = plan(r, pass), run = pl.run;
+  const hitterView = state.role !== 'setter';
+  const mine = c => !hitterView || c.pos.role === state.role;
+  const chip = (o, cls) => { const g = o.set.signal.glyph, showG = g && g !== o.set.name && !o.set.name.startsWith(g); return `<button class="sc pc${o.on ? '' : ' off'}${cls ? ' ' + cls : ''}" data-select="${o.set.id}" data-set="${o.set.id}" style="color:${o.set.color}" title="${esc(o.why)}"><i aria-hidden="true"></i>${showG ? `<span class="g">${esc(g)}</span>` : ''}<span class="n">${esc(o.set.name)}</span></button>`; };
+  const firstOpt = pl.primary ? pl.primary.cell.options.find(o => o.set === pl.primary.set) : null;
+  const mineCell = hitterView ? pl.cells.filter(mine).find(c => c.best) : null;   // a hitter's own ball comes first; the setter's first look is a note
+  const first = hitterView
+    ? (mineCell ? `<div class="plan-first"><span class="lab">Your ball</span>${chip(mineCell.best, 'big')}<span class="who">${esc(mineCell.pos.label)}${mineCell.hitter ? ` in zone ${mineCell.hitter.zone}` : ''}</span><span class="why">${esc(mineCell.best.why)}</span><button class="btn primary small" data-show="3d" data-id="${mineCell.best.set.id}" data-playnow="1">▶ Play in 3D</button>${firstOpt ? `<span class="hint wide">The setter's first look is the ${esc(pl.primary.set.name)} to the ${esc(pl.primary.cell.pos.label.toLowerCase())}${pl.primary.cell.pos.role === state.role ? ' — that is you' : ': be ready to cover'}.</span>` : ''}</div>`
+      : `<div class="plan-first"><span class="lab">Your ball</span><span class="hint">${run.mode === 'over' ? 'Free ball — nobody reaches this pass.' : 'No ball for you on this pass: cover.'}</span></div>`)
+    : firstOpt
+    ? `<div class="plan-first"><span class="lab">First look</span>${chip(firstOpt, 'big')}<span class="who">→ ${esc(pl.primary.cell.pos.label)}${pl.primary.cell.hitter ? ` in zone ${pl.primary.cell.hitter.zone}` : ''}${pl.primary.overridden ? ' · coach' : ''}</span><span class="why">${esc(firstOpt.why)}</span><button class="btn primary small" data-show="3d" data-id="${pl.primary.set.id}" data-playnow="1">▶ Play in 3D</button></div>`
+    : `<div class="plan-first"><span class="lab">First look</span><span class="hint">${run.mode === 'over' ? 'Free ball — nobody reaches this pass.' : 'No ball is on for this pass.'}</span></div>`;
+  const rows = pl.cells.filter(mine).map(c => {
+    const on = c.options.filter(o => o.on), off = c.options.filter(o => !o.on);
+    const none = !c.best ? `<span class="hint">no ball${off.length ? ` — ${esc(off[0].offWhy)}` : ''}</span>` : '';
+    return `<div class="plan-row${pl.primary && pl.primary.cell === c ? ' first' : ''}">` +
+      `<div class="plan-pos"><b>${esc(c.pos.label)}</b><small>${c.hitter ? `zone ${c.hitter.zone}` : ''}</small></div>` +
+      `<div class="plan-balls">${c.best ? `<div class="bestrow">${chip(c.best)}<span class="why">${esc(c.best.why)}${c.overridden ? ' · coach' : ''}</span></div>` : none}` +
+      (on.length > 1 ? `<div class="alts"><span class="lab">then</span>${on.slice(1).map(o => chip(o)).join('')}</div>` : '') +
+      (off.length ? `<details class="offs"><summary>${off.length} off on this pass</summary>${off.map(o => `<div class="offrow">${chip(o)}<span class="why">${esc(o.offWhy)}</span></div>`).join('')}</details>` : '') +
+      `</div></div>`;
+  }).join('');
+  // the four passes at a glance, on the current bearing where it applies
+  const grades = PASSES.map(q => { const dir = q.dist === 0 ? 'off' : passDirFor(q, state.passDir); const spot = passSpotFor(q, dir); const sit = Object.assign({}, q, { spot, dir, distM: passDistM(spot), zone: zoneOfSpot(spot) }); return { q, dir, pl: plan(r, sit) }; });
+  const positions = pl.cells.filter(mine).map(c => c.pos);
+  const table = `<div class="plan-table-wrap"><table class="plan-table"><thead><tr><th>Pass</th>${positions.map(p => `<th>${esc(p.short)}</th>`).join('')}</tr></thead><tbody>` +
+    grades.map(g => `<tr class="${g.q.id === state.pass ? 'now' : ''}"><th><button class="sc mini" data-pass="${g.q.id}">${esc(g.q.label)}${g.q.dist ? ` <small>${esc(dirOf(g.dir).label.toLowerCase())}</small>` : ''}</button></th>` +
+      positions.map(p => { const c = g.pl.cells.find(x => x.pos.key === p.key); const b = c && c.best; const isFirst = !!(b && g.pl.primary && g.pl.primary.cell === c); return `<td>${b ? `<button class="sc mini${isFirst ? ' rec' : ''}" data-plancell="${g.q.id}|${b.set.id}" data-set="${b.set.id}" style="color:${b.set.color}" title="${esc(b.why)}"><i aria-hidden="true"></i><span>${esc(b.set.name)}</span>${isFirst ? '<b>★</b>' : ''}</button>` : `<span class="hint">${g.pl.run.mode === 'over' ? 'free ball' : '—'}</span>`}</td>`; }).join('') + `</tr>`).join('') +
+    `</tbody></table></div>`;
+  const form = run.form;
+  const setterText = run.mode === 'jump' ? 'jump-sets' : run.mode === 'stand' ? 'sets standing' : run.mode === 'run' ? 'sets on the run' : run.mode === 'bump' ? 'bump-sets' : run.mode === 'help' ? `cannot get there — the ${run.who === 'L' ? 'libero' : roleLabel(run.who).toLowerCase()} sets` : 'cannot get there — free ball';
+  const recvLine = `<p class="plan-recv hint">Serve receive: ${form.passers.map(p => p.code).join(', ')} pass, ${run.passer.code} takes this serve in the ${run.passer.lane} lane; the setter ${form.runM > 0.05 ? `starts ${form.runM.toFixed(1)} m from target and ` : ''}${setterText}. <button class="btn small" data-show="court" data-id="${pl.primary ? pl.primary.set.id : ''}">Court ▸</button></p>`;
+  el.innerHTML = `<div class="plan-cap"><b>Rotation ${r}</b> · setter zone ${rot.setterZone}, ${rot.setterFront ? 'front' : 'back'} row · <b>${esc(passOf(state.pass).label)} pass</b>${state.pass !== 'perfect' ? `, ${pass.distM.toFixed(1)} m ${esc(dirOf(pass.dir).label.toLowerCase())}` : ''}${hitterView ? ` · your balls as ${esc(roleLabel(state.role).toLowerCase())}` : ''}</div>` +
+    first + `<div class="plan-rows">${rows}</div>` + `<h3 class="plan-h">All four passes, rotation ${r}${hitterView ? ` — you` : ''}</h3>` + table + recvLine;
+  applySelection();
+}
+
+/* ============================================================
    DETAIL CARD (shared)
    ============================================================ */
 function canPlayNow(s) {
@@ -2623,7 +2714,7 @@ function select(id, opts) {
 function applySelection() {
   const sel = state.selected;
   document.body.classList.toggle('has-sel', !!sel && !(byId(sel) || {}).modifier);
-  const scopes = ['#net-scene', '#court-scene', '#v3-scene', '#strip-net', '#strip-court', '#strip-3d', '#net-legend', '#cards', '#cards-more', '#checks-spec'];
+  const scopes = ['#net-scene', '#court-scene', '#v3-scene', '#strip-net', '#strip-court', '#strip-3d', '#net-legend', '#cards', '#cards-more', '#checks-spec', '#plan-body'];
   const hasSel = {};
   scopes.forEach(sc => { const root = $(sc); hasSel[sc] = !!(root && sel && root.querySelector(`[data-set="${sel}"]`)); });
   const scopeOf = el => scopes.find(sc => el.closest(sc));
@@ -2886,6 +2977,7 @@ function showTab(id) {
   if (id === '3d') render3D();
   if (id === 'checks') renderChecks();
   if (id === 'signals') renderSignals();
+  if (id === 'plan') renderPlan();
   if (id === 'quiz') { const q = state.quiz; if (!q.current || !quizPool().some(s => s.id === q.current)) { q.queue = []; quizNext(); } else renderQuiz(); }
   renderDetail();
   applySelection();
@@ -2897,7 +2989,7 @@ function showTab(id) {
   } else window.scrollTo({ top: 0 });
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-pass],[data-passdir],[data-fromserve],[data-place],[data-passtap],[data-bic-toggle],[data-reach],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
+  const t = e.target.closest('[data-tab],[data-goto],[data-group],[data-select],[data-plancell],[data-show],[data-zone],[data-close],[data-play],[data-slow],[data-mode],[data-row],[data-pass],[data-passdir],[data-fromserve],[data-place],[data-passtap],[data-bic-toggle],[data-reach],[data-qanswer],[data-qnext],[data-qreset],[data-diag],[data-cam],[data-role],[data-rotation],#bic-toggle,#v3-bic,#v3-net');
   if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.overlay')) { stopPlayback(); e.stopImmediatePropagation(); e.preventDefault(); return; }   // a tap anywhere on the scene stops the clip, and does nothing else
   if (!t) return;
   if (t.matches('.nav [data-tab]')) { showTab(t.getAttribute('data-tab')); return; }
@@ -2918,11 +3010,18 @@ document.addEventListener('click', e => {
   }
   if (t.hasAttribute('data-show')) {
     e.stopPropagation();
-    select(t.getAttribute('data-id'), { silent: true });
+    select(t.getAttribute('data-id') || null, { silent: true });
     const s = byId(t.getAttribute('data-id'));
     if (s) { state.hidden.delete(tempoOf(s)); if (!rowOk(s)) setRow('both'); if (!passOk(s) && !s.modifier) setPass('perfect'); }
     if (t.hasAttribute('data-bic')) state.bic = true;
     showTab(t.getAttribute('data-show'));
+    if (t.hasAttribute('data-playnow') && s) setTimeout(() => { if (state.selected === s.id && canPlayNow(s)) play(); }, 350);
+    return;
+  }
+  if (t.hasAttribute('data-plancell')) {   // a cell of the four-pass table: that pass grade, then that ball
+    const [g, id] = t.getAttribute('data-plancell').split('|');
+    if (state.pass !== g) setPass(g);
+    select(state.selected === id ? null : id);
     return;
   }
   if (t.hasAttribute('data-select')) { const id = t.getAttribute('data-select'); select(state.selected === id ? null : id, { silent: !!t.closest('#checks-spec') }); return; }
@@ -2998,7 +3097,7 @@ v3Orbit();
 renderRoleBar();
 renderSignals();
 renderQuiz();
-showTab('3d');
+showTab('plan');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
 window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, setterRun, passHang, leaveTau, MODE_MENU, transitionInfo, transitionOk, menuGate, plan, PLAN_OVERRIDES, PLAN_POSITIONS, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
