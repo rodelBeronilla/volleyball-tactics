@@ -64,23 +64,48 @@ in the same place. Tempo classes and the Checks tab are always graded off a perf
 
 ## Serve receive and the setter's route
 
-The setter has a start and a route in every rotation, just as the hitters do, and it is derived
-rather than typed. Front-row players wait at the 3-m line in their rotational zone, back-row
-players pass from 6.5 m off the net, the libero plays for the back-row middle. The setter starts
-at the point closest to the target that keeps them legal under the overlap rule: behind the player
-in front of them and on the correct side of their row neighbours. That gives the classic 5-1
-picture without any per-rotation data: in rotations 1 and 2 the setter stacks at the 3-m line
-right of centre and runs 1.9 m; in rotation 3 they start left of centre behind the middle and run
-2.6 m; in rotation 4 they start at the net left of the middle and run 1.7 m along it; in rotations
-5 and 6 they are already at the target. The 3D and Court views draw the formation, the setter's
-start and their dotted route, and the role bar says why the start is where it is.
+Every player has a serve-receive start and a transition route in every rotation, and all of it
+is derived rather than typed. The formation is solved from the lineup: the libero and both
+outsides pass (wings about 6 m off the net a third of the court in, the centre passer a half-step
+deeper, a front-row outside a little shallower); the front-row middle and opposite hide at the net
+in their own zone column; a back-row opposite tucks short at the attack line; the setter waits as
+close to the target as the rule allows (at the net when front row, at the attack line when back
+row). Then the seven overlap constraints of FIVB rule 7.4 (each front-row player nearer the net
+than the back-row player in their column, each row in left-centre-right order, no diagonals)
+push players until legal, the least important job giving way first: passers hold their depth, the
+setter yields a little, hiders yield first. A back-row setter or opposite who has to be deeper
+than a passer tucks into the near corner, and nobody tucked short stands in a passer's lane.
 
-▶ now plays the whole rally by default: the opponent's serve (about a second in the air), the pass
-(about 1.2 s, apex around 3.5 m) into the setter's hands, the setter releasing on the serve and
-running to the ball, the hitter moving from their receive spot to their approach start, then the
-set and the approach. "Set only" on the card shortens the clip to the set. The Checks tab verifies
-that every start is legal, is the closest legal point to target, and that the setter reaches the
-ball before the pass does.
+That reproduces the textbook 5-1 without per-rotation data: in rotation 1 the setter hides in
+the right-back corner behind the right passer and has the long 5.6 m release; in rotation 2 they
+stack at the attack line behind the opposite and run 2 m; in rotation 3 they start left of centre
+behind the middle and run 3 m; in rotation 4 they start at the net just left of the middle; in
+rotations 5 and 6 they are already at the target, and the back-row opposite tucks at the attack
+line.
+
+After the serve every player transitions: the setter to the ball, each hitter to the start of
+their own always-on ball (the middle to centre 3 m off, the outside to outside the left sideline,
+the opposite to the right sideline, a back-row outside to the A or Pipe nearest the lane they
+passed in, a back-row opposite to the D), the libero stays home. Hiders and the setter release on
+the serve; passers move once the ball is past them, the passer after passing; runs are at a
+realistic speed and a hitter who is still on the way when their approach should begin merges into
+it. The 3D and Court views draw the formation, every player's dotted route, the serve and the pass,
+and the role bar says who passes and why the setter starts where they do. The Checks tab verifies
+that every rotation is legal under all seven constraints, that the passers are the libero and both
+outsides in the 5–7.5 m band, and it flags every transition that is still on the way when the
+approach should begin (the front-row outside passing on the right in rotations 1 and 4 has an 8 m
+route to the left pin and starts the approach inside; the card says so). The hitter card carries a
+"Serve receive" row with the start, the lane or hiding spot, and the route.
+
+▶ plays the whole rally by default: the opponent's serve (about a second in the air), the pass
+(about 1.2 s, apex around 3.5 m) into the setter's hands, everyone releasing and transitioning,
+then the set and the approach. "Set only" on the card shortens the clip to the set; ½ speed
+doubles it. The side view starts at the pass, since it has no depth to show the serve.
+
+On a phone the sheet collapses to its title and buttons when a clip plays and the page scrolls
+so the whole scene sits above it; the Play button becomes ■ Stop, a tap anywhere on the scene
+stops the clip, and any change of tab, set, rotation or pass stops it too. Markers are larger on
+small screens and the camera buttons fade during playback.
 
 ## BIC, side by side
 
