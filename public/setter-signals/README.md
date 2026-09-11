@@ -46,7 +46,9 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 Next to the rotation, **Pass** grades the pass by how far it lands from the setter's target, and
 **going** says which way it went. A perfect pass is the setter's optimal position, and every grade
 after it is a radius of error around that point: the landing spot is the grade's radius along the
-chosen bearing (off the net, off-left, off-right, left, right, tight), so a good pass can never be
+chosen bearing (off the net, off-left, off-right, left, right, tight — a tight pass comes down
+0.3 m from the net and switches off the 3/Shoot and the 32, which their own notes say not to run
+tight), so a good pass can never be
 further than 1.5 m from target whichever way it goes, and bearings that would leave the court or
 cross into another grade's ring are not offered. Perfect is within half a metre of target: the
 setter jump-sets and the whole menu is on (the 3 / 2 / 1 / 0 passing scale, by distance). Good is within 1.5 m: the setter moves to it and sets standing,
@@ -68,7 +70,9 @@ Every player has a serve-receive start and a transition route in every rotation,
 is derived rather than typed. The formation is solved from the lineup: the libero and both
 outsides pass (wings about 6 m off the net a third of the court in, the centre passer a half-step
 deeper, a front-row outside a little shallower); the front-row middle and opposite hide at the net
-in their own zone column; a back-row opposite tucks short at the attack line; the setter waits as
+as close to their own attack start as the rule allows (in rotation 1 they stack to the right, the
+middle at 6.8 m and the opposite at 6.4 m, so the opposite's route to the right pin is 3.8 m); a
+back-row opposite tucks short at the attack line; the setter waits as
 close to the target as the rule allows (at the net when front row, at the attack line when back
 row). Then the seven overlap constraints of FIVB rule 7.4 (each front-row player nearer the net
 than the back-row player in their column, each row in left-centre-right order, no diagonals)
@@ -126,11 +130,17 @@ from a set on the run, a bump, or a helper. The 3D and Court views draw the form
 and the role bar says who passes and why the setter starts where they do. The Checks tab verifies
 that every rotation is legal under all seven constraints, that the passers are the libero and both
 outsides in the 5–7.5 m band, and it flags every transition that is still on the way when the
-approach should begin (the front-row outside passing on the right in rotations 1 and 4 has an 8 m
-route to the left pin and starts the approach inside; the card says so). The hitter card carries a
-"Serve receive" row with the start, the lane or hiding spot, and the route.
+approach should begin. The gate is per ball and per passer: the hitter of each ball is timed from
+their own receive spot (leaving later if they are the one who passed) to that ball's start, and a
+ball they would only reach after its takeoff is off in that rotation on that pass, with the reason
+on the card. In rotations 1 and 4 the front-row outside passes on the right, 8 m from the left
+pin, so the Go and the Hut are off and the 4 is run with a shortened approach; in rotations 2, 3, 5
+and 6 the back-row outside passing on the right reaches the A late but the Pipe on time. The
+hitter card carries a "Serve receive" row with the start, the lane or hiding spot, and the route
+to the selected ball, and the role bar says who takes the serve.
 
-▶ plays the whole rally by default: the opponent's serve (about a second in the air), the pass
+▶ plays the whole rally by default: the opponent's serve (a float that clears the tape by 0.3 m
+and takes about 1.1 s to the passer, derived from that clearance), the pass
 (1.26–1.51 s, apex 3.8–4.6 m by pass grade) into the setter's hands, everyone releasing and transitioning,
 then the set and the approach. "Set only" on the card shortens the clip to the set; ½ speed
 doubles it. The side view starts at the pass, since it has no depth to show the serve.
@@ -249,6 +259,7 @@ records the claims that failed.
 | Elite setters jump 28.8 ± 3.6 cm on a set (match data); a hand set is taken above the forehead, as high as possible; a bump set is taken around waist height on the forearms | Jump Performance During Official Matches in Elite Volleyball Players (2019), Coaching Volleyball (setter hand position), Better at Beach (bump set) | Standing release 0.29 m below a jump-set release; a moving setter cannot take the ball above the forehead once it is below 1.9 m; a platform contact around 1.0 m | Accepted: jump +0.10 m, standing −0.20 m, on the run −0.35 m relative to the tape; forehead 1.9 m, waist 1.0 m |
 | Setter-out: "most coaches use the libero, playing in left back, to take the second ball"; the right side / opposite was the traditional choice; a libero may not finger-set an attack from the front zone (FIVB 19.3.1.4) but may bump-set anywhere | Coaching Volleyball (second contact when setter-out), PrepVolleyball, FIVB rules | The app picks whoever can reach the ball while it is still above the waist; in rotation 1 that is the opposite hiding in zone 4 for a shank to the left pin | Accepted |
 | Time to stop and load a jump about 0.35 s, to plant and square up about 0.1 s | Estimate (countermovement-jump propulsion takes about a third of a second) | Only decides jump versus standing set at the margin | Estimate, marked as such |
+| Serve: receivers get 0.6–1.1 s from the server's contact; a float serve is the slow end | serve-reception studies, Volleyball 1 on 1 | Derived from a 0.3 m clearance over the tape (ball radius plus margin) to the passer's platform: 1.07 s to the centre passer, 1.1 s to a wing | Accepted, derived |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
