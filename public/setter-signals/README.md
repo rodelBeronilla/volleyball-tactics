@@ -68,7 +68,7 @@ in the same place. Tempo classes and the Checks tab are always graded off a perf
 
 Every player has a serve-receive start and a transition route in every rotation, and all of it
 is derived rather than typed. The formation is solved from the lineup: the libero and both
-outsides pass (wings about 6 m off the net a third of the court in, the centre passer a half-step
+outsides pass (wings about 6 m off the net and 2 m in from their sideline, the centre passer 0.8 m
 deeper, a front-row outside a little shallower); the front-row middle and opposite hide at the net
 as close to their own attack start as the rule allows (in rotation 1 they stack to the right, the
 middle at 6.8 m and the opposite at 6.4 m, so the opposite's route to the right pin is 3.8 m); a
@@ -194,7 +194,7 @@ time: the hitter's route, the pass arriving, the set, and the jump meeting the b
 Heights in the side view are relative (`peak` 0 → 1). The 3D view and the Checks tab turn them into
 metres with the constants in `WORLD` (just below `SETS`): net height, where the setter releases the
 ball, how far above the tape a hitter contacts it, and how high a `peak = 1` ball goes. Hang time comes
-from gravity alone, so a 1 hangs about 0.35 s and a 4 about 1.5 s. Hitter timing follows from it:
+from gravity alone, so a 1 hangs about 0.45 s and a 4 about 1.3 s. Hitter timing follows from it:
 the approach time is derived from the route (`WORLD.approach`): a hitter who starts outside the
 sideline takes a full four-step approach (1.0 s); one who starts inside the court (a middle, or the
 opposite on a Back 2) is already close and takes two or three steps (0.75 s); a back-row run is
@@ -211,7 +211,7 @@ set on this ("Hang times match measured set flight times"):
 
 | Set | Hang | Peak above the net | Reference |
 | --- | --- | --- | --- |
-| 1, Back 1 | 0.45 s | 0.49 m (1.6 ft) | measured quick 0.40–0.49 s; "1–2 ft" |
+| 1, Back 1 | 0.45 s | 0.49 m (1.6 ft) | inside the measured quick band (0.40–0.49 s); "1–2 ft" |
 | Push 1 | 0.51 s | 0.56 m (1.8 ft) | same tempo as the 1 |
 | 3 / Shoot (31) | 0.55 s | 0.61 m (2 ft), a foot off the net | "1–2 ft, a foot off the net" |
 | Slide | 0.67 s | 0.79 m (2.6 ft) | "1–3 ft", one-foot takeoff |
@@ -237,18 +237,18 @@ records the claims that failed.
 
 | Quantity | Source | Cross-check | Verdict |
 | --- | --- | --- | --- |
-| Set flight times | Olympic men's finals 2000 and 2021, 327 sets, video-timed (Papers on Anthropology, 2022): quick 0.40–0.49 s, sets to zone 4 averaged 1.12 s then 0.97 s | Physics: 0.45 s is a ball that barely rises above the hitter's contact; 1.1 s is a ball peaking about 1.75 m above the net. Both match how coaches describe a quick and a medium ball. Single study, elite men only. | Used as the anchor. Its weakest use is the 4, which is extrapolated as the slow tail (1.2–1.5 s). |
+| Set flight times | Olympic men's finals 2000 and 2021, 327 sets, video-timed (Papers on Anthropology, 2022): quick sets averaged 0.40 s (2000) and 0.49 s (2021), sets to zone 4 averaged 1.12 s then 0.97 s | Physics: 0.45 s is a ball that barely rises above the hitter's contact; 1.1 s is a ball peaking about 1.75 m above the net. Both match how coaches describe a quick and a medium ball. Single study, elite men only. | Used as the anchor. Its weakest use is the 4, which is extrapolated as the slow tail (1.2–1.5 s). |
 | Quick 1–2 ft, 31 1–2 ft, 2 "2–3 ft" or "one metre", Go 3–4 ft, Slide 1–3 ft | coaching sites (Improve Your Volley, Pakmen, Volleyball Expert, Coaching Volleyball) | All sit inside the measured flight-time bands at club reach | Accepted |
 | Hut 8–10 ft, 4 10–12 ft | Improve Your Volley | 8–10 ft is a 1.35–1.5 s ball, 10–12 ft is 1.6 s+; both slower than the measured 2000 average for an ordinary outside set. Internally inconsistent with the same site's "fastest set 3–4 ft" | Rejected; Hut set to the measured 1.12 s, 4 to the slow tail |
 | Go = 2nd-step, Hut and 5 = 1st-step or slower, 1 = 3rd/4th-step, Pipe and Bic = 2nd/3rd-step, D = 2nd-step | Gold Medal Squared, Volleyball World | Reproduced by the timing model with route-derived approach times | Accepted; these decide the tempo classes |
 | Pipe "about a metre above the antenna", "traditional pipe two metres above the net" | Art of Coaching, Volleyball Hub Pro | Antenna tops 0.8 m above the net, so 1.8 m; hang 1.13 s sits in the measured band | Accepted (modern pipe) |
-| Pipe "1.5–2 m off the net" | Sportplan | A back-row hitter must take off behind the 3 m line; with a half-metre broad jump the ball is met about 2.5–2.7 m off | Rejected as contact depth; 2.7 m used |
+| Pipe "1.5–2 m off the net"; the back-row attacker plants as close to the attack line as possible and lands well in front of it | Sportplan, Volleyball Hub Pro | A plant just behind the 3 m line plus a metre of broad jump (back-row attacks carry more horizontal speed than front-row ones, per the kinematic studies) meets the ball about 2.2 m off | Accepted: 2.2 m (2.1 m at BIC tempo), takeoff 3.2 m off |
 | Bic "lower, faster version of a Pipe", "the back-row quick" | Gold Medal Squared, Coaching Volleyball | A 2nd/3rd-step ball on a back-row run is about 0.8 s; a third of a second faster than the Pipe | Accepted |
 | 31 "lands 4–5 ft in front of the setter" | Improve Your Volley | Contradicts the nine-zone numbering (zone 3 is 2–3 m from the left antenna, Coaching Volleyball). That description is what this app calls the Push 1 | Noted; 3/Shoot follows the zone numbering |
 | Slide "2–3 ft behind the setter" | Improve Your Volley | Describes a short slide; the modern slide runs to the right antenna (NCAA) | Antenna slide used |
 | Setter target 5 ft right of centre, 2–4 ft (3–5 ft) off the net | How to Coach Volleyball, Volleyballmag | Two independent sources agree | Accepted: 5.9 m from the left antenna, 0.9 m off |
-| Approach times: full four-step ≈ 1.0–1.2 s, last two steps ≈ 0.6 s | spike biomechanics (four-step vs step-close studies) | Consistent with the model's 1.0 s full and 0.75 s short approach; uncertainty about ±0.2 s moves only the borderline classes (Hut, 32) | Accepted with that caveat |
-| Rise to the ball 0.35 s | Physics: a 0.5 m jump peaks after 0.32 s; elite spike jumps 0.5–0.7 m | Consistent | Accepted |
+| Approach times: full four-step ≈ 1.0 s, a start inside the court ≈ 0.75 s, a back-row run ≈ 1.2 s | Assumption, consistent with measured approach velocities (the first step at about 2.5 m/s, rising toward the plant; horizontal takeoff velocity 1.7–3.6 m/s; back-row approaches faster than front-row) rather than a measured duration; no readable source gives the duration directly | Consistent with the model's 1.0 s full and 0.75 s short approach; uncertainty about ±0.2 s moves only the borderline classes (Hut, 32) | Accepted with that caveat |
+| Rise to the ball 0.35 s | Physics: a 0.5 m jump peaks after 0.32 s; elite men's best spike jumps are about 0.8 m (0.40 s to the peak) | Consistent for the club reach the data is graded at; a touch quick for elite jumps | Accepted |
 | Hitter reach: elite men ≈ 3.5 m spike reach on a 2.43 m net, elite women ≈ 3.2 m on 2.24 | spike-jump biomechanics | About a metre above the net at the top level; a third of a metre at club level | Used for the Club / College / Pro levels |
 | Net heights 2.43 / 2.24 m, court 9 × 9 m, 3 m line, nine 1 m zones along the net | FIVB rules, Coaching Volleyball | Rules | Accepted |
 | Players may leave their serve-receive positions at the server's contact; the setter and the middles "release to their jobs at contact" | FIVB rule 7.4 (positional faults are judged at the moment of the service hit), Coaching Volleyball (serve-receive strategies for rotation 1) | Nothing about the pass exists before the passer's contact, so the release can only be aimed at the target | Accepted: the setter runs toward the target from the serve and only turns toward the pass once it has been passed |
@@ -267,14 +267,15 @@ a metre in front of it, the Back 1 half a metre behind, the Push 1 about 1.3 m i
 0.7 m in front and the Back 2 about 1.1 m behind. Pin sets (Go, Hut, 4, Red, 5) land a metre inside
 the antenna, the Slide about 1.4 m inside the right antenna, the 3/Shoot and 32 in zone 3 (2.3 to
 2.5 m from the left antenna). Quicks are contacted half a metre off the net, flat balls a foot off,
-the 2 about 0.6 m, a Hut 0.9 m and a high ball about a metre off. Back-row balls are contacted 2.7 m off the
-net (2.5 m for a BIC) with the takeoff behind the 3-m line.
+the 2 about 0.6 m, a Hut 0.9 m and a high ball about a metre off. Back-row balls are contacted 2.2 m off the
+net (2.1 m for a BIC) with the takeoff behind the 3-m line and a metre of broad jump.
 
 **Tempo is derived, not typed.** It is how far through the approach the hitter is at setter contact
 (`WORLD.tempoPhases`): leaving the floor or already up is **minus tempo** (1, Push 1, Back 1);
-planting is **first tempo** (3/Shoot, Slide); on the second step is **second tempo** (2, Back 2,
-32, Go, Red, A, B, Pipe, C, D, and a BIC ball); on the first step or still waiting is **third
-tempo** (Hut, 4, 5). This matches the common "2nd-step tempo" (Go, Red) and "1st-step or slower"
+planting is **first tempo** (3/Shoot, Slide, and a BIC ball: a back-row hitter on the third step of
+a four-step run, which is the "2nd or 3rd step" Gold Medal Squared uses to define the bic); on the
+second step is **second tempo** (2, Back 2, 32, Go, Red, A, B, Pipe, C, D); on the first step or
+still waiting is **third tempo** (Hut, 4, 5). This matches the common "2nd-step tempo" (Go, Red) and "1st-step or slower"
 (Hut, 5) descriptions of those sets. The
 filters, the legend, the quiz and the cards all classify by tempo and by row, never by set type. Raise or lower a set's `peak` and its
 tempo class moves with it; the Checks tab confirms the named sets land where the game puts them. 

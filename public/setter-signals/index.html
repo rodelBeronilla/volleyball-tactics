@@ -620,7 +620,7 @@ const ROWS = [
 /* `group` is an internal family used by the colour scheme and the data checks; it is never shown as a filter. The UI classifies by tempo and by row. */
 const GROUPS = ['quick', 'medium', 'outside', 'rightside', 'backrow'];
 const SETTER_X = 0.66;   // setter's target: about 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2
-const BACKROW_TARGET_Y = { normal: 0.30, bic: 0.28 };
+const BACKROW_TARGET_Y = { normal: 0.245, bic: 0.23 };   // back-row balls are met about 2.2 m off the net (2.1 at BIC tempo): a plant just behind the 3 m line and a metre of broad jump; coaching puts the pipe 1.5–2 m off
 /* Pass quality. Where the ball arrives decides where the setter sets from and which balls are on.
    spot is in court fractions (x: left sideline → right, y: net → end line); release is metres above the tape
    (a jump set on a perfect pass, a standing set further off); lift is extra height the setter adds when
@@ -656,7 +656,8 @@ function passSpotFor(q, dir) {
   if (q.dist === 0) return { x: PASS_TARGET.x, y: PASS_TARGET.y };
   const d = dirOf(dir);
   if (d.id === 'tight') return { x: PASS_TARGET.x, y: 0.3 / WORLD.courtD };   // on the tape: the ball comes down 0.3 m from the net, whatever the grade asks for
-  return { x: PASS_TARGET.x + q.dist * d.v.x / WORLD.courtW, y: PASS_TARGET.y + q.dist * d.v.y / WORLD.courtD };
+  const n = Math.hypot(d.v.x, d.v.y);   // unit bearing, so the spot lands exactly the grade's distance from target
+  return { x: PASS_TARGET.x + q.dist * (d.v.x / n) / WORLD.courtW, y: PASS_TARGET.y + q.dist * (d.v.y / n) / WORLD.courtD };
 }
 /* A bearing is offered only if the pass stays on the court and still lands inside its own grade's ring. */
 function passDirOk(q, dir) {
@@ -716,7 +717,7 @@ function approachSecFor(s, hitter) {
   const start = src.approach && src.approach[0];
   return start && start.x >= 0 && start.x <= 1 ? WORLD.approach.short : WORLD.approach.full;
 }
-WORLD.jumpFront = 0.6; WORLD.jumpBack = 0.5; WORLD.jumpSlide = 0.8;   // metres from takeoff to the ball, along the line of approach
+WORLD.jumpFront = 0.6; WORLD.jumpBack = 1.0; WORLD.jumpSlide = 0.8;   // metres from takeoff to the ball, along the line of approach: a back-row attacker plants at the line and lands well in front of it
 /* The 5-1, derived from one fact: the lineup in service order, rotation 1 = setter serving from zone 1.
    Rotating moves every player one zone down (2→1, 1→6, 6→5, 5→4, 4→3, 3→2). Front row is zones 2, 3, 4.
    After the serve everyone switches to base: OH 4 / MB 3 / setter-or-opposite 2 in front; libero 5 (for
@@ -2285,12 +2286,47 @@ const RULES = [
       Object.keys(MODE_MENU).forEach(m => { const on = SETS.filter(s => !s.modifier && MODE_MENU[m](s)); const wrong = on.filter(s => (m === 'run' || m === 'bump' || m === 'help') && s.pass !== 'any'); if (wrong.length) out.push({ id: null, ok: false, level: 'err', msg: `${MODE_TEXT[m]} allows ${wrong.map(s => s.name).join(', ')}` }); if (m === 'over' && on.length) out.push({ id: null, ok: false, level: 'err', msg: 'a free ball allows sets' }); });
       return out;
     } },
-  { name: 'Pass bearings stay inside their grade\'s ring and on the court', why: 'A good pass is at most 1.5 m from target whichever way it goes, an off pass at most 3 m; a bearing that would leave the court or cross into another grade is not offered.',
-    run: () => PASSES.filter(q => q.dist > 0).flatMap(q => PASS_DIRS.map(d => {
-      const ok = passDirOk(q, d.id), sp = passSpotFor(q, d.id), m = passDistM(sp), grade = passGradeOf(sp).id;
-      const should = sp.x >= 0.02 && sp.x <= 0.98 && sp.y >= 0.01 && sp.y <= 0.98 && grade === q.id;
-      return { id: null, ok: ok === should && (!ok || m <= q.maxM + 1e-6), level: 'err', msg: `${q.label} ${d.label.toLowerCase()}: ${ok ? `${m.toFixed(1)} m from target, zone ${zoneOfSpot(sp)}` : 'not offered'}` };
-    })) },
+  { name: 'Pass bearings stay inside their grade\'s ring and on the court', why: 'A bearing lands its grade\'s distance from target in the direction its name says (left of target, right of it, deeper than it; tight at the tape), inside its own ring and outside the ring below; it is offered exactly when that spot is on the court. Every grade offers a pass straight off the net.',
+    run: () => {
+      const out = [], W = WORLD.courtW, D = WORLD.courtD, tx = PASS_TARGET.x * W, ty = PASS_TARGET.y * D;
+      PASSES.filter(q => q.dist > 0).forEach(q => {
+        const prev = PASSES[PASSES.indexOf(q) - 1];
+        if (!passDirOk(q, 'off')) out.push({ id: null, ok: false, level: 'err', msg: `${q.label}: a pass straight off the net must be offered` });
+        PASS_DIRS.forEach(d => {
+          const sp = passSpotFor(q, d.id), x = sp.x * W, y = sp.y * D, m = Math.hypot(x - tx, y - ty), bad = [];
+          const onCourt = x >= 0.02 * W && x <= 0.98 * W && y >= 0.01 * D && y <= 0.98 * D;
+          const inRing = m <= q.maxM + 1e-9 && (!prev || m > prev.maxM + 1e-9);
+          if (d.id === 'tight') { if (y > 0.35) bad.push(`tight comes down ${y.toFixed(2)} m from the net`); }
+          else { if (Math.abs(m - q.dist) > 1e-6) bad.push(`lands ${m.toFixed(2)} m from target, not ${q.dist}`); if (d.id.includes('left') && x >= tx) bad.push('left is not left of target'); if (d.id.includes('right') && x <= tx) bad.push('right is not right of target'); if (d.id.startsWith('off') && y <= ty) bad.push('off is not deeper than target'); }
+          const offered = passDirOk(q, d.id), expected = onCourt && inRing;
+          if (offered !== expected) bad.push(offered ? `offered although ${onCourt ? `it lands ${m.toFixed(1)} m from target, in another grade\'s ring` : 'it leaves the court'}` : 'on the court and inside the ring but not offered');
+          out.push({ id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `${q.label} ${d.label.toLowerCase()}: ${offered ? `${m.toFixed(1)} m from target, zone ${zoneOfSpot(sp)}` : `not offered (${onCourt ? `${m.toFixed(1)} m from target is ${inRing ? '' : 'not '}this grade` : 'off the court'})`}` });
+        });
+      });
+      return out;
+    } },
+  { name: 'The serve and the pass are real flights', why: 'The serve leaves the server\'s hand behind the end line, clears the tape by the set margin over the net line and comes down on a passer\'s platform in the 0.6–1.3 s a float takes; the pass rises to the apex its grade is passed at (3–4.7 m) and comes down at jump-set height where the grade and bearing say, in 1.1–1.6 s; a late second contact is the same ball, lower and further along.',
+    run: () => [1, 2, 3, 4, 5, 6].flatMap(r => {
+      const H = WORLD.netHeights.men, R = WORLD.rally, W = WORLD.courtW, D = WORLD.courtD, form = receiveFormation(r);
+      const sits = [resolvedPass('perfect')].concat([['off', 'off-left'], ['shank', 'left'], ['good', 'tight']].map(([g, dir]) => { const q = passOf(g); return Object.assign({}, q, { spot: passSpotFor(q, dir), dir }); }));
+      return sits.map(sit => {
+        const run = setterRun(sit, r, H), bad = [];
+        if (!form.passers.includes(run.passer)) bad.push('the serve is not taken by a passer');
+        if (Math.abs(run.pc.z - R.passContactZ) > 1e-9) bad.push('the serve is not taken on the platform');
+        if (run.serveAtNet < H + R.serveClear - 1e-6) bad.push(`the serve crosses the net at ${run.serveAtNet.toFixed(2)} m`);
+        if (run.serveSec < 0.6 || run.serveSec > 1.3) bad.push(`the serve hangs ${run.serveSec.toFixed(2)} s`);
+        let apex = 0; for (let f = 0; f <= 1.0001; f += 0.005) apex = Math.max(apex, run.zAt(f));
+        if (apex < 3.0 || apex > 4.7) bad.push(`pass apex ${apex.toFixed(2)} m`);
+        if (Math.abs(apex - R.passApex[sit.id]) > 0.02) bad.push(`pass apex ${apex.toFixed(2)} m is not the ${sit.id} apex ${R.passApex[sit.id]}`);
+        if (run.passSec < 1.1 || run.passSec > 1.6) bad.push(`the pass hangs ${run.passSec.toFixed(2)} s`);
+        if (Math.abs(run.zAt(1) - (H + WORLD.setter.hands.jump)) > 1e-6) bad.push('the pass does not come down at jump-set height');
+        if (Math.abs(run.nominal.x - sit.spot.x * W) > 1e-6 || Math.abs(run.nominal.y - sit.spot.y * D) > 1e-6) bad.push('the pass does not land where the bearing says');
+        if (run.delay > 1e-9 && !(run.contact.z < run.zAt(1) - 1e-9)) bad.push('a late contact is not lower');
+        if (run.delay > 1e-9) { const along = Math.hypot(run.contact.x - run.pc.x, run.contact.y - run.pc.y), nom = Math.hypot(run.nominal.x - run.pc.x, run.nominal.y - run.pc.y); if (along < nom - 1e-9) bad.push('a late contact is not further along the pass'); }
+        const lab = `${sit.label.toLowerCase()}${sit.dir ? ' ' + sit.dir : ''}`;
+        return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `R${r} ${lab}: serve ${run.serveSec.toFixed(2)} s, ${(run.serveAtNet - H).toFixed(2)} m over the tape to ${run.passer.code}; pass ${run.passSec.toFixed(2)} s to a ${apex.toFixed(1)} m apex${run.delay > 1e-9 ? `, taken ${run.delay.toFixed(2)} s late at ${run.contact.z.toFixed(2)} m` : ''}` };
+      });
+    }) },
   { name: 'Pass quality gates the menu the way a 5-1 setter would call it', why: 'A perfect pass turns everything on. A good pass keeps the balls that survive a setter setting standing a metre or so off the net, and an off pass leaves only the out-of-system balls, with a high ball to the outside always available. The setter is drawn where the pass takes them.',
     run: () => {
       const out = [];
@@ -2443,7 +2479,7 @@ function renderDetail() {
   if (s.pass) rows.push(['Pass', `<span class="meter">${[1, 2, 3].map(i => `<i class="${i <= passN ? 'on' : ''}"></i>`).join('')}</span>${esc(passText)}`]);
   if (s.useWhen) rows.push([hitterView ? 'When' : 'Call it when', esc(forHitter(s.useWhen, s))]);
   if (s.avoidWhen) rows.push(['Not when', esc(forHitter(s.avoidWhen, s))]);
-  rows.push(['Fallback', fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed && !efb.other ? ' <span class="hint">in this rotation</span>' : ''}${efb.other || (s.group === 'backrow' && fb.group !== 'backrow') ? ` <span class="hint">to the front-row ${esc(availability(fb, state.rotation).hitter || fb.hitter)} — ${hitterView ? 'not you' : 'not this hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
+  rows.push(['Fallback', s.modifier ? 'The same back-row ball at normal tempo — the Pipe, A, B, C or D it was flicked on.' : fb ? `<button class="sc" data-select="${fb.id}" style="color:${fb.color}"><i aria-hidden="true"></i><span style="color:var(--text)">${esc(fb.name)}</span></button>${efb.changed && !efb.other ? ' <span class="hint">in this rotation</span>' : ''}${efb.other || (s.group === 'backrow' && fb.group !== 'backrow') ? ` <span class="hint">to the front-row ${esc(availability(fb, state.rotation).hitter || fb.hitter)} — ${hitterView ? 'not you' : 'not this hitter'}</span>` : ''}` : (s.pass === 'any' ? 'This is the fallback — always on.' : 'No fallback for this hitter in this rotation.')]);
   if (!s.modifier) rows.push(['Rotations', esc(rotationsText(s))]);
   $('.content', el).innerHTML =
     `<div class="bar"></div>` +
@@ -2606,15 +2642,15 @@ function play() {
       const w = tl.setterAt(t); const q = toScreen(w);
       smove.style.opacity = t < 0.05 ? 1 : 0; smove.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`);
     }
-    if (state.fromServe) tokens.forEach(tk => { const pl = tl.form.players[Number(tk.dataset.player)]; if (!pl || (recv && pl.i === recv.i && approach)) { if (tk.style.opacity !== '0') tk.style.opacity = 0; return; } const w = tl.playerAt(pl, t); const q = toScreen({ x: Math.min(W, Math.max(0, w.x)), y: w.y }); tk.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`); });
+    if (state.fromServe) tokens.forEach(tk => { const pl = tl.form.players[Number(tk.dataset.player)]; if (!pl || (recv && pl.i === recv.i && approach)) { if (tk.style.opacity !== '0') tk.style.opacity = 0; return; } const w = tl.playerAt(pl, t); const q = toScreen({ x: w.x, y: w.y }); tk.setAttribute('transform', `translate(${r1(q.x)} ${r1(q.y)})`); });
     if (approach) {
       hitter.style.opacity = 1;
       const h = hitterPhase(t, tl);
       let q;
       const a0 = approach.getPointAtLength(0);
-      const late = state.fromServe && recv && isCourt ? (() => { const w = tl.playerAt(recv, tl.startAt); const s0 = toScreen({ x: Math.min(W, Math.max(0, w.x)), y: w.y }); return { x: s0.x - a0.x, y: s0.y - a0.y }; })() : { x: 0, y: 0 };
+      const late = state.fromServe && recv && isCourt ? (() => { const w = tl.playerAt(recv, tl.startAt); const s0 = toScreen({ x: w.x, y: w.y }); return { x: s0.x - a0.x, y: s0.y - a0.y }; })() : { x: 0, y: 0 };
       if (h.mode === 'wait') {
-        if (state.fromServe && recv && isCourt) { const w = tl.playerAt(recv, t); q = toScreen({ x: Math.min(W, Math.max(0, w.x)), y: w.y }); }
+        if (state.fromServe && recv && isCourt) { const w = tl.playerAt(recv, t); q = toScreen({ x: w.x, y: w.y }); }
         else q = a0;
       }
       else if (h.mode === 'run') { const pt = approach.getPointAtLength(alen * h.f); q = { x: pt.x + late.x * (1 - h.f), y: pt.y + late.y * (1 - h.f) }; }
