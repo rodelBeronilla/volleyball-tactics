@@ -892,7 +892,10 @@ const RECV = {
   wingDepth: 6.0, frontWingDepth: 5.6, centreDepth: 6.8, slots: [2.0, 4.5, 7.2],   // the three passers: wings a third of the court in, the centre passer a half-step deeper
   hideY: 1.0, tuckY: 3.0, tuckX: 6.0, cornerIn: 0.7,                              // hiders wait at the net in their zone; a back-row opposite tucks short; forced deep, tuck in the corner
   margin: 0.4, lane: 0.9, stiff: { pass: 30, set: 2, hide: 1 },                                // who gives way when the overlap rule bites: passers hold their depth, the setter yields a little, hiders yield first
-  setterSpeed: 3.5, hitterSpeed: 3.5, reaction: 0.15, seesItPast: 0.2
+  setterSpeed: 4.0, hitterSpeed: 3.5, reaction: 0.3, read: 0.3, seesItPast: 0.2
+  // reaction: receivers start moving about 0.3 s after the server's contact (serve-reception studies); the same beat is
+  // allowed for reading the pass. setterSpeed: junior/college setters run 20 m in about 3.7 s (5.4 m/s average from a
+  // standing start), so a 4 m/s average over a short chase that has to end under control is on the conservative side.
 };
 const zoneX = z => ({ 4: 1.5, 3: 4.5, 2: 7.5, 5: 1.5, 6: 4.5, 1: 7.5 })[z];
 const OVERLAP = [['x', 4, 3], ['x', 3, 2], ['x', 5, 6], ['x', 6, 1], ['y', 2, 1], ['y', 3, 6], ['y', 4, 5]];   // a[k] must be < b[k] − margin (FIVB 7.4: front/back partner in the column, neighbours in the row; no diagonals)
@@ -971,6 +974,35 @@ function passerFor(pass, r) {   // whoever passes: of the three passers, the one
   if (pass.id === 'perfect' || pass.dist === 0) return f.passers.find(p => p.lane === 'centre') || f.passers[0];
   return f.passers.slice().sort((a, b) => (Math.abs(a.x - sx) + (a.front ? 0.8 : 0)) - (Math.abs(b.x - sx) + (b.front ? 0.8 : 0)))[0];
 }
+/* ---------- The setter's run, honestly ----------
+   The pass does not exist until it leaves the passer's hands, so nothing about it can steer the setter before that.
+   On the serve the setter releases toward the target (after a reaction); when the passer contacts the ball they need
+   another beat to read it, and only then can they turn toward wherever it is going, from wherever they are. Whether
+   they get there before the ball comes down is a result of the run, not an assumption. */
+const setterRunCache = {};
+function setterRun(pass, r) {
+  r = r || state.rotation;
+  const key = r + '|' + pass.id + '|' + pass.spot.x.toFixed(4) + ',' + pass.spot.y.toFixed(4) + '|' + JSON.stringify(RECV) + '|' + JSON.stringify(WORLD.rally) + '|' + SETTER_X + '|' + WORLD.releaseY;
+  if (setterRunCache[key]) return setterRunCache[key];
+  const form = receiveFormation(r), R = WORLD.rally, v = RECV.setterSpeed, W = WORLD.courtW, D = WORLD.courtD;
+  const passSec = R.passSec;
+  const serveAt = -(R.serveSec + passSec), passAt = -passSec;
+  const releaseAt = serveAt + RECV.reaction, readAt = passAt + RECV.read;
+  const start = { x: form.setter.x, y: form.setter.y }, target = { x: form.target.x, y: form.target.y };
+  const spot = { x: pass.spot.x * W, y: pass.spot.y * D };
+  const lerp = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f });
+  const clamp01 = f => Math.max(0, Math.min(1, f));
+  const toTargetM = Math.hypot(target.x - start.x, target.y - start.y);
+  const before = t => toTargetM < 1e-6 ? { x: target.x, y: target.y } : lerp(start, target, clamp01((t - releaseAt) * v / toTargetM));   // toward the target, knowing nothing about the pass
+  const atRead = before(readAt);
+  const chaseM = Math.hypot(spot.x - atRead.x, spot.y - atRead.y);
+  const arriveAt = readAt + chaseM / v;
+  const at = t => t < readAt ? before(t) : (chaseM < 1e-6 ? { x: spot.x, y: spot.y } : lerp(atRead, spot, clamp01((t - readAt) * v / chaseM)));
+  const coveredM = Math.min(toTargetM, Math.max(0, (readAt - releaseAt) * v));
+  const out = { r, form, pass, serveAt, passAt, releaseAt, readAt, start, target, spot, atRead, toTargetM, coveredM, chaseM, runM: coveredM + chaseM, arriveAt, late: Math.max(0, arriveAt), slack: -arriveAt, at };
+  setterRunCache[key] = out;
+  return out;
+}
 function roleHasNow(s) {   // is it on in this rotation, for this role, on this pass?
   const a = availability(s, state.rotation);
   if (!a.ok || !passOk(s)) return false;
@@ -1024,7 +1056,9 @@ function renderRoleBar() {
   const where = `Rotation ${rot.r}: setter in zone ${rot.setterZone}, ${rot.setterFront ? 'front' : 'back'} row · front ${rot.front.join(' ')} · back ${rot.back.join(' ')}`;
   const pass = currentPass(), rec = recommended(), form = receiveFormation(state.rotation);
   const recvText = ` Serve receive: ${form.passers.map(p => p.code).join(', ')} pass; setter starts ${form.setter.y > 4.5 ? 'deep' : form.setter.y > 1.5 ? 'at the 3-m line' : 'at the net'} ${form.setter.x < 3 ? 'on the left' : form.setter.x < 5 ? 'left of centre' : form.setter.x > 7.5 ? 'in the right corner' : 'on the right'}${form.setter.why.length ? ` (${form.setter.why.join(', ')})` : ''} and runs ${form.runM.toFixed(1)} m to target on the serve.`;
-  const passText = pass.id === 'perfect' ? '' : ` ${pass.label} pass, ${pass.distM.toFixed(1)} m ${dirOf(pass.dir).label.toLowerCase()} of target, landing in zone ${pass.zone}. ${pass.hint}${rec ? ` Best call: the ${rec.name}.` : ''}`;
+  const run = setterRun(pass, state.rotation);
+  const chaseText = run.chaseM > 0.05 ? ` The setter reads it ${run.chaseM.toFixed(1)} m away and ${run.late > 0.02 ? `is ${run.late.toFixed(2)} s late` : `gets there with ${run.slack.toFixed(2)} s to spare`}.` : '';
+  const passText = pass.id === 'perfect' ? chaseText : ` ${pass.label} pass, ${pass.distM.toFixed(1)} m ${dirOf(pass.dir).label.toLowerCase()} of target, landing in zone ${pass.zone}. ${pass.hint}${chaseText}${rec ? ` Best call: the ${rec.name}.` : ''}`;
   const hint = (state.role === 'setter' ? `${where}. ${rot.setterFront ? 'Two front-row hitters: the opposite attacks from the back row and you can dump.' : 'Three front-row hitters plus the back-row outside.'}` : `${where}. Your balls now — front row: ${front.join(' · ') || 'none'}${back.length ? ` · back row: ${back.join(' · ')}` : ''}.`) + recvText + passText;
   $('#rolebar').innerHTML = `<span class="lab">I am the</span><div class="seg" role="group" aria-label="Role">${ROLES.map(r => `<button data-role="${r.id}" aria-pressed="${state.role === r.id}">${r.label}</button>`).join('')}</div>` +
     `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}` +
@@ -1044,16 +1078,13 @@ function timeline(fl) {
   // the rally before the set: the serve is contacted at serveAt, passed at passAt, and reaches the setter at t = 0
   const pass = fl.pass || resolvedPass('perfect');
   const R = WORLD.rally, serveAt = -(R.serveSec + R.passSec), passAt = -R.passSec;
-  const form = receiveFormation(fl.rotation || state.rotation), W = WORLD.courtW, D = WORLD.courtD;
-  const spot = { x: pass.spot.x * W, y: pass.spot.y * D };
-  const runM = Math.hypot(spot.x - form.setter.x, spot.y - form.setter.y);
-  const runSec = Math.min(-serveAt - RECV.reaction - 0.1, runM / RECV.setterSpeed);   // the setter releases on the serve (after a reaction) and is there before the pass arrives; on a shank they sprint
+  const run = setterRun(pass, fl.rotation || state.rotation), form = run.form;
   const passer = passerFor(pass, form.r);
   const kServe = G * R.serveSec * R.serveSec / 2, kPass = G * R.passSec * R.passSec / 2;
   const pc = { x: passer.x, y: passer.y, z: R.passContactZ };
   const arc = (a, b, k, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f + k * f * (1 - f) });
   const ballAt = t => t < serveAt ? Object.assign({}, R.server) : t < passAt ? arc(R.server, pc, kServe, (t - serveAt) / R.serveSec) : t < 0 ? arc(pc, fl.p0, kPass, (t - passAt) / R.passSec) : fl.at(Math.min(1, t / fl.T));
-  const setterAt = t => { const f = runSec > 0 ? Math.max(0, Math.min(1, (t - serveAt - RECV.reaction) / runSec)) : (t >= serveAt ? 1 : 0); return { x: form.setter.x + (spot.x - form.setter.x) * f, y: form.setter.y + (spot.y - form.setter.y) * f, z: 0 }; };
+  const setterAt = t => { const q = run.at(t); return { x: q.x, y: q.y, z: 0 }; };   // toward the target until the pass can be read, then to the ball
   // everyone else: hiders and the setter release on the serve; passers move once the ball is past them, the passer after passing
   const playerAt = (p, t) => {
     if (p.i === 0) return setterAt(t);
@@ -1062,9 +1093,9 @@ function timeline(fl) {
     const f = Math.max(0, Math.min(1, (t - leaveAt) / sec));
     return { x: p.x + (p.goes.x - p.x) * f, y: p.y + (p.goes.y - p.y) * f, z: 0 };
   };
-  // the old "moveSec" is how long before t = 0 the setter is still on the way, kept for the short (set-only) clip
-  const moveSec = pass.id === 'perfect' ? 0 : Math.max(0, runSec - (-serveAt - runSec)) + 0.25;
-  return { T: fl.T, startAt, takeoffAt, approachSec, phase: -startAt / approachSec, moveSec, moveM: runM, serveAt, passAt, runSec, runM, form, passer, passContact: pc, ballAt, setterAt, playerAt };
+  // how long before t = 0 the setter is still on the way: from the read, when the chase begins (kept for the short, set-only clip)
+  const moveSec = run.chaseM > 0.05 ? -run.readAt + 0.25 : 0;
+  return { T: fl.T, startAt, takeoffAt, approachSec, phase: -startAt / approachSec, moveSec, moveM: run.runM, serveAt, passAt, runSec: run.arriveAt - run.releaseAt, runM: run.runM, run, form, passer, passContact: pc, ballAt, setterAt, playerAt };
 }
 function timingText(s, tl) {
   if (s.timingNote) return s.timingNote;
@@ -1170,7 +1201,8 @@ function netScene(L, sets, opts) {
   const handsY = L.netY - L.fs * 1.1;
   const span = handsY - L.topY;
   const pass = currentPass();
-  const setterX = nx(L, pass.spot.x), baseX = nx(L, SETTER_X);
+  const run = setterRun(pass, state.rotation);
+  const setterX = nx(L, pass.spot.x), baseX = nx(L, run.atRead.x / WORLD.courtW);   // the chase starts where the setter is when the pass can be read
   let o = `<svg class="scene" viewBox="0 0 ${L.W} ${L.H}" role="img" aria-label="Side view of the net with set trajectories">`;
   o += `<defs><pattern id="mesh" width="${L.fs * 0.5}" height="${L.fs * 0.5}" patternUnits="userSpaceOnUse"><path d="M0 0H${L.fs * 0.5}V${L.fs * 0.5}" fill="none" stroke="#3a4157" stroke-width="1"/></pattern>`;
   sets.forEach(s => { o += `<marker id="arrow-${s.id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="${s.color}"/></marker>`; });
@@ -1205,10 +1237,10 @@ function netScene(L, sets, opts) {
        `<path d="M${r1(setterX)} ${r1(headY + headR)} V${r1(L.netY + L.netH + L.fs * 0.9)} M${r1(setterX)} ${r1(L.netY + L.netH + L.fs * 0.9)} L${r1(setterX - L.fs * 0.5)} ${r1(L.floorY)} M${r1(setterX)} ${r1(L.netY + L.netH + L.fs * 0.9)} L${r1(setterX + L.fs * 0.5)} ${r1(L.floorY)}" fill="none" stroke="#e8ebf5" stroke-width="${r1(L.sw * 0.9)}" stroke-linecap="round"/>` +
        (opts && opts.noLabels ? '' : `<text x="${r1(setterX)}" y="${r1(L.floorY + L.fs * 1.1)}" font-size="${r1(L.fs * 0.75)}" fill="#8b93ab" text-anchor="middle">Setter${pass.id === 'perfect' ? '' : ` · ${(pass.spot.y * WORLD.courtD).toFixed(1)} m off the net`}</text>`) +
        `</g>`;
-  if (pass.id !== 'perfect') {   // where the setter came from
+  if (run.chaseM > 0.05) {   // where the setter is when the pass can be read, and the chase to the ball
     o += `<g class="smove-g"><circle cx="${r1(baseX)}" cy="${r1(L.floorY)}" r="${r1(L.fs * 0.3)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>` +
          `<path d="M${r1(baseX)} ${r1(L.floorY)} L${r1(setterX)} ${r1(L.floorY)}" stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6" fill="none"/>` +
-         (opts && opts.noLabels ? '' : `<text x="${r1(baseX)}" y="${r1(L.floorY - L.fs * 0.6)}" font-size="${r1(L.fs * 0.7)}" fill="#8b93ab" text-anchor="middle">target</text>`) + `</g>`;
+         (opts && opts.noLabels ? '' : `<text x="${r1(baseX)}" y="${r1(L.floorY - L.fs * 0.6)}" font-size="${r1(L.fs * 0.7)}" fill="#8b93ab" text-anchor="middle">reads the pass${run.late > 0.02 ? ` · ${run.late.toFixed(1)} s late` : ''}</text>`) + `</g>`;
   }
   // sets: draw the highest first so low ones sit on top
   sets.slice().sort((a, b) => b.netView.peak - a.netView.peak).forEach(s => { o += netSetMarkup(L, s, opts); });
@@ -1393,22 +1425,25 @@ function courtScene(sets, opts) {
     [[1.5, 'good'], [3.0, 'off']].forEach(([m, k]) => { o += `<circle class="tol tol-${k}" cx="${r1(tx)}" cy="${r1(ty)}" r="${r1(m * mx)}" fill="none" stroke="#8b93ab" stroke-width="1.2" stroke-dasharray="3 5" opacity="${state.placing || state.pass !== 'perfect' ? 0.7 : 0.25}"/>`; if (!opts.noLabels && (state.placing || state.pass !== 'perfect')) o += `<text x="${r1(tx - m * mx + 6)}" y="${r1(ty + CL.fs * 0.55)}" font-size="${r1(CL.fs * 0.5)}" fill="#8b93ab">${m} m</text>`; });
     if (state.placing) o += `<rect class="placer" data-passtap x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${CL.ch}" fill="#4da3ff" opacity=".08" style="cursor:crosshair"/>`; }
   // setter, at the pass; a dotted run from the target when the pass is off
-  const pass = currentPass(), sx = cx(pass.spot.x), sy = cy(pass.spot.y);
-  if (pass.id !== 'perfect') {
-    const bx = cx(PASS_TARGET.x), by = cy(PASS_TARGET.y);
-    o += `<g class="smove-g"><circle cx="${r1(bx)}" cy="${r1(by)}" r="${r1(CL.fs * 0.5)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>` +
-         `<path d="M${r1(bx)} ${r1(by)} L${r1(sx)} ${r1(sy)}" stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6" fill="none"/>` +
-         (opts.noLabels ? '' : `<text x="${r1(sx + CL.fs * 0.7)}" y="${r1(sy + CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab">${esc(pass.label)} pass · ${pass.distM.toFixed(1)} m from target</text>`) + `</g>`;
+  const pass = currentPass(), sx = cx(pass.spot.x), sy = cy(pass.spot.y), run = setterRun(pass, state.rotation);
+  { // the target, and the chase: from wherever the setter is when the pass can be read, to the ball
+    const bx = cx(PASS_TARGET.x), by = cy(PASS_TARGET.y), rx = cx(run.atRead.x / WORLD.courtW), ry = cy(run.atRead.y / WORLD.courtD);
+    o += `<g class="smove-g">`;
+    if (pass.id !== 'perfect') o += `<circle cx="${r1(bx)}" cy="${r1(by)}" r="${r1(CL.fs * 0.5)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>`;
+    if (run.chaseM > 0.05) o += `<path d="M${r1(rx)} ${r1(ry)} L${r1(sx)} ${r1(sy)}" stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6" fill="none"/><circle cx="${r1(rx)}" cy="${r1(ry)}" r="${r1(CL.fs * 0.3)}" fill="none" stroke="#8b93ab" stroke-width="1.5"/>`;
+    if (!opts.noLabels && pass.id !== 'perfect') o += `<text x="${r1(sx + CL.fs * 0.7)}" y="${r1(sy + CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.6)}" fill="#8b93ab">${esc(pass.label)} pass · ${pass.distM.toFixed(1)} m from target</text>`;
+    if (!opts.noLabels && run.chaseM > 0.05) o += `<text x="${r1(rx + CL.fs * 0.5)}" y="${r1(ry - CL.fs * 0.4)}" font-size="${r1(CL.fs * 0.55)}" fill="#8b93ab">reads the pass · ${run.chaseM.toFixed(1)} m to go${run.late > 0.02 ? ` · ${run.late.toFixed(1)} s late` : ''}</text>`;
+    o += `</g>`;
   }
   { const form = receiveFormation(state.rotation), sel = state.selected && byId(state.selected), W = WORLD.courtW, D = WORLD.courtD;
     o += `<g class="recv-g">`;
     form.players.forEach(pl => { if (pl.i === 0) return; const qx = cx(pl.x / W), qy = cy(pl.y / D);
       if (pl.moveM > 0.2) { const gx = cx(Math.min(1, Math.max(0, pl.goes.x / W))), gy = cy(pl.goes.y / D); o += `<path class="proute" d="M${r1(qx)} ${r1(qy)}L${r1(gx)} ${r1(gy)}" stroke="#8b93ab" stroke-width="1.3" stroke-dasharray="2 5" opacity=".5"/>`; }
       o += `<g class="ptoken" data-player="${pl.i}" transform="translate(${r1(qx)} ${r1(qy)})"><circle r="${r1(CL.fs * 0.42)}" fill="#1e2332" stroke="#8b93ab" stroke-width="1.5" opacity=".85"/><text y="${r1(CL.fs * 0.22)}" font-size="${r1(CL.fs * 0.5)}" font-weight="800" fill="#8b93ab" text-anchor="middle">${esc(pl.code)}</text></g>`; });
-    const qx = cx(form.setter.x / W), qy = cy(form.setter.y / D);
-    o += `<path d="M${r1(qx)} ${r1(qy)} L${r1(sx)} ${r1(sy)}" stroke="#e8ebf5" stroke-width="2" stroke-dasharray="4 6" fill="none" opacity=".7"/>`;
+    const qx = cx(form.setter.x / W), qy = cy(form.setter.y / D), rx = cx(run.atRead.x / W), ry = cy(run.atRead.y / D);
+    o += `<path d="M${r1(qx)} ${r1(qy)} L${r1(rx)} ${r1(ry)}" stroke="#e8ebf5" stroke-width="2" stroke-dasharray="4 6" fill="none" opacity=".7"/>`;
     o += `<circle cx="${r1(qx)}" cy="${r1(qy)}" r="${r1(CL.fs * 0.42)}" fill="#e8ebf5" opacity=".9"/><text x="${r1(qx)}" y="${r1(qy + CL.fs * 0.22)}" font-size="${r1(CL.fs * 0.5)}" font-weight="800" fill="#0f1117" text-anchor="middle">S</text>`;
-    if (!opts.noLabels) o += `<text x="${r1(qx + CL.fs * 0.7)}" y="${r1(qy - CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.55)}" fill="#8b93ab">setter starts · ${form.runM.toFixed(1)} m run</text>`;
+    if (!opts.noLabels) o += `<text x="${r1(qx + CL.fs * 0.7)}" y="${r1(qy - CL.fs * 0.3)}" font-size="${r1(CL.fs * 0.55)}" fill="#8b93ab">setter starts · ${run.runM.toFixed(1)} m run</text>`;
     if (sel && !sel.modifier) { const fl0 = flight(sel, { bic: state.bic && sel.group === 'backrow' }); if (fl0) { const tl0 = timeline(fl0); const pts = []; for (let i = 0; i <= 24; i++) { const w = tl0.ballAt(tl0.serveAt + (0 - tl0.serveAt) * i / 24); if (w.y >= 0) pts.push({ x: cx(w.x / W), y: cy(w.y / D) }); }
       if (pts.length > 2) o += `<path class="rally" d="${bezierThrough(pts)}" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="2 6" opacity=".45"/>`;
       const pc = tl0.passContact; o += `<circle cx="${r1(cx(pc.x / W))}" cy="${r1(cy(pc.y / D))}" r="${r1(CL.fs * 0.25)}" fill="#fff" opacity=".6"/>`; } }
@@ -1597,12 +1632,14 @@ function v3Scene(L, sets, opts) {
   o += line({ x: 0, y: 0, z: netH }, { x: W, y: 0, z: netH }, 'stroke="#e8ebf5" stroke-width="4" stroke-linecap="round"');
   [0, W].forEach(x => { o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#ff4d4d" stroke-width="5" stroke-linecap="round"'); o += line({ x, y: 0, z: netH - 1 }, { x, y: 0, z: netH + 0.8 }, 'stroke="#fff" stroke-width="5" stroke-dasharray="10 10"'); });
   // setter, where the pass takes them; a dotted run from the target when the pass is off
-  const pass = currentPass();
+  const pass = currentPass(), run = setterRun(pass, state.rotation);
   const rel = { x: pass.spot.x * W, y: pass.spot.y * D, z: netH + pass.release };
-  if (pass.id !== 'perfect') {
-    const base = { x: SETTER_X * W, y: WORLD.releaseY, z: 0 };
-    o += `<g class="smove-g">` + line(base, { x: rel.x, y: rel.y, z: 0 }, 'stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6"');
-    { const q = P(base); o += `<circle cx="${r1(q.x)}" cy="${r1(q.y)}" r="${r1(fs * 0.3)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>`; if (!opts.noLabels) o += `<text x="${r1(q.x)}" y="${r1(q.y - fs * 0.5)}" font-size="${r1(fs * 0.7)}" fill="#8b93ab" text-anchor="middle">target</text>`; }
+  { // the target, and the chase from wherever the setter is when the pass can be read
+    const base = { x: SETTER_X * W, y: WORLD.releaseY, z: 0 }, rd = { x: run.atRead.x, y: run.atRead.y, z: 0 };
+    o += `<g class="smove-g">`;
+    if (run.chaseM > 0.05) o += line(rd, { x: rel.x, y: rel.y, z: 0 }, 'stroke="#8b93ab" stroke-width="2" stroke-dasharray="4 6"');
+    if (pass.id !== 'perfect') { const q = P(base); o += `<circle cx="${r1(q.x)}" cy="${r1(q.y)}" r="${r1(fs * 0.3)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/>`; if (!opts.noLabels) o += `<text x="${r1(q.x)}" y="${r1(q.y - fs * 0.5)}" font-size="${r1(fs * 0.7)}" fill="#8b93ab" text-anchor="middle">target</text>`; }
+    if (run.chaseM > 0.05) { const q = P(rd); o += `<circle cx="${r1(q.x)}" cy="${r1(q.y)}" r="${r1(fs * 0.22)}" fill="none" stroke="#8b93ab" stroke-width="1.5"/>`; if (!opts.noLabels) o += `<text x="${r1(q.x)}" y="${r1(q.y + fs * 0.9)}" font-size="${r1(fs * 0.6)}" fill="#8b93ab" text-anchor="middle">reads the pass · ${run.chaseM.toFixed(1)} m to go${run.late > 0.02 ? ` · ${run.late.toFixed(1)} s late` : ''}</text>`; }
     o += `</g>`;
   }
   // serve receive: everyone's start, the setter's run to the ball, and (for the selected set) the serve and the pass
@@ -1612,9 +1649,9 @@ function v3Scene(L, sets, opts) {
       if (pl.moveM > 0.2) { const g = P({ x: pl.goes.x, y: pl.goes.y, z: 0 }); o += `<path class="proute" d="M${r1(q.x)} ${r1(q.y)}L${r1(g.x)} ${r1(g.y)}" stroke="#8b93ab" stroke-width="1.2" stroke-dasharray="2 5" opacity=".5"/>`; }
       o += `<g class="ptoken" data-player="${pl.i}" transform="translate(${r1(q.x)} ${r1(q.y)})"><circle r="${r1(fs * 0.32)}" fill="#1e2332" stroke="#8b93ab" stroke-width="1.5" opacity=".85"/><text y="${r1(fs * 0.2)}" font-size="${r1(fs * 0.42)}" font-weight="800" fill="#8b93ab" text-anchor="middle">${esc(pl.code)}${pl.job === 'pass' ? '' : ''}</text></g>`; });
     const sq = P({ x: form.setter.x, y: form.setter.y, z: 0 });
-    o += line({ x: form.setter.x, y: form.setter.y, z: 0 }, { x: rel.x, y: rel.y, z: 0 }, 'stroke="#e8ebf5" stroke-width="2" stroke-dasharray="4 6" opacity=".7"');
+    o += line({ x: form.setter.x, y: form.setter.y, z: 0 }, { x: run.atRead.x, y: run.atRead.y, z: 0 }, 'stroke="#e8ebf5" stroke-width="2" stroke-dasharray="4 6" opacity=".7"');
     o += `<circle cx="${r1(sq.x)}" cy="${r1(sq.y)}" r="${r1(fs * 0.34)}" fill="#e8ebf5" opacity=".9"/><text x="${r1(sq.x)}" y="${r1(sq.y + fs * 0.2)}" font-size="${r1(fs * 0.42)}" font-weight="800" fill="#0f1117" text-anchor="middle">S</text>`;
-    if (!opts.noLabels) o += `<text x="${r1(sq.x)}" y="${r1(sq.y - fs * 0.55)}" font-size="${r1(fs * 0.65)}" fill="#8b93ab" text-anchor="middle">setter starts · ${form.runM.toFixed(1)} m run</text>`;
+    if (!opts.noLabels) o += `<text x="${r1(sq.x)}" y="${r1(sq.y - fs * 0.55)}" font-size="${r1(fs * 0.65)}" fill="#8b93ab" text-anchor="middle">setter starts · ${run.runM.toFixed(1)} m run</text>`;
     if (sel && !sel.modifier) { const fl0 = flight(sel, { bic: state.bic && sel.group === 'backrow' }); if (fl0) { const tl0 = timeline(fl0); const pts = []; for (let i = 0; i <= 24; i++) { const w = tl0.ballAt(tl0.serveAt + (0 - tl0.serveAt) * i / 24); pts.push(P(w)); }
       o += `<path class="rally" d="${bezierThrough(pts)}" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="2 6" opacity=".45"/>`;
       const pq = P(tl0.passContact); o += `<circle cx="${r1(pq.x)}" cy="${r1(pq.y)}" r="${r1(fs * 0.22)}" fill="#fff" opacity=".6"/>`; } }
@@ -2079,12 +2116,28 @@ const RULES = [
       if (f.passers.length !== 3 || !f.passers.every(p => p.role === 'OH' || p.code === 'L')) bad.push('passers must be the libero and both outsides');
       f.passers.forEach(p => { if (p.y < 5.0 || p.y > 7.5) bad.push(`${p.code} passes from ${p.y.toFixed(1)} m, outside the 5–7.5 m band`); });
       f.players.forEach(p => { if (p.x < 0.3 || p.x > WORLD.courtW - 0.3 || p.y < 0.3 || p.y > WORLD.courtD - 0.3) bad.push(`${p.code} starts off the court`); });
-      const R = WORLD.rally; if (f.runM / RECV.setterSpeed > R.serveSec + R.passSec - 0.1) bad.push('setter cannot reach the target before the pass arrives');
+      { const pr = setterRun(resolvedPass('perfect'), r); if (pr.arriveAt > 0) bad.push(`setter cannot reach the target before a perfect pass comes down (${pr.late.toFixed(2)} s late)`); }
       const front = rotation(r).setterFront; if (front && s.y > 1.5) bad.push('a front-row setter should start at the net'); if (!front && s.y < 1.4) bad.push('a back-row setter must start behind the front row');
       const late = [];
       f.players.forEach(p => { if (!p.i) return; const ti = transitionInfo(p); if (!ti) return; if (ti.tooLate) bad.push(`${p.code} cannot even take off in time for the ${ti.ball.name} (${p.moveM.toFixed(1)} m, arrives ${ti.arrive.toFixed(1)} s after the setter's touch)`); else if (ti.late > 0) late.push(`${p.code} ${p.moveM.toFixed(1)} m to the ${ti.ball.name}, ${ti.late.toFixed(1)} s late for a full approach — starts inside, approach shortened`); });
       const lateText = late.length ? ` · long transitions: ${late.join('; ')}` : '';
       return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || `R${r}: passers ${f.passers.map(p => `${p.code}(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' ')} · setter ${s.x.toFixed(1)},${s.y.toFixed(1)} ${s.why.length ? '— ' + s.why.join(', ') : ''} · runs ${f.runM.toFixed(1)} m${lateText}` };
+    }) },
+  { name: 'The setter cannot know the pass before it is passed', why: 'The pass exists only once it leaves the passer\'s hands. Until the setter has read it they run toward the target, and where they are at that moment is the same whatever the pass turns out to be; the chase starts from there, never from the target. Whether they arrive before the ball comes down is a result of the run, not an assumption.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => {
+      const bad = [], perfect = setterRun(resolvedPass('perfect'), r);
+      const situations = PASSES.filter(q => q.dist > 0).flatMap(q => PASS_DIRS.filter(d => passDirOk(q, d.id)).map(d => Object.assign({}, q, { spot: passSpotFor(q, d.id), dir: d.id })));
+      situations.forEach(sit => {
+        const run = setterRun(sit, r);
+        for (let t = run.serveAt; t <= run.readAt + 1e-9; t += 0.05) { const a = run.at(t), b = perfect.at(t); if (Math.hypot(a.x - b.x, a.y - b.y) > 1e-6) { bad.push(`${sit.label} ${sit.dir}: the setter is steered by the pass at ${t.toFixed(2)} s, before it can be read`); break; } }
+        const q = run.at(run.readAt - 0.01), s0 = run.start, tg = run.target;   // before the read, on the line from the start to the target
+        if (Math.abs((tg.x - s0.x) * (q.y - s0.y) - (tg.y - s0.y) * (q.x - s0.x)) > 1e-3) bad.push(`${sit.label} ${sit.dir}: the setter leaves the line to the target before reading the pass`);
+        if (Math.abs(run.chaseM - Math.hypot(run.spot.x - run.atRead.x, run.spot.y - run.atRead.y)) > 1e-6) bad.push(`${sit.label} ${sit.dir}: the chase does not start where the setter is at the read`);
+        if (run.arriveAt < run.readAt - 1e-9) bad.push(`${sit.label} ${sit.dir}: arrives before the read`);
+      });
+      const lateOnes = situations.map(sit => setterRun(sit, r)).filter(x => x.late > 0.02);
+      const msg = `R${r}: reads the pass at ${perfect.atRead.x.toFixed(1)},${perfect.atRead.y.toFixed(1)} after ${perfect.coveredM.toFixed(1)} m of the ${perfect.toTargetM.toFixed(1)} m release${lateOnes.length ? ` · late to ${lateOnes.length} of ${situations.length} bad passes (worst ${Math.max(...lateOnes.map(x => x.late)).toFixed(2)} s: ${lateOnes.slice().sort((a, b) => b.late - a.late).slice(0, 3).map(x => `${x.pass.label.toLowerCase()} ${x.pass.dir}`).join(', ')}${lateOnes.length > 3 ? '…' : ''})` : ' · reaches every pass'}`;
+      return { id: null, ok: !bad.length, level: 'err', msg: bad.join('; ') || msg };
     }) },
   { name: 'Pass bearings stay inside their grade\'s ring and on the court', why: 'A good pass is at most 1.5 m from target whichever way it goes, an off pass at most 3 m; a bearing that would leave the court or cross into another grade is not offered.',
     run: () => PASSES.filter(q => q.dist > 0).flatMap(q => PASS_DIRS.map(d => {
@@ -2228,6 +2281,8 @@ function renderDetail() {
   rows.push(['Signal', `<div class="sigrow">${glyphHtml(s, 'glyph')}<div>${esc(s.signal.description)}<br><span class="badge">${esc(howLabel(s))}</span></div></div>`]);
   if (s.startNote) rows.push([hitterView ? 'Start' : 'Hitter starts', esc(startNoteFor(s))]);
   { const rp = !s.modifier && receiverFor(s); if (rp) { const ti = transitionInfo(rp); const from = `${rp.job === 'pass' ? `passing in the ${rp.lane} lane` : rp.job === 'hide' ? 'hiding at the net' : 'tucked short'}, ${rp.x.toFixed(1)} m across and ${rp.y.toFixed(1)} m off`; rows.push(['Serve receive', esc(`${hitterView ? 'You start' : 'Hitter starts'} ${from}, then ${rp.moveM < 0.3 ? 'stays put' : `moves ${rp.moveM.toFixed(1)} m to the approach start`}${ti && ti.late > 0 ? ` — ${ti.late.toFixed(1)} s late for a full approach on the ${ti.ball.name}, so start inside and shorten the approach` : ''}.`)]); } }
+  if (tl && tl.run) { const rn = tl.run, v = hitterView ? { rel: 'The setter releases', cov: 'has covered', at: 'is at target', run: 'runs' } : { rel: 'You release', cov: 'have covered', at: 'are at target', run: 'run' };
+    rows.push([hitterView ? 'Setter' : 'Your run', esc(`${v.rel} on the serve from ${rn.start.x.toFixed(1)}, ${rn.start.y.toFixed(1)} (${rn.toTargetM.toFixed(1)} m from target)${rn.coveredM < rn.toTargetM - 0.05 ? `, ${v.cov} ${rn.coveredM.toFixed(1)} m when the pass can be read` : rn.toTargetM > 0.05 ? `, ${v.at} when the pass can be read` : ''}${rn.chaseM > 0.05 ? `, then ${v.run} ${rn.chaseM.toFixed(1)} m to the ball in the ${(-rn.readAt).toFixed(1)} s left: ${rn.late > 0.02 ? `${rn.late.toFixed(2)} s late` : `there with ${rn.slack.toFixed(2)} s to spare`}` : ', and the ball comes to them'}.`)]); }
   if (tl) rows.push([hitterView ? 'Timing' : 'Hitter timing', `${esc(timingText(s, tl))}${timelineSvg(tl, s.color)}`]);
   if (where) rows.push(['Ball', esc(where)]);
   if (bicRow) rows.push(['BIC', bicRow]);
@@ -2661,7 +2716,7 @@ renderSignals();
 renderQuiz();
 showTab('3d');
 { const c = runChecks(); if (c.errs || c.warns) console.warn(`Setter Signals: ${c.errs} failing check(s), ${c.warns} warning(s) — see the Checks tab.`); else console.info(`Setter Signals: all ${c.total} checks pass.`); }
-window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
+window.SetterSignals = { state, setRow, SETS, WORLD, SYSTEM, rotation, availability, rotationsText, setRotation, flight, timeline, hitterPhase, timingText, approachWorld, routeGeom, startNoteFor, hitterTags, effectiveFallback, setPass, placePass, currentPass, passSpotFor, passDirOk, receiveFormation, receiverFor, passerFor, setterRun, runChecks, select, frameAt: (id, t) => { const s = byId(id); const fl = flight(s, { bic: state.bic && s.group === 'backrow' }); frame3D(s, approachWorld(s, 24), t, fl, timeline(fl)); }, debug: () => v3Orbit.debug && v3Orbit.debug() };
 })();
 </script>
 </body>

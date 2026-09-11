@@ -56,8 +56,8 @@ and lofts a high ball, only the out-of-system balls (2, 4, 5) are on, and the 4 
 best call. Shank is anything further: whoever gets there bump-sets a high ball to a pin (4 or 5),
 no middle ball. Or tap exactly where the pass lands: on the Court view, **📍 Place the pass** then tap the
 court, and the 1.5 m and 3 m tolerance rings around the target show which grade you are in. Every view
-draws the setter where the pass takes them, with a dotted run from the target, and ▶ shows the
-setter run to the ball before the set. Sets that are off on the current pass stay in the name
+draws the setter where the pass takes them, with the chase from the point where they read the
+pass, and ▶ shows the setter release on the serve and run to the ball before the set. Sets that are off on the current pass stay in the name
 strip, dimmed, with the reason; select one and the card says which ball to run instead. Flight
 paths are recomputed from the new release point (lower and lofted the further off it is) and land
 in the same place. Tempo classes and the Checks tab are always graded off a perfect pass.
@@ -83,13 +83,27 @@ behind the middle and run 3 m; in rotation 4 they start at the net just left of 
 rotations 5 and 6 they are already at the target, and the back-row opposite tucks at the attack
 line.
 
-After the serve every player transitions: the setter to the ball, each hitter to the start of
-their own always-on ball (the middle to centre 3 m off, the outside to outside the left sideline,
-the opposite to the right sideline, a back-row outside to the A or Pipe nearest the lane they
-passed in, a back-row opposite to the D), the libero stays home. Hiders and the setter release on
-the serve; passers move once the ball is past them, the passer after passing; runs are at a
-realistic speed and a hitter who is still on the way when their approach should begin merges into
-it. The 3D and Court views draw the formation, every player's dotted route, the serve and the pass,
+After the serve every player transitions: each hitter to the start of their own always-on ball
+(the middle to centre 3 m off, the outside to outside the left sideline, the opposite to the right
+sideline, a back-row outside to the A or Pipe nearest the lane they passed in, a back-row opposite
+to the D), the libero stays home. Hiders and the setter release on the serve; passers move once
+the ball is past them, the passer after passing; runs are at a realistic speed and a hitter who is
+still on the way when their approach should begin merges into it.
+
+The setter's run is modelled honestly. The pass does not exist until it leaves the passer's
+hands, so nothing about it can steer the setter before that: they release toward the target a
+reaction (0.3 s) after the server's contact, and when the passer contacts the ball they need
+another 0.3 s to read it before they can turn toward wherever it is going, from wherever they are
+at that moment. The chase is a straight run at 4 m/s from that point, and whether they arrive
+before the ball comes down is a result, not an assumption. In rotation 1 the setter has covered
+4.0 m of the 5.6 m release when the pass can be read and reaches the target with half a second to
+spare; a 2.5 m off pass is reached with 0.28 s to spare; a shank 4.5 m off is 0.2–0.45 s late in
+every rotation, which is exactly the case coaches describe as "whoever gets there sets it". The
+views draw the release to the read point, a small ring where the pass is read, and the chase from
+there to the ball; the card row "Your run" (or "Setter" for a hitter) gives the numbers. The
+Checks tab verifies that the setter's position up to the read is identical whatever the pass
+turns out to be, that the chase starts from the read point and never from the target, and it
+lists the passes the setter cannot reach in time in each rotation. The 3D and Court views draw the formation, every player's dotted route, the serve and the pass,
 and the role bar says who passes and why the setter starts where they do. The Checks tab verifies
 that every rotation is legal under all seven constraints, that the passers are the libero and both
 outsides in the 5–7.5 m band, and it flags every transition that is still on the way when the
@@ -208,6 +222,10 @@ records the claims that failed.
 | Rise to the ball 0.35 s | Physics: a 0.5 m jump peaks after 0.32 s; elite spike jumps 0.5–0.7 m | Consistent | Accepted |
 | Hitter reach: elite men ≈ 3.5 m spike reach on a 2.43 m net, elite women ≈ 3.2 m on 2.24 | spike-jump biomechanics | About a metre above the net at the top level; a third of a metre at club level | Used for the Club / College / Pro levels |
 | Net heights 2.43 / 2.24 m, court 9 × 9 m, 3 m line, nine 1 m zones along the net | FIVB rules, Coaching Volleyball | Rules | Accepted |
+| Players may leave their serve-receive positions at the server's contact; the setter and the middles "release to their jobs at contact" | FIVB rule 7.4 (positional faults are judged at the moment of the service hit), Coaching Volleyball (serve-receive strategies for rotation 1) | Nothing about the pass exists before the passer's contact, so the release can only be aimed at the target | Accepted: the setter runs toward the target from the serve and only turns toward the pass once it has been passed |
+| Receivers begin moving about 0.3 s after the server's contact; the serve reaches them in 0.6–1.1 s | serve-reception studies (Predicting Volleyball Serve-Reception, 2016; Volleyball 1 on 1 split-step timing) | A 1.0 s float serve sits inside the measured window | Accepted: 0.3 s reaction for the release and the same beat to read the pass |
+| Setters and liberos run 20 m in about 3.7 s (junior female players) | anthropometric and physical-characteristics study of young female volleyball players by position | 5.4 m/s average from a standing start over 20 m; the first metres are slower and a chase has to end under control | Accepted at 4 m/s for the setter's run; hitters transition at 3.5 m/s |
+| Passing scale 3 / 2 / 1 / 0: a 3 gives the setter every option, a 2 mostly two, a 1 one option or a non-setter sets, a 0 is an ace or a shank that hands the ball back | The Art of Coaching Volleyball (pass rating explanation), Coaching Volleyball, Smarter Volley | The app's Perfect / Good / Off / Shank tiers are the same scale by distance from target; a playable "shank" is the top of the 0 band | Accepted; used by the plan model |
 
 The targets themselves follow the usual 5-1 references. The setter's target (`SETTER_X`) is about
 5 ft right of centre, 5.9 m from the left antenna, on the seam of zones 3 and 2. The 1 is set half
