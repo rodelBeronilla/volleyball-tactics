@@ -8,7 +8,9 @@ Hut, Go, 5, Red, Slide) and back-row attacks (A, B, Pipe, C, D, plus the BIC tem
 ## Pick your role and rotation
 
 The control at the top ("I am the Setter / Outside / Middle / Opposite") filters every view to the
-sets that role hits. The setter sees everything. A hitter sees their balls only, their quiz covers
+sets that role hits. Below it, the planning controls (rotation, pass grade, bearing) stay pinned to
+the top of the screen while you scroll, on phones and desktop alike, so a rotation or a pass is
+always one tap away; every button is at least 44 px tall. The setter sees everything. A hitter sees their balls only, their quiz covers
 only those, and the detail card speaks to them ("Start", "Timing", "When"); for the setter the same
 rows read "Hitter starts", "Hitter timing", "Call it when". Both choices are remembered on the device.
 
@@ -39,8 +41,13 @@ No build step, no frameworks, no CDNs. Everything (CSS, JS, SVG) is inline.
 | 3D Court | A real 9 × 9 m half court in perspective. Every ball is a gravity parabola from the setter's hands to the hitter's contact point, with a dotted ground shadow and a drop line so depth is unambiguous. Drag to orbit; Coach / Corner / Blockers / Top presets; BIC toggle; men's or women's net height. ▶ plays the ball in real hang time (or ½ speed). |
 | Diagrams | The two flat views. **Net** is the side view: height and landing spot tell sets apart. **Court** is top-down: front-row landing spots along the net, back-row attacks with start point, dotted approach, takeoff behind the 3 m line and set target; tap a zone number to highlight sets landing there. |
 | Signals | Card per set: glyph, name, signal description, tempo/hitter chips. Tap to select, then "Show in 3D" / "Show on net" / "Show on court". |
-| Quiz | Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), and the same filters. |
+| More | Quiz and Checks. **Quiz:** Signal → Set and Trajectory → Set, four choices, instant feedback, running score (saved in `localStorage`), and the same filters. **Checks:** below. |
 | Checks | Every set is graded against explicit rules: where it lands, how high, who hits it, how it relates to neighbouring sets, takeoff placement, unique signals and calls, tempo versus physics, pass requirement versus tempo, fallback chains, and — importantly — whether the words in each note match the drawn data (outside the sideline, centre, zone, metres off the net, halfway to the antenna, behind the setter, second step, above the tape…). A spec sheet lists each set's landing spot, contact height, apex and hang time. |
+
+The hitter card puts the coaching rows first (signal, start, pass — with "on now" or "off on this
+pass" — when, not when, fallback) and the physics after them (serve receive, the setter's run,
+timing, the ball, rotations). Signal cards that are off in the current rotation or on the current
+pass are dimmed with the reason.
 
 ## Pass quality
 
