@@ -76,7 +76,10 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 .route{stroke-dasharray:3 5;fill:none;opacity:.6}
 .ghost{pointer-events:none}
 .ghost text{fill:#c8cddb}
-.toolbar .seg.phase button,.toolbar .seg.step button{padding:0 14px}
+.toolbar .seg.phase button,.toolbar .seg.step button,.toolbar .seg.read button{padding:0 14px}
+.shadow{fill:#000;opacity:.22}
+.area{opacity:.12}
+.area-open{fill:none;stroke:#ff4d4d;stroke-dasharray:4 5;opacity:.6}
 .stepbar{display:flex;align-items:center;gap:10px;margin-top:8px;max-width:640px}
 .stepbar .stepname{flex:1;text-align:center;font-size:13px;color:var(--muted);font-weight:600;min-width:0}
 .stepbar .btn{flex:0 0 auto;min-width:96px}
@@ -129,8 +132,8 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
   .scene-wrap svg{max-height:min(420px,58vh);display:block;margin:0 auto}
   .kv{grid-template-columns:1fr}
   .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px}
-  .toolbar .seg.phase,.toolbar .seg.step{display:flex;flex:1 1 100%}
-  .toolbar .seg.phase button,.toolbar .seg.step button{flex:1;padding:0;font-size:13px}
+  .toolbar .seg.phase,.toolbar .seg.step,.toolbar .seg.read{display:flex;flex:1 1 100%}
+  .toolbar .seg.phase button,.toolbar .seg.step button,.toolbar .seg.read button{flex:1;padding:0;font-size:13px}
   .stepbar .btn{min-width:88px;padding:0 12px}
   .stepbar .stepname{font-size:12px}
 }
@@ -186,7 +189,8 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
         <div class="seg phase" role="group" aria-label="Phase"><button data-phase="start" aria-pressed="true">Start</button><button data-phase="recv" aria-pressed="false">Serve receive</button><button data-phase="atk" aria-pressed="false">Attack</button><button data-phase="base" aria-pressed="false">Base defence</button></div>
         <div class="seg step" id="step" role="group" aria-label="R6 step" hidden><button data-step="first" aria-pressed="true">First ball</button><button data-step="attack" aria-pressed="false">After the first hit</button></div>
         <button class="toggle" id="t-routes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span id="t-routes-lab">After the pass</span></button>
-        <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Receive coverage (6 back)</span></button>
+        <div class="seg read" id="read" role="group" aria-label="Their attack" hidden><button data-read="base" aria-pressed="true">Base</button><button data-read="right" aria-pressed="false">Their outside</button><button data-read="middle" aria-pressed="false">Their middle</button><button data-read="left" aria-pressed="false">Their right side</button></div>
+        <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span id="t-lanes-lab">Receive coverage</span></button>
       </div>
       <div class="two">
         <div>
@@ -306,7 +310,7 @@ const OVERLAP = [['x', 4, 3], ['x', 3, 2], ['x', 5, 6], ['x', 6, 1], ['y', 2, 1]
 const PAIR_TEXT = { 'x43': 'zone 4 left of zone 3 (front row order)', 'x32': 'zone 3 left of zone 2 (front row order)', 'x56': 'zone 5 left of zone 6 (back row order)', 'x61': 'zone 6 left of zone 1 (back row order)', 'y21': 'zone 2 in front of zone 1 (right column)', 'y36': 'zone 3 in front of zone 6 (centre column)', 'y45': 'zone 4 in front of zone 5 (left column)' };
 
 /* The page always opens at R6 Start, the setter about to serve. */
-const state = { rotation: 1, tab: 'rot', phase: 'start', step: 'first', routes: true, lanes: true, selected: null };
+const state = { rotation: 1, tab: 'rot', phase: 'start', step: 'first', read: 'base', routes: true, lanes: true, selected: null };
 const $ = (s, root) => (root || document).querySelector(s);
 const $$ = (s, root) => Array.from((root || document).querySelectorAll(s));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -336,7 +340,7 @@ function attackSpots(r, phase) {
 /* Defence (base): blockers half an arm's length off the net, the pins pinched in; wings 1.2 m in and behind the attack
    line, middle back deep. X(l)S at the net means the setter takes the block to the right of X. */
 const BASE = {
-  blockY: 0.5, pinIn: 2.0, wingIn: 1.2, wingY: 4.2, deepY: 7.0, serveY: 9.6,
+  blockY: 0.5, pinIn: 2.0, wingIn: 1.0, wingY: 6.0, deepY: 8.0, serveY: 9.6,   // 6 back: wings out on the sidelines, the middle back deep on the end line
   stiff: { mb: 3, other: 1 }, reaction: 0.3,
 };
 const BASE_SPOT = { 4: { x: BASE.pinIn, y: BASE.blockY }, 3: { x: W / 2, y: BASE.blockY }, 2: { x: W - BASE.pinIn, y: BASE.blockY }, 5: { x: BASE.wingIn, y: BASE.wingY }, 6: { x: W / 2, y: BASE.deepY }, 1: { x: W - BASE.wingIn, y: BASE.wingY } };
@@ -347,6 +351,36 @@ function defenceSpots(r) {
   Object.keys(L).forEach(code => { const e = L[code]; const z = e.rel === 'l' ? ({ 4: 3, 3: 2 }[e.zone] || e.zone) : e.zone; out[code] = Object.assign({ zone: z, tok: e.tok }, BASE_SPOT[z]); });
   return out;
 }
+
+/* ============================================================
+   6 BACK (perimeter, middle-back defence). Base: three blockers at the net, the two wings out on the sidelines, the
+   middle back deep on the end line, a loose triangle. Read, once their ball is set: two blockers on the ball, the
+   off-blocker pulls off the net to the attack line inside their sideline for tips and the sharp angle, the wing outside
+   the block digs the line from the sideline, the other wing digs cross-court from their sideline, and the middle back
+   holds the end line in line with the hitter for what comes through or over the block. Weakness: tips into the middle.
+   Zones are ours after the switch: 4 left block, 3 middle block, 2 right block, 5 left back, 6 middle back, 1 right back.
+   ============================================================ */
+const SIXBACK_RIGHT = {   // their outside hitter: the ball comes over our right
+  name: 'their outside (our right)', ball: 8.0, shadow: [6.6, 8.4],
+  spots: { 4: { x: 1.8, y: 3.0, job: 'off-blocker: pulls off to the attack line for tips and the sharp angle', short: 'off-blocker' }, 3: { x: 7.0, y: 0.5, job: 'closes the block on the ball', short: 'block' }, 2: { x: 7.9, y: 0.5, job: 'blocks the line', short: 'block line' },
+    5: { x: 0.8, y: 6.0, job: 'digs cross-court from the sideline', short: 'cross' }, 6: { x: 5.5, y: 8.5, job: 'holds the end line in line with the hitter: through and over the block', short: 'end line' }, 1: { x: 8.3, y: 6.5, job: 'digs the line from the sideline', short: 'line' } },
+  areas: [{ z: 1, x0: 7.6, y0: 2.5, x1: 9, y1: 9, label: 'line' }, { z: 6, x0: 2.0, y0: 7.0, x1: 7.6, y1: 9, label: 'deep · over the block' }, { z: 5, x0: 0, y0: 4.0, x1: 2.0, y1: 9, label: 'cross' }, { z: 5, x0: 2.0, y0: 4.0, x1: 4.5, y1: 7.0, label: '' }, { z: 4, x0: 0, y0: 1.2, x1: 4.5, y1: 4.0, label: 'tips · sharp angle' }],
+  open: { x0: 4.5, y0: 3.5, x1: 7.6, y1: 7.0, label: 'the campfire: tips land here' },
+};
+const SIXBACK_MIDDLE = {
+  name: 'their middle', ball: 4.5, shadow: [3.6, 5.6],
+  spots: { 3: { x: 4.5, y: 0.5, job: 'blocks the quick', short: 'block' }, 2: { x: 5.4, y: 0.5, job: 'joins the block', short: 'block' }, 4: { x: 1.8, y: 3.0, job: 'off-blocker: pulls off to the attack line for tips and the left angle', short: 'off-blocker' },
+    5: { x: 0.8, y: 6.0, job: 'digs the left angle from the sideline', short: 'left angle' }, 1: { x: 8.2, y: 6.0, job: 'digs the right angle from the sideline', short: 'right angle' }, 6: { x: 4.5, y: 8.5, job: 'holds the end line in line with the hitter', short: 'end line' } },
+  areas: [{ z: 5, x0: 0, y0: 4.0, x1: 3.0, y1: 9, label: 'left angle' }, { z: 1, x0: 6.0, y0: 4.0, x1: 9, y1: 9, label: 'right angle' }, { z: 6, x0: 3.0, y0: 7.0, x1: 6.0, y1: 9, label: 'deep' }, { z: 4, x0: 0, y0: 1.2, x1: 3.0, y1: 4.0, label: 'tips' }],
+  open: { x0: 3.0, y0: 3.5, x1: 6.0, y1: 7.0, label: 'the campfire: tips land here' },
+};
+const mirrorRead = (src, name) => { const zm = { 4: 2, 3: 3, 2: 4, 5: 1, 6: 6, 1: 5 }, spots = {}; Object.keys(src.spots).forEach(z => { const p = src.spots[z]; spots[zm[z]] = Object.assign({}, p, { x: W - p.x }); });
+  return { name, ball: W - src.ball, shadow: [W - src.shadow[1], W - src.shadow[0]], spots, areas: src.areas.map(a => ({ z: zm[a.z], x0: W - a.x1, y0: a.y0, x1: W - a.x0, y1: a.y1, label: a.label })), open: { x0: W - src.open.x1, y0: src.open.y0, x1: W - src.open.x0, y1: src.open.y1, label: src.open.label } }; };
+const SIXBACK = { right: SIXBACK_RIGHT, middle: SIXBACK_MIDDLE, left: mirrorRead(SIXBACK_RIGHT, 'their right side (our left)') };
+const BASE_AREAS = [{ z: 5, x0: 0, y0: 4.0, x1: 2.2, y1: 9, label: 'sideline' }, { z: 1, x0: 6.8, y0: 4.0, x1: 9, y1: 9, label: 'sideline' }, { z: 6, x0: 2.2, y0: 6.5, x1: 6.8, y1: 9, label: 'end line' }];
+const READS = ['base', 'right', 'middle', 'left'];
+/* Where each of ours goes for a read, by the zone the sheet's defence line gives them. */
+function readSpots(r, read) { const d = defenceSpots(r), spec = SIXBACK[read], out = {}; Object.keys(d).forEach(code => { const z = d[code].zone; out[code] = Object.assign({ zone: z }, spec.spots[z]); }); return out; }
 
 /* ============================================================
    SERVE RECEIVE, solved: the sheet says who stands where and who shades whom; each player wants the spot for that
@@ -515,19 +549,22 @@ function courtFrame(label, netText, endLabel, extraH) {
   return o;
 }
 const animSvg = () => `<g class="tok-anim" id="anim"></g><circle class="ball" id="ball" r="8" fill="#fff" stroke="#0f1117" stroke-width="2" opacity="0" style="filter:drop-shadow(0 0 3px rgba(255,255,255,.9))"/>`;
-/* Receive coverage, 6 back: the three passers split the court at the seams between them; the wings take short and
-   mid serves in their thirds, the centre passer (the deep one, playing 6 back) takes the middle and every deep serve
-   across the whole width. */
-const COVER_RECV = { short: 2.6, deep: 7.4 };
+/* Receive coverage with three passers: the court is split at the two seams between them, and each seam is shared by
+   the rule: the passer nearer the server takes the short seam, the passer further away takes the deep seam. With the
+   serve coming from the far centre the wings are nearer, so a wing owns their third and the short part of the seam, and
+   the deep centre passer owns the middle and the deep part of both seams. */
+const COVER_RECV = { short: 2.6, split: 6.4, widen: 0.9 };
 function coverageSvg(form) {
-  const P = form.passers, seamL = (P[0].x + P[1].x) / 2, seamR = (P[1].x + P[2].x) / 2, sh = COVER_RECV.short, dp = COVER_RECV.deep;
-  const R = (x0, y0, x1, y1, op) => `<rect class="lane" x="${r1(cx(x0))}" y="${r1(cy(y0))}" width="${r1(cx(x1) - cx(x0))}" height="${r1(cy(y1) - cy(y0))}" style="opacity:${op}"/>`;
-  let o = R(0, sh, seamL, dp, 0.07) + R(seamR, sh, W, dp, 0.07) + R(seamL, sh, seamR, dp, 0.12) + R(0, dp, W, D, 0.12);
-  o += `<path d="M${r1(cx(seamL))} ${r1(cy(sh))}V${r1(cy(dp))}M${r1(cx(seamR))} ${r1(cy(sh))}V${r1(cy(dp))}M${r1(cx(0))} ${r1(cy(dp))}H${r1(cx(W))}" stroke="${COLOR.pass}" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45" fill="none"/>`;
-  o += `<text x="${r1(cx(seamL / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[0].code)} short &amp; mid</text>`;
-  o += `<text x="${r1(cx((seamR + W) / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[2].code)} short &amp; mid</text>`;
-  o += `<text x="${r1(cx((seamL + seamR) / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[1].code)} middle</text>`;
-  o += `<text x="${r1(cx(W / 2))}" y="${r1(cy(D) - 6)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[1].code)} 6 back · every deep ball</text>`;
+  const P = form.passers, seamL = (P[0].x + P[1].x) / 2, seamR = (P[1].x + P[2].x) / 2, sh = COVER_RECV.short, sp = COVER_RECV.split, wd = COVER_RECV.widen;
+  const poly = (pts, op) => `<polygon class="lane" points="${pts.map(([x, y]) => `${r1(cx(x))},${r1(cy(y))}`).join(' ')}" style="opacity:${op}"/>`;
+  let o = poly([[0, sh], [seamL, sh], [seamL, sp], [seamL - wd, sp], [seamL - wd, D], [0, D]], 0.07);
+  o += poly([[W, sh], [seamR, sh], [seamR, sp], [seamR + wd, sp], [seamR + wd, D], [W, D]], 0.07);
+  o += poly([[seamL, sh], [seamR, sh], [seamR, sp], [seamR + wd, sp], [seamR + wd, D], [seamL - wd, D], [seamL - wd, sp], [seamL, sp]], 0.12);
+  o += `<path d="M${r1(cx(seamL))} ${r1(cy(sh))}V${r1(cy(sp))}H${r1(cx(seamL - wd))}V${r1(cy(D))}M${r1(cx(seamR))} ${r1(cy(sh))}V${r1(cy(sp))}H${r1(cx(seamR + wd))}V${r1(cy(D))}" stroke="${COLOR.pass}" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45" fill="none"/>`;
+  o += `<text x="${r1(cx(seamL / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[0].code)} · short seam</text>`;
+  o += `<text x="${r1(cx((seamR + W) / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[2].code)} · short seam</text>`;
+  o += `<text x="${r1(cx((seamL + seamR) / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[1].code)} · middle</text>`;
+  o += `<text x="${r1(cx((seamL + seamR) / 2))}" y="${r1(cy(D) - 6)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[1].code)} · deep seams</text>`;
   return o;
 }
 function courtSvg(r) {
@@ -566,16 +603,35 @@ function startSvg(r) {
   rot.players.forEach(p => { const q = form.players[p.i], dim = sel != null && sel !== p.i; o += tokenSvg(zoneX(p.zone), p.front ? START_Y.front : START_Y.back, p.code, colorOf(q), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])} in zone ${p.zone}"`, `<text y="-20" font-size="11" fill="#c8cddb" text-anchor="middle">${p.zone}</text>`, p.role === 'S'); });
   return o + animSvg() + `</svg>`;
 }
+function areasSvg(areas, byZone, open) {
+  let o = areas.map(a => `<rect class="area" x="${r1(cx(a.x0))}" y="${r1(cy(a.y0))}" width="${r1(cx(a.x1) - cx(a.x0))}" height="${r1(cy(a.y1) - cy(a.y0))}" fill="${a.z >= 2 && a.z <= 4 ? BCOL.block : BCOL.dig}"/>${a.label ? `<text x="${r1(cx((a.x0 + a.x1) / 2))}" y="${r1(cy(a.y0) + 13)}" font-size="10" fill="${a.z >= 2 && a.z <= 4 ? BCOL.block : BCOL.dig}" opacity=".85" text-anchor="middle">${esc(byZone[a.z] || '')} · ${esc(a.label)}</text>` : ''}`).join('');
+  if (open) o += `<rect class="area-open" x="${r1(cx(open.x0))}" y="${r1(cy(open.y0))}" width="${r1(cx(open.x1) - cx(open.x0))}" height="${r1(cy(open.y1) - cy(open.y0))}" rx="8"/><text x="${r1(cx((open.x0 + open.x1) / 2))}" y="${r1(cy((open.y0 + open.y1) / 2) + 4)}" font-size="10" fill="#ff4d4d" opacity=".8" text-anchor="middle">${esc(open.label)}</text>`;
+  return o;
+}
 function baseSvg(r) {
-  const form = baseFormation(r), sel = state.selected, s = form.server;
-  let o = courtFrame(`Base defence, rotation ${LBL(r)}`, 'NET · we serve; they attack from the far side', false, 40);
-  o += `<text x="${r1(s.x < W / 2 ? cx(W) : cx(0))}" y="${r1(cy(9) + 22)}" font-size="12" fill="#8b93ab" text-anchor="${s.x < W / 2 ? 'end' : 'start'}">END LINE · the server stands behind it</text>`;
+  const form = baseFormation(r), sel = state.selected, s = form.server, read = state.read;
+  const byZone = {}; form.players.forEach(p => { byZone[p.base.zone] = p.code; });
+  if (read === 'base') {
+    let o = courtFrame(`Base defence, rotation ${LBL(r)}`, 'NET · we serve; they attack from the far side', false, 40);
+    o += `<text x="${r1(s.x < W / 2 ? cx(W) : cx(0))}" y="${r1(cy(9) + 22)}" font-size="12" fill="#8b93ab" text-anchor="${s.x < W / 2 ? 'end' : 'start'}">END LINE · the server stands behind it</text>`;
+    o += `<g class="static-g">`;
+    if (state.lanes) o += areasSvg(BASE_AREAS, byZone, null);
+    if (state.routes) form.players.forEach(p => { const c = baseColor(p); if (p.moveM > 0.2) o += `<path class="route" d="M${r1(cx(p.x))} ${r1(cy(p.y))}L${r1(cx(p.goes.x))} ${r1(cy(p.goes.y))}" stroke="${c}" stroke-width="2"/>`; if (p.moveM > 0.2 || p.serves) o += ghostSvg(p.x, p.y, p.code, c, p.serves ? 'serves' : String(p.zone)); });
+    const selP = sel != null ? form.players[sel] : null;
+    if (selP) o += bindsSvg(selP);
+    o += `</g>`;
+    form.players.forEach(p => { const dim = sel != null && sel !== p.i; o += tokenSvg(p.goes.x, p.goes.y, p.code, baseColor(p), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])}: ${esc(p.job)}"`, `<text y="28" font-size="10" fill="#c8cddb" text-anchor="middle">${esc(BASE_SHORT[p.base.zone])}</text>`, p.role === 'S'); });
+    return o + animSvg() + `</svg>`;
+  }
+  const spec = SIXBACK[read], spots = readSpots(r, read);
+  let o = courtFrame(`6 back against ${spec.name}, rotation ${LBL(r)}`, `NET · their ball is set to ${spec.name}`, true, 0);
   o += `<g class="static-g">`;
-  if (state.routes) form.players.forEach(p => { const c = baseColor(p); if (p.moveM > 0.2) o += `<path class="route" d="M${r1(cx(p.x))} ${r1(cy(p.y))}L${r1(cx(p.goes.x))} ${r1(cy(p.goes.y))}" stroke="${c}" stroke-width="2"/>`; if (p.moveM > 0.2 || p.serves) o += ghostSvg(p.x, p.y, p.code, c, p.serves ? 'serves' : String(p.zone)); });
-  const selP = sel != null ? form.players[sel] : null;
-  if (selP) o += bindsSvg(selP);
+  if (state.lanes) o += areasSvg(spec.areas, byZone, spec.open);
+  o += `<rect class="shadow" x="${r1(cx(spec.shadow[0]))}" y="${r1(cy(0))}" width="${r1(cx(spec.shadow[1]) - cx(spec.shadow[0]))}" height="${r1(cy(4.5) - cy(0))}"/>`;
+  o += `<circle cx="${r1(cx(spec.ball))}" cy="${r1(cy(0) - 12)}" r="8" fill="#fff" stroke="#0f1117" stroke-width="2"/><text x="${r1(cx(spec.ball))}" y="${r1(cy(0) - 26)}" font-size="11" fill="#c8cddb" text-anchor="middle">their hitter</text>`;
+  if (state.routes) form.players.forEach(p => { const c = baseColor(p), q = spots[p.code], d = Math.hypot(q.x - p.goes.x, q.y - p.goes.y); if (d > 0.2) o += `<path class="route" d="M${r1(cx(p.goes.x))} ${r1(cy(p.goes.y))}L${r1(cx(q.x))} ${r1(cy(q.y))}" stroke="${c}" stroke-width="2"/>` + ghostSvg(p.goes.x, p.goes.y, p.code, c, null); });
   o += `</g>`;
-  form.players.forEach(p => { const dim = sel != null && sel !== p.i; o += tokenSvg(p.goes.x, p.goes.y, p.code, baseColor(p), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])}: ${esc(p.job)}"`, `<text y="28" font-size="10" fill="#c8cddb" text-anchor="middle">${esc(BASE_SHORT[p.base.zone])}</text>`, p.role === 'S'); });
+  form.players.forEach(p => { const q = spots[p.code], dim = sel != null && sel !== p.i; o += tokenSvg(q.x, q.y, p.code, baseColor(p), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])}: ${esc(q.job)}"`, `<text y="${q.y < 1 ? -20 : 28}" font-size="10" fill="#c8cddb" text-anchor="middle">${esc(q.short)}</text>`, p.role === 'S'); });
   return o + animSvg() + `</svg>`;
 }
 function rotationSvg(r) {
@@ -600,22 +656,24 @@ const PHASE_TEXT = {
     legend: '<span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>waits at the net</span><span><i style="background:var(--tuck)"></i>tucks behind a passer</span><span>Shaded: receive coverage, the centre passer 6 back for every deep ball.</span><span>Tap a player for the why.</span>' },
   atk: { title: 'Attack, rotation by rotation', desc: 'Where everyone is once our ball is set: hitters at their approach starts, the setter at the target, the back row covering. Dashed rings show the serve-receive spot each one came from. R6 keeps its receive shape for the first ball and switches after the first hit.', routes: 'From serve receive', play: '',
     legend: '<span><i style="background:#a78bfa"></i>hits</span><span><i style="background:var(--set)"></i>sets</span><span><i style="background:var(--pass)"></i>covers</span><span>Tap a player for their route.</span>' },
-  base: { title: 'Base defence, rotation by rotation', desc: 'Where the six wait once the other side has the ball: three blockers at the net, three diggers deep. At our own serve everyone must still be in rotational order, so the stack shows where they stand at the service hit and how far each one switches to get home before the other side sets.', routes: 'Switch from the serve', play: 'Play our serve and the switch',
-    legend: '<span><i style="background:#a78bfa"></i>blocks</span><span><i style="background:var(--pass)"></i>digs</span><span><i style="background:var(--set)"></i>setter</span><span>Dashed rings: where they stand at the service hit.</span><span>Tap a player for the why.</span>' },
+  base: { title: 'Base defence, 6 back', desc: 'Where the six wait once the other side has the ball, in a 6-back (perimeter) defence: three blockers at the net, the wings out on the sidelines, the middle back deep on the end line. At our own serve everyone must still be in rotational order, so the stack shows where they stand at the service hit and the switch home. Pick their attack to see the read: two on the block, the off-blocker to the attack line, line and cross from the sidelines, the middle back on the end line.', routes: 'Switch from the serve', play: 'Play our serve and the switch',
+    legend: '<span><i style="background:#a78bfa"></i>blocks</span><span><i style="background:var(--pass)"></i>digs</span><span><i style="background:var(--set)"></i>setter</span><span>Shaded: who covers what. Dashed red: the campfire nobody covers.</span><span>Tap a player for the why.</span>' },
 };
 function applyPhaseChrome() {
   const t = PHASE_TEXT[state.phase];
   $('#rot-title').textContent = t.title; $('#rot-desc').textContent = t.desc; $('#t-routes-lab').textContent = t.routes; $('#legend').innerHTML = t.legend;
-  $('#t-lanes').hidden = state.phase !== 'recv';
+  $('#t-lanes').hidden = !(state.phase === 'recv' || state.phase === 'base'); $('#t-lanes-lab').textContent = state.phase === 'base' ? '6-back coverage' : 'Receive coverage';
+  $('#read').hidden = state.phase !== 'base';
+  $$('[data-read]').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-read') === state.read)));
   $('#step').hidden = !(state.phase === 'atk' && LBL(state.rotation) === 6);
   $$('[data-phase]').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-phase') === state.phase)));
   $$('[data-step]').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-step') === state.step)));
-  const fab = $('.fab'); if (fab) { fab.hidden = state.phase === 'atk' || state.phase === 'start'; fab.setAttribute('aria-label', t.play); }
+  const fab = $('.fab'); if (fab) { fab.hidden = state.phase === 'atk' || state.phase === 'start' || (state.phase === 'base' && state.read !== 'base'); fab.setAttribute('aria-label', t.play); }
   const steps = stepsOf(state.rotation), k = stepIndex();
   $('#stepname').textContent = `R${LBL(state.rotation)} · ${stepLabel(steps[k])} · ${k + 1} of ${steps.length}`;
 }
 function stepIndex() { const steps = stepsOf(state.rotation); const k = steps.findIndex(st => st.phase === state.phase && (st.phase !== 'atk' || st.step === state.step)); return k < 0 ? 0 : k; }
-const stepLabel = st => st.phase === 'start' ? 'Start' : st.phase === 'recv' ? 'Serve receive' : st.phase === 'base' ? 'Base defence' : st.step === 'first' ? 'Attack · first ball' : (LBL(state.rotation) === 6 ? 'Attack · after the first hit' : 'Attack');
+const stepLabel = st => st.phase === 'start' ? 'Start' : st.phase === 'recv' ? 'Serve receive' : st.phase === 'base' ? (state.read !== 'base' ? `6 back vs ${SIXBACK[state.read].name.replace(/ \(.*\)/, '')}` : 'Base defence') : st.step === 'first' ? 'Attack · first ball' : (LBL(state.rotation) === 6 ? 'Attack · after the first hit' : 'Attack');
 /* Next / Back walk Start → Receive → Attack (→ after the first hit in R6) → Defence, then on to the next rotation. */
 function stepBy(d) {
   if (tweening) stopPlayback();                                                // a step already under way completes first
@@ -657,13 +715,23 @@ function renderAttack() {
   }).join('');
 }
 function renderBase() {
-  const r = state.rotation, form = baseFormation(r), tl = baseTimeline(r), s = form.server;
+  const r = state.rotation, form = baseFormation(r), tl = baseTimeline(r), s = form.server, read = state.read;
   $('#scene').innerHTML = baseSvg(r);
+  if (read !== 'base') {
+    const spec = SIXBACK[read], spots = readSpots(r, read), by = z => form.players.find(p => p.base.zone === z).code;
+    const blockers = Object.keys(spec.spots).filter(z => spec.spots[z].y < 1).map(z => by(Number(z)));
+    $('#summary').innerHTML = `<b>Rotation ${LBL(r)} · 6 back against ${esc(spec.name)}</b> · from the sheet's defence line <code>${esc(SHEET[LBL(r)].defence)}</code>.<br>` +
+      `<b>Block:</b> ${blockers.join(' and ')}. <b>Off-blocker:</b> ${by(read === 'left' ? 2 : 4)}, ${esc(spec.spots[read === 'left' ? 2 : 4].job.replace(/^off-blocker: /, ''))}. <b>Line:</b> ${read === 'middle' ? `${by(5)} left angle, ${by(1)} right angle` : `${by(read === 'right' ? 1 : 5)} from the sideline`}. <b>Cross-court:</b> ${read === 'middle' ? 'shared by the wings' : `${by(read === 'right' ? 5 : 1)} from the sideline`}. <b>End line:</b> ${by(6)}, in line with the hitter for what comes through or over the block.` +
+      `<br><span class="hint">Perimeter defence digs the hard ball with four; it is thin against tips into the middle, the campfire. Dashed rings: base spots; routes: the read once the ball is set.</span>`;
+    $('#cards').innerHTML = form.players.map(p => { const q = spots[p.code], d = Math.hypot(q.x - p.goes.x, q.y - p.goes.y);
+      return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${baseColor(p)}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code])}</b> <span class="job">· ${esc(BASE_SHORT[p.base.zone])} · reads to ${q.x.toFixed(1)} m across, ${q.y.toFixed(1)} m off</span><div class="why">${esc(q.job.charAt(0).toUpperCase() + q.job.slice(1))}. ${d > 0.2 ? `${d.toFixed(1)} m from base.` : 'Already there from base.'}</div></div></div>`; }).join('');
+    return;
+  }
   const sw = form.players.filter(p => p.switches && !p.serves).map(p => `${p.code} ${p.zone}→${p.base.zone} (${p.moveM.toFixed(1)} m)`);
   $('#summary').innerHTML = `<b>Rotation ${LBL(r)}</b> · ${esc(NAMES[s.code])} serves from zone 1 · sheet <code>${esc(SHEET[LBL(r)].defence)}</code>.<br>` +
     `<b>Net</b> ${form.front.map(p => p.code).join(' · ')} left to right, <b>back row</b> ${form.back.map(p => p.code).join(' · ')}. <b>Switches:</b> ${sw.length ? sw.join(', ') : 'none'}${s.moveM > 0.2 ? `; the server runs ${s.moveM.toFixed(1)} m in to ${BASE_SHORT[s.base.zone]}` : ''}. ` +
     `<b>Clock:</b> our serve lands in ${tl.serveSec.toFixed(2)} s and their pass hangs ${(tl.oppSet - tl.serveSec).toFixed(2)} s, so their setter touches ${tl.oppSet.toFixed(2)} s after the service hit; the last one home is ${tl.last.code}, ${tl.slack >= 0 ? `${tl.slack.toFixed(2)} s before that` : `${(-tl.slack).toFixed(2)} s late`}.` +
-    `<br><span class="hint">Base is where the six wait until the other side sets. From here each one reads the set and moves to their read position.</span>`;
+    `<br><span class="hint">6 back: three blockers at the net, the wings out on the sidelines, the middle back deep on the end line. Pick their attack above to see the read.</span>`;
   $('#cards').innerHTML = form.players.map(p => {
     const c = baseColor(p), sec = p.moveM / tl.speedOf(p), slack = tl.oppSet - tl.arrive(p);
     const atServe = p.serves ? `Serves from behind the end line, ${p.x.toFixed(1)} m across, then runs ${p.moveM.toFixed(1)} m in (${sec.toFixed(2)} s).`
@@ -753,15 +821,24 @@ const RULES = [
       if (tl.passSec < 1.1 || tl.passSec > 1.6) bad.push(`pass hangs ${tl.passSec.toFixed(2)} s`);
       const z = tl.ballAt(-1e-9).z; if (Math.abs(z - (NET_H + RALLY.handsAbove)) > 0.01) bad.push('pass does not come down at the hands');
       return { ok: !bad.length, msg: bad.join('; ') || `R${LBL(r)}: serve ${tl.serveSec.toFixed(2)} s, ${(tl.serve.atNet - NET_H).toFixed(2)} m over the tape to ${tl.passer.code}; pass ${tl.passSec.toFixed(2)} s` }; }) },
-  { name: 'Base defence: blockers at the net left–middle–right, diggers deep in the right zones', why: 'After the switch an outside blocks left, a middle blocks middle and the setter or right side blocks right, half an arm\'s length off the net; an outside digs left back, a middle middle back and the setter or right side right back, the wings 1.2 m in from the sideline and behind the attack line, the middle back deep. Six spots, one per zone.',
+  { name: 'Base defence, 6 back: blockers at the net left–middle–right, wings on the sidelines, middle back on the end line', why: 'After the switch an outside blocks left, a middle blocks middle and the setter or right side blocks right, half an arm\'s length off the net; an outside digs left back and a middle middle back, the setter or right side right back; the wings 1 m in from the sideline and 6 m off, the middle back 1 m inside the end line. Six spots, one per zone.',
     run: () => ORDER.map(r => { const f = baseFormation(r), bad = [], fr = f.front, bk = f.back;
       if (!(fr[0].role === 'OH' && fr[1].role === 'MB' && ['S', 'OPP'].includes(fr[2].role))) bad.push(`front row after the switch is ${fr.map(p => p.code).join('-')}`);
       if (!(bk[0].role === 'OH' && bk[1].role === 'MB' && ['S', 'OPP'].includes(bk[2].role))) bad.push(`back row after the switch is ${bk.map(p => p.code).join('-')}`);
       fr.forEach(p => { if (p.base.y > 1.0) bad.push(`${p.code} blocks from ${p.base.y.toFixed(1)} m off the net`); });
-      bk.forEach(p => { if (p.base.y < 4.0) bad.push(`${p.code} digs from ${p.base.y.toFixed(1)} m, inside the attack line`); });
+      bk.forEach(p => { if (p.base.zone === 6 ? p.base.y < D - 1.5 : (p.base.y < 5.0 || Math.min(p.base.x, W - p.base.x) > 1.5)) bad.push(`${p.code} is not on the perimeter (${p.base.x.toFixed(1)}, ${p.base.y.toFixed(1)})`); });
       if (!(fr[0].base.x < fr[1].base.x && fr[1].base.x < fr[2].base.x && bk[0].base.x < bk[1].base.x && bk[1].base.x < bk[2].base.x)) bad.push('not left–middle–right');
       if (f.players.map(p => p.base.zone).sort().join('') !== '123456') bad.push('base zones are not one per zone');
       return { ok: !bad.length, msg: bad.join('; ') || `R${LBL(r)}: ${fr.map(p => `${p.code} ${BASE_SHORT[p.base.zone]}`).join(', ')}; ${bk.map(p => `${p.code} ${BASE_SHORT[p.base.zone]}`).join(', ')}` }; }) },
+  { name: '6-back reads: two on the block, the off-blocker at the attack line, wings on the sidelines, middle back on the end line', why: 'For their outside, middle and right-side attack: exactly two front-row players within 0.6 m of the net and within 1.5 m of the ball, the third front-row player pulled off between 2.5 and 3.5 m with a metre or more inside the sideline, both wings within 1.2 m of a sideline and at least 5.5 m off, the middle back within 1 m of the end line, everyone on the court and nobody on top of anyone.',
+    run: () => ORDER.flatMap(r => ['right', 'middle', 'left'].map(read => { const f = baseFormation(r), sp = readSpots(r, read), spec = SIXBACK[read], bad = [];
+      const fr = f.players.filter(p => p.front), bk = f.players.filter(p => !p.front);
+      const blockers = fr.filter(p => sp[p.code].y <= 0.6); if (blockers.length !== 2) bad.push(`${blockers.length} blockers`); blockers.forEach(p => { if (Math.abs(sp[p.code].x - spec.ball) > 1.5) bad.push(`${p.code} blocks ${Math.abs(sp[p.code].x - spec.ball).toFixed(1)} m from the ball`); });
+      fr.filter(p => sp[p.code].y > 0.6).forEach(p => { const q = sp[p.code]; if (q.y < 2.5 || q.y > 3.5 || Math.min(q.x, W - q.x) < 1.0) bad.push(`${p.code} off-blocker at ${q.x.toFixed(1)}, ${q.y.toFixed(1)}`); });
+      bk.forEach(p => { const q = sp[p.code]; if (p.base.zone === 6 ? q.y < D - 1.0 : (Math.min(q.x, W - q.x) > 1.2 || q.y < 5.5)) bad.push(`${p.code} reads to ${q.x.toFixed(1)}, ${q.y.toFixed(1)}`); });
+      f.players.forEach(p => { const q = sp[p.code]; if (q.x < 0.3 || q.x > W - 0.3 || q.y < 0.3 || q.y > D - 0.3) bad.push(`${p.code} reads off the court`); });
+      f.players.forEach((p, i) => f.players.slice(i + 1).forEach(o => { if (Math.hypot(sp[p.code].x - sp[o.code].x, sp[p.code].y - sp[o.code].y) < 0.4) bad.push(`${p.code} and ${o.code} share a spot`); }));
+      return { ok: !bad.length, msg: bad.join('; ') || `R${LBL(r)} vs ${spec.name}: block ${blockers.map(p => p.code).join('+')}, ${f.players.filter(p => !blockers.includes(p)).map(p => `${p.code} ${sp[p.code].short}`).join(', ')}` }; })) },
   { name: 'The stack at our serve is legal, the server behind the end line', why: 'FIVB 7.4 exempts the server, so the other five must satisfy the pairs that do not involve zone 1 at the service hit (recomputed from the rule text with the 0.4 m margin), stand inside the court, and be the same every time; the server stands behind the end line.',
     run: () => ORDER.map(r => { const f = baseFormation(r), at = z => f.players.find(p => p.zone === z), bad = [];
       [[4, 5], [3, 6]].forEach(([fz, bz]) => { if (!(at(fz).y <= at(bz).y - RECV.margin + 1e-6)) bad.push(`zone ${fz} is not in front of zone ${bz}`); });
@@ -802,7 +879,7 @@ function stopPlayback() {
 }
 function play() {
   if (isPlaying()) { const wasTween = tweening; stopPlayback(); if (!wasTween) return; }
-  if (state.phase === 'atk' || state.phase === 'start') return;
+  if (state.phase === 'atk' || state.phase === 'start' || (state.phase === 'base' && state.read !== 'base')) return;
   const base = state.phase === 'base', tl = base ? baseTimeline(state.rotation) : timeline(state.rotation), form = tl.form, col = base ? baseColor : colorOf;
   const anim = $('#anim'), ball = $('#ball'); if (!anim || !ball) return;
   document.body.classList.add('playing'); $('.fab').textContent = '■ Stop';
@@ -828,6 +905,7 @@ function positionsOf(r, st) {
   if (st.phase === 'start') rotation(r).players.forEach(p => { out[p.code] = { x: zoneX(p.zone), y: p.front ? START_Y.front : START_Y.back }; });
   else if (st.phase === 'recv') receiveFormation(r).players.forEach(p => { out[p.code] = { x: p.x, y: p.y }; });
   else if (st.phase === 'atk') { const a = attackSpots(r, LBL(r) === 6 ? (st.step || 'first') : 'attack'); Object.keys(a).forEach(c => { out[c] = { x: a[c].x, y: a[c].y }; }); }
+  else if (st.read && st.read !== 'base') { const sp = readSpots(r, st.read); Object.keys(sp).forEach(c => { out[c] = { x: sp[c].x, y: sp[c].y }; }); }
   else baseFormation(r).players.forEach(p => { out[p.code] = { x: p.goes.x, y: p.goes.y }; });
   return out;
 }
@@ -838,7 +916,7 @@ function coloursOf(r, st) {
   else receiveFormation(r).players.forEach(p => { out[p.code] = colorOf(p); });
   return out;
 }
-const hereStep = () => ({ phase: state.phase, step: state.step });
+const hereStep = () => ({ phase: state.phase, step: state.step, read: state.read });
 /* Nobody runs through anybody. Each mover heads for their spot at their own speed from their own leave time and steps
    round anyone within a body's reach; when it is head-on both step to their right and pass. Positions come from a
    fixed-step simulation, and everyone is exactly home by the end. */
@@ -888,7 +966,7 @@ function runPaths(movers, t0, tEnd) {
 function moveTo(r, st) {
   stopPlayback();
   const from = positionsOf(state.rotation, hereStep()), to = positionsOf(r, st), col = coloursOf(state.rotation, hereStep()), players = rotation(state.rotation).players;
-  const apply = () => { if (r !== state.rotation) { state.rotation = r; state.selected = null; state.step = 'first'; renderBar(); } if (st.step) state.step = st.step; setPhase(st.phase, st.step); };
+  const apply = () => { if (r !== state.rotation) { state.rotation = r; state.selected = null; state.step = 'first'; renderBar(); } if (st.step) state.step = st.step; setPhase(st.phase, st.step, st.read); };
   const anim = $('#anim');
   if (!anim || reduceMotion.matches || players.every(p => Math.hypot(to[p.code].x - from[p.code].x, to[p.code].y - from[p.code].y) < 0.05)) { apply(); return; }
   tweening = true; pendingDone = apply;
@@ -920,18 +998,19 @@ function renderTab() {
   if (state.tab === 'rot') renderRot(); else if (state.tab === 'rules') renderRules(); else if (state.tab === 'roles') renderRoles(); else if (state.tab === 'checks') renderChecks();
 }
 function setRotation(r) { stopPlayback(); state.rotation = r; state.selected = null; state.step = 'first'; renderBar(); renderTab(); }
-function setPhase(ph, step) { if (ph === 'atk') state.step = step || (state.phase === 'atk' ? state.step : 'first'); state.phase = ['start', 'atk', 'base'].includes(ph) ? ph : 'recv'; state.selected = null; renderRot(); }
+function setPhase(ph, step, read) { if (ph === 'atk') state.step = step || (state.phase === 'atk' ? state.step : 'first'); state.read = ph === 'base' ? (READS.includes(read) ? read : 'base') : 'base'; state.phase = ['start', 'atk', 'base'].includes(ph) ? ph : 'recv'; state.selected = null; renderRot(); }
 function setStep(st) { state.step = st === 'attack' ? 'attack' : 'first'; renderRot(); }
 function select(i) { state.selected = state.selected === i ? null : i; if (state.tab === 'rot') { stopPlayback(); renderRot(); const c = $(`.pcard[data-player="${state.selected}"]`); if (c && narrow.matches) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
 document.addEventListener('click', e => {
   if (isPlaying() && !tweening && e.target.closest('.scene-wrap') && !e.target.closest('.fab')) { stopPlayback(); e.preventDefault(); return; }
-  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-phase],[data-step],[data-next],[data-prev],[data-play],#t-routes,#t-lanes');
+  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-phase],[data-step],[data-read],[data-next],[data-prev],[data-play],#t-routes,#t-lanes');
   if (!t) return;
   if (t.hasAttribute('data-tab')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-rotation')) { setRotation(Number(t.getAttribute('data-rotation'))); return; }
   if (t.hasAttribute('data-player')) { select(Number(t.getAttribute('data-player'))); return; }
   if (t.hasAttribute('data-phase')) { const ph = t.getAttribute('data-phase'); moveTo(state.rotation, { phase: ph, step: ph === 'atk' ? 'first' : undefined }); return; }
   if (t.hasAttribute('data-step')) { moveTo(state.rotation, { phase: 'atk', step: t.getAttribute('data-step') }); return; }
+  if (t.hasAttribute('data-read')) { moveTo(state.rotation, { phase: 'base', read: t.getAttribute('data-read') }); return; }
   if (t.hasAttribute('data-next')) { stepBy(1); return; }
   if (t.hasAttribute('data-prev')) { stepBy(-1); return; }
   if (t.hasAttribute('data-play')) { play(); return; }
@@ -942,7 +1021,7 @@ document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === 
 renderBar();
 showTab('rot');
 { const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
-window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, moveTo, runPaths, showTab, select, RECV, BASE, OVERLAP, TARGET };
+window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, moveTo, runPaths, readSpots, SIXBACK, showTab, select, RECV, BASE, OVERLAP, TARGET };
 })();
 </script>
 </body>
