@@ -76,7 +76,10 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 .route{stroke-dasharray:3 5;fill:none;opacity:.6}
 .ghost{pointer-events:none}
 .ghost text{fill:#c8cddb}
-.toolbar .seg.phase button,.toolbar .seg.step button{padding:0 16px}
+.toolbar .seg.phase button,.toolbar .seg.step button{padding:0 14px}
+.stepbar{display:flex;align-items:center;gap:10px;margin-top:8px;max-width:640px}
+.stepbar .stepname{flex:1;text-align:center;font-size:13px;color:var(--muted);font-weight:600;min-width:0}
+.stepbar .btn{flex:0 0 auto;min-width:96px}
 .summary code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;background:var(--panel3);padding:2px 6px;border-radius:6px}
 .ball,.tok-anim{pointer-events:none}
 body.playing .static-g{opacity:.25}
@@ -127,7 +130,9 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
   .kv{grid-template-columns:1fr}
   .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px}
   .toolbar .seg.phase,.toolbar .seg.step{display:flex;flex:1 1 100%}
-  .toolbar .seg.phase button,.toolbar .seg.step button{flex:1;padding:0}
+  .toolbar .seg.phase button,.toolbar .seg.step button{flex:1;padding:0;font-size:13px}
+  .stepbar .btn{min-width:88px;padding:0 12px}
+  .stepbar .stepname{font-size:12px}
 }
 @media (min-width:900px){
   .app{display:grid;grid-template-columns:200px minmax(0,1fr);align-items:start;min-height:100vh}
@@ -178,7 +183,7 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
         <p id="rot-desc">Where the six stand before the serve, why the overlap rule puts them there, who passes, where the setter releases from, and where everyone goes once the ball is passed. Nothing is typed per rotation: the lineup, the rule and the jobs decide.</p>
       </div>
       <div class="toolbar">
-        <div class="seg phase" role="group" aria-label="Phase"><button data-phase="recv" aria-pressed="true">Serve receive</button><button data-phase="atk" aria-pressed="false">Attack</button><button data-phase="base" aria-pressed="false">Base defence</button></div>
+        <div class="seg phase" role="group" aria-label="Phase"><button data-phase="start" aria-pressed="true">Start</button><button data-phase="recv" aria-pressed="false">Serve receive</button><button data-phase="atk" aria-pressed="false">Attack</button><button data-phase="base" aria-pressed="false">Base defence</button></div>
         <div class="seg step" id="step" role="group" aria-label="R6 step" hidden><button data-step="first" aria-pressed="true">First ball</button><button data-step="attack" aria-pressed="false">After the first hit</button></div>
         <button class="toggle" id="t-routes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span id="t-routes-lab">After the pass</span></button>
         <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Passing lanes</span></button>
@@ -186,6 +191,7 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
       <div class="two">
         <div>
           <div class="scene-wrap"><div id="scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play the serve and the pass">▶ Play</button></div></div>
+          <div class="stepbar"><button class="btn" data-prev aria-label="Back one step">◀ Back</button><div class="stepname" id="stepname" aria-live="polite"></div><button class="btn primary" data-next aria-label="Next step">Next ▶</button></div>
           <div class="legend" id="legend" style="margin-top:8px"></div>
         </div>
         <div>
@@ -261,14 +267,17 @@ function rotation(r) {
    shape for the first ball and switches after the first hit); defence = base once the other side has the ball.
    ============================================================ */
 const SHEET = {
-  6: { receive: '1O1(f)S 6M1 5O2 4R 3M2', first: '6M1 5O2 4R 3M2(l)S 2O1', attack: '6M1 5O2 4O1 3M2(l)S 2R', defence: '1S 6M1 5O2 4O1 3M2 2R' },
-  1: { receive: '1O1 6M1 5O2 3R(l)S 2M2', attack: '6M1 5O1 4O2 3M2(l)S 2R', defence: '1S 6M1 5O1 4O2 3M2 2R' },
-  2: { receive: '1M2 6O1 5O2 4M1(l)S 2R', attack: '6M2 5O1 4O2 3M1(l)S 2R', defence: '1S 6M2 5O1 4O2 3M1 2R' },
-  3: { receive: '1M2(f)R 6O1 5O2 4S(l)M1', attack: '1R 6M2 5O1 4O2 3M1(l)S', defence: '1R 6M2 5O1 4O2 3M1(l)S' },
-  4: { receive: '1O2 6M2(f)R 5O1 3S(l)M1', attack: '1R 6M2 5O2 4O1 3S(l)M1', defence: '1R 6M2 5O2 4O1 3M1(l)S' },
-  5: { receive: '1M1 6O2 5O1(f)R 4M2 2S', attack: '1R 6M1 5O2 4O1 3M2(l)S', defence: '1R 6M1 5O2 4O1 3M2(l)S' },
+  6: { start: '1S 6M1 5O2 4R 3M2 2O1', receive: '1O1(f)S 6M1 5O2 4R 3M2', first: '6M1 5O2 4R 3M2(l)S 2O1', attack: '6M1 5O2 4O1 3M2(l)S 2R', defence: '1S 6M1 5O2 4O1 3M2 2R' },
+  1: { start: '1O1 6S 5M1 4O2 3R 2M2', receive: '1O1 6M1 5O2 3R(l)S 2M2', attack: '6M1 5O1 4O2 3M2(l)S 2R', defence: '1S 6M1 5O1 4O2 3M2 2R' },
+  2: { start: '1M2 6O1 5S 4M1 3O2 2R', receive: '1M2 6O1 5O2 4M1(l)S 2R', attack: '6M2 5O1 4O2 3M1(l)S 2R', defence: '1S 6M2 5O1 4O2 3M1 2R' },
+  3: { start: '1R 6M2 5O1 4S 3M1 2O2', receive: '1M2(f)R 6O1 5O2 4S(l)M1', attack: '1R 6M2 5O1 4O2 3M1(l)S', defence: '1R 6M2 5O1 4O2 3M1(l)S' },
+  4: { start: '1O2 6R 5M2 4O1 3S 2M1', receive: '1O2 6M2(f)R 5O1 3S(l)M1', attack: '1R 6M2 5O2 4O1 3M1(l)S', defence: '1R 6M2 5O2 4O1 3M1(l)S' },
+  5: { start: '1M1 6O2 5R 4M2 3O1 2S', receive: '1M1 6O2 5O1(f)R 4M2 2S', attack: '1R 6M1 5O2 4O1 3M2(l)S', defence: '1R 6M1 5O2 4O1 3M2(l)S' },
 };
-const PHASES = { receive: 'Serve receive', first: 'First ball', attack: 'Attack', defence: 'Base defence' };
+const PHASES = { start: 'Start', receive: 'Serve receive', first: 'First ball', attack: 'Attack', defence: 'Base defence' };
+/* The steps a rotation is walked through with Next / Back; R6 has the extra first-ball step. */
+const stepsOf = r => LBL(r) === 6 ? [{ phase: 'start' }, { phase: 'recv' }, { phase: 'atk', step: 'first' }, { phase: 'atk', step: 'attack' }, { phase: 'base' }] : [{ phase: 'start' }, { phase: 'recv' }, { phase: 'atk', step: 'attack' }, { phase: 'base' }];
+const START_Y = { front: 1.8, back: 6.5 };
 const ENTRY = /^([1-6])([A-Z]\d?)(?:\((f|l)\)([A-Z]\d?))?$/;
 function parseSheet(str) { return str.trim().split(/\s+/).map(tok => { const m = ENTRY.exec(tok); if (!m) throw new Error('bad sheet entry ' + tok); return { tok, zone: Number(m[1]), a: m[2], rel: m[3] || null, b: m[4] || null }; }); }
 /* Each player's listed zone (and relation) in one phase of one rotation. */
@@ -298,7 +307,7 @@ const PAIR_TEXT = { 'x43': 'zone 4 left of zone 3 (front row order)', 'x32': 'zo
 
 const state = {
   rotation: (function () { try { const r = Number(localStorage.getItem('serveReceive.rotation')); if (r >= 1 && r <= 6) return r; } catch (e) { /* ignore */ } return 1; })(),
-  tab: 'rot', phase: (function () { try { const p = localStorage.getItem('serveReceive.phase'); return ['recv', 'atk', 'base'].includes(p) ? p : 'recv'; } catch (e) { return 'recv'; } })(),
+  tab: 'rot', phase: (function () { try { const p = localStorage.getItem('serveReceive.phase'); return ['start', 'recv', 'atk', 'base'].includes(p) ? p : 'start'; } catch (e) { return 'start'; } })(),
   step: 'first', routes: true, lanes: true, selected: null
 };
 const $ = (s, root) => (root || document).querySelector(s);
@@ -522,13 +531,25 @@ function courtSvg(r) {
   form.players.forEach(p => { const dim = sel != null && sel !== p.i; o += tokenSvg(p.x, p.y, p.code, colorOf(p), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])} in zone ${p.zone}: ${esc(jobText(p))}"`, `<text y="-20" font-size="11" fill="#c8cddb" text-anchor="middle">${p.zone}</text>`, p.role === 'S'); });
   return o + animSvg() + `</svg>`;
 }
+/* Where each player comes from for an attack view: the serve-receive spot, or for R6 after the first hit, the first-ball spot. */
+function attackFrom(r, phase) { const out = {}; if (phase === 'attack' && LBL(r) === 6) { const fi = attackSpots(r, 'first'); Object.keys(fi).forEach(c => { out[c] = { x: fi[c].x, y: fi[c].y }; }); } else receiveFormation(r).players.forEach(p => { out[p.code] = { x: p.x, y: p.y }; }); return out; }
 function attackSvg(r) {
   const form = receiveFormation(r), phase = LBL(r) === 6 ? state.step : 'attack', spots = attackSpots(r, phase), sel = state.selected;
+  const from = attackFrom(r, phase);
   let o = courtFrame(`${PHASES[phase]}, rotation ${LBL(r)}`, 'NET · our ball is set; they block and dig on the far side', true, 0);
   o += `<g class="static-g">`;
-  if (state.routes) form.players.forEach(p => { const s = spots[p.code], c = ACOL[s.kind], d = Math.hypot(s.x - p.x, s.y - p.y); if (d > 0.2) o += `<path class="route" d="M${r1(cx(p.x))} ${r1(cy(p.y))}L${r1(cx(s.x))} ${r1(cy(s.y))}" stroke="${c}" stroke-width="2"/>`; if (d > 0.2) o += ghostSvg(p.x, p.y, p.code, c, null); });
+  if (state.routes) form.players.forEach(p => { const s = spots[p.code], f = from[p.code], c = ACOL[s.kind], d = Math.hypot(s.x - f.x, s.y - f.y); if (d > 0.2) o += `<path class="route" d="M${r1(cx(f.x))} ${r1(cy(f.y))}L${r1(cx(s.x))} ${r1(cy(s.y))}" stroke="${c}" stroke-width="2"/>`; if (d > 0.2) o += ghostSvg(f.x, f.y, p.code, c, null); });
   o += `</g>`;
   form.players.forEach(p => { const s = spots[p.code], dim = sel != null && sel !== p.i; o += tokenSvg(s.x, s.y, p.code, ACOL[s.kind], `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])}: ${esc(s.label)}"`, `<text y="28" font-size="10" fill="#c8cddb" text-anchor="middle">${esc(s.label.replace(/^(hits|covers|sets) /, ''))}</text>`, p.role === 'S'); });
+  return o + `</svg>`;
+}
+function startSvg(r) {
+  const rot = rotation(r), form = receiveFormation(r), sel = state.selected;
+  let o = courtFrame(`Start, rotation ${LBL(r)}`, 'NET · rotational order before the serve', true, 0);
+  o += `<g class="static-g">`;
+  if (state.routes) rot.players.forEach(p => { const q = form.players[p.i], c = colorOf(q), x0 = zoneX(p.zone), y0 = p.front ? START_Y.front : START_Y.back, d = Math.hypot(q.x - x0, q.y - y0); if (d > 0.2) o += `<path class="route" d="M${r1(cx(x0))} ${r1(cy(y0))}L${r1(cx(q.x))} ${r1(cy(q.y))}" stroke="${c}" stroke-width="2"/><circle cx="${r1(cx(q.x))}" cy="${r1(cy(q.y))}" r="5" fill="none" stroke="${c}" stroke-width="1.5" opacity=".7"/>`; });
+  o += `</g>`;
+  rot.players.forEach(p => { const q = form.players[p.i], dim = sel != null && sel !== p.i; o += tokenSvg(zoneX(p.zone), p.front ? START_Y.front : START_Y.back, p.code, colorOf(q), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])} in zone ${p.zone}"`, `<text y="-20" font-size="11" fill="#c8cddb" text-anchor="middle">${p.zone}</text>`, p.role === 'S'); });
   return o + `</svg>`;
 }
 function baseSvg(r) {
@@ -559,6 +580,8 @@ function renderBar() {
   requestAnimationFrame(() => { const b = $('#bar'); if (b) document.documentElement.style.setProperty('--sticky-h', b.offsetHeight + 'px'); });
 }
 const PHASE_TEXT = {
+  start: { title: 'Start, rotation by rotation', desc: 'Rotational order at the start of the rotation: who is in which zone before anyone moves. From here everyone goes to their serve-receive spot when the other side serves, or to the stack and base when we serve. Step through Start, Receive, Attack and Defence with Next.', routes: 'To serve receive', play: '',
+    legend: '<span><i style="background:var(--pass)"></i>will pass</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>will wait at the net</span><span><i style="background:var(--tuck)"></i>will tuck behind a passer</span><span>Dotted lines: to the serve-receive spot.</span>' },
   recv: { title: 'Serve receive, rotation by rotation', desc: 'Where the six stand at the service hit, who passes, who shades the setter and the right side, and where everyone goes once the ball is passed. The coach\'s sheet says who stands where; the overlap rule settles the exact spots. R6 is the starting rotation, the setter serving (the Setter Signals page calls it rotation 1).', routes: 'After the pass', play: 'Play the serve and the pass',
     legend: '<span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>waits at the net</span><span><i style="background:var(--tuck)"></i>tucks behind a passer</span><span>Tap a player for the why.</span>' },
   atk: { title: 'Attack, rotation by rotation', desc: 'Where everyone is once our ball is set: hitters at their approach starts, the setter at the target, the back row covering. Dashed rings show the serve-receive spot each one came from. R6 keeps its receive shape for the first ball and switches after the first hit.', routes: 'From serve receive', play: '',
@@ -573,7 +596,18 @@ function applyPhaseChrome() {
   $('#step').hidden = !(state.phase === 'atk' && LBL(state.rotation) === 6);
   $$('[data-phase]').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-phase') === state.phase)));
   $$('[data-step]').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-step') === state.step)));
-  const fab = $('.fab'); if (fab) { fab.hidden = state.phase === 'atk'; fab.setAttribute('aria-label', t.play); }
+  const fab = $('.fab'); if (fab) { fab.hidden = state.phase === 'atk' || state.phase === 'start'; fab.setAttribute('aria-label', t.play); }
+  const steps = stepsOf(state.rotation), k = stepIndex();
+  $('#stepname').textContent = `R${LBL(state.rotation)} · ${stepLabel(steps[k])} · ${k + 1} of ${steps.length}`;
+}
+function stepIndex() { const steps = stepsOf(state.rotation); const k = steps.findIndex(st => st.phase === state.phase && (st.phase !== 'atk' || st.step === state.step)); return k < 0 ? 0 : k; }
+const stepLabel = st => st.phase === 'start' ? 'Start' : st.phase === 'recv' ? 'Serve receive' : st.phase === 'base' ? 'Base defence' : st.step === 'first' ? 'Attack · first ball' : (LBL(state.rotation) === 6 ? 'Attack · after the first hit' : 'Attack');
+/* Next / Back walk Start → Receive → Attack (→ after the first hit in R6) → Defence, then on to the next rotation. */
+function stepBy(d) {
+  const steps = stepsOf(state.rotation); let k = stepIndex() + d;
+  if (k >= steps.length) { const r = state.rotation % 6 + 1; state.rotation = r; state.step = 'first'; state.phase = 'start'; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } state.selected = null; renderBar(); setPhase('start'); return; }
+  if (k < 0) { const r = (state.rotation + 4) % 6 + 1; state.rotation = r; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } state.selected = null; renderBar(); state.step = 'attack'; setPhase('base'); return; }
+  const st = steps[k]; setPhase(st.phase, st.step);
 }
 function renderRecv() {
   const r = state.rotation, rot = rotation(r), form = receiveFormation(r), tl = timeline(r);
@@ -594,16 +628,16 @@ function renderRecv() {
   }).join('');
 }
 function renderAttack() {
-  const r = state.rotation, form = receiveFormation(r), phase = LBL(r) === 6 ? state.step : 'attack', spots = attackSpots(r, phase);
+  const r = state.rotation, form = receiveFormation(r), phase = LBL(r) === 6 ? state.step : 'attack', spots = attackSpots(r, phase), from = attackFrom(r, phase), fromText = phase === 'attack' && LBL(r) === 6 ? 'the first-ball spot' : 'serve receive';
   $('#scene').innerHTML = attackSvg(r);
   const hitters = form.players.filter(p => spots[p.code].kind === 'hit').sort((a, b) => spots[a.code].x - spots[b.code].x), covers = form.players.filter(p => spots[p.code].kind === 'cover').sort((a, b) => spots[a.code].x - spots[b.code].x);
   $('#summary').innerHTML = `<b>Rotation ${LBL(r)} · ${PHASES[phase]}</b> · sheet <code>${esc(SHEET[LBL(r)][phase])}</code>.<br>` +
     `<b>Hitters:</b> ${hitters.map(p => `${p.code} ${spots[p.code].label.replace(/^hits /, '')}`).join(', ')}. <b>Setter</b> at the target. <b>Coverage:</b> ${covers.map(p => `${p.code} ${spots[p.code].label.replace(/^covers /, '')}`).join(', ')}.` +
     (LBL(r) === 6 ? `<br><b>R6:</b> ${phase === 'first' ? 'the first ball is hit from the receive shape: R from 4, O1 from 2. After the first hit O1 and R swap sides.' : 'after the first hit O1 takes the left side and R the right for the rest of the rally.'}` : '') +
-    `<br><span class="hint">Routes run from the serve-receive spot; distances are what each player covers after the pass.</span>`;
+    `<br><span class="hint">Routes run from ${fromText}; distances are what each player covers to get here.</span>`;
   $('#cards').innerHTML = form.players.map(p => {
-    const s = spots[p.code], c = ACOL[s.kind], d = Math.hypot(s.x - p.x, s.y - p.y);
-    return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${c}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code])}</b> <span class="job">· ${esc(s.label)} · ${s.x.toFixed(1)} m across, ${s.y.toFixed(1)} m off</span><div class="why">${d > 0.2 ? `From ${p.x.toFixed(1)}, ${p.y.toFixed(1)} in serve receive: ${d.toFixed(1)} m, ${(d / (p.role === 'S' ? RECV.setterSpeed : RECV.hitterSpeed)).toFixed(2)} s.` : 'Already there from serve receive.'}${LBL(r) === 6 && (p.code === 'R' || p.code === 'O1') ? ` ${phase === 'first' ? 'Stays on this side until the first hit.' : 'Switched here after the first hit.'}` : ''}</div></div></div>`;
+    const s = spots[p.code], f = from[p.code], c = ACOL[s.kind], d = Math.hypot(s.x - f.x, s.y - f.y);
+    return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${c}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code])}</b> <span class="job">· ${esc(s.label)} · ${s.x.toFixed(1)} m across, ${s.y.toFixed(1)} m off</span><div class="why">${d > 0.2 ? `From ${f.x.toFixed(1)}, ${f.y.toFixed(1)} in ${fromText}: ${d.toFixed(1)} m, ${(d / (p.role === 'S' ? RECV.setterSpeed : RECV.hitterSpeed)).toFixed(2)} s.` : `Already there from ${fromText}.`}${LBL(r) === 6 && (p.code === 'R' || p.code === 'O1') ? ` ${phase === 'first' ? 'Stays on this side until the first hit.' : 'Switched here after the first hit.'}` : ''}</div></div></div>`;
   }).join('');
 }
 function renderBase() {
@@ -622,10 +656,19 @@ function renderBase() {
     return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${c}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code])}</b> <span class="job">· ${esc(p.job)} · base ${p.base.x.toFixed(1)} m across, ${p.base.y.toFixed(1)} m off</span><div class="why">${esc(atServe)}${esc(home)}</div></div></div>`;
   }).join('');
 }
+function renderStart() {
+  const r = state.rotation, rot = rotation(r), form = receiveFormation(r);
+  $('#scene').innerHTML = startSvg(r);
+  $('#summary').innerHTML = `<b>Rotation ${LBL(r)} · Start</b> · sheet <code>${esc(SHEET[LBL(r)].start)}</code>.<br>` +
+    `<b>Front row</b> ${rot.front.join(' · ')} (zones 4 · 3 · 2), <b>back row</b> ${rot.back.join(' · ')} (zones 5 · 6 · 1). Setter in zone ${rot.setterZone}, ${rot.setterFront ? 'front' : 'back'} row.` +
+    `<br><span class="hint">Press Next to see where everyone goes for serve receive, then the attack, then base defence.</span>`;
+  $('#cards').innerHTML = rot.players.map(p => { const q = form.players[p.i], d = Math.hypot(q.x - zoneX(p.zone), q.y - (p.front ? START_Y.front : START_Y.back));
+    return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${colorOf(q)}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code])}</b> <span class="job">· zone ${p.zone}, ${p.front ? 'front' : 'back'} row</span><div class="why">For serve receive ${esc(jobText(q))}, ${d.toFixed(1)} m from the middle of zone ${p.zone}.</div></div></div>`; }).join('');
+}
 function renderRot() {
   stopPlayback();
   applyPhaseChrome();
-  if (state.phase === 'base') renderBase(); else if (state.phase === 'atk') renderAttack(); else renderRecv();
+  if (state.phase === 'base') renderBase(); else if (state.phase === 'atk') renderAttack(); else if (state.phase === 'start') renderStart(); else renderRecv();
 }
 function renderRules() {
   const r = state.rotation, form = receiveFormation(r), m = RECV.margin, at = z => form.players.find(p => p.zone === z);
@@ -648,9 +691,10 @@ function renderRoles() {
 const colOf = x => x < 3 ? 'left' : x < 6 ? 'centre' : 'right';
 const COL_OF_ZONE = { 4: 'left', 5: 'left', 3: 'centre', 6: 'centre', 2: 'right', 1: 'right' };
 const RULES = [
-  { name: 'The sheet is complete and consistent', why: 'Every phase of every rotation lists all six players exactly once; in attack and defence a net zone holds a front-row player and a back zone a back-row player (the setter sets from the target whichever row they are in); a relation names a real teammate. R6 hits the first ball from its receive shape (R from 4, O1 from 2) and swaps them after the first hit.',
+  { name: 'The sheet is complete and consistent', why: 'Every phase of every rotation lists all six players exactly once; the start line matches the rotational order; in attack and defence a net zone holds a front-row player and a back zone a back-row player (the setter sets from the target whichever row they are in); a relation names a real teammate. R6 hits the first ball from its receive shape (R from 4, O1 from 2) and swaps them after the first hit.',
     run: () => ORDER.map(r => { const bad = [], rot = rotation(r), phases = Object.keys(SHEET[LBL(r)]);
       phases.forEach(ph => { let L; try { L = listing(r, ph); } catch (e) { bad.push(`${ph}: ${e.message}`); return; } const codes = Object.keys(L); if (codes.length !== 6 || SYSTEM.lineup.some(c => !L[c])) bad.push(`${ph} lists ${codes.join(',')}`); codes.forEach(c => { const e = L[c], p = rot.players.find(q => q.code === c); if (!p) { bad.push(`${ph}: ${c} is not on the team`); return; } if (e.of && !rot.players.some(q => q.code === e.of)) bad.push(`${ph}: ${c} relates to ${e.of}`); if (ph !== 'receive' && !(c === 'S' && ph !== 'defence')) { const netZone = e.zone >= 2 && e.zone <= 4; if (netZone !== p.front) bad.push(`${ph}: ${c} is ${p.front ? 'front' : 'back'} row but listed in zone ${e.zone}`); } }); });
+      { const st = listing(r, 'start'); rot.players.forEach(p => { if (st[p.code] && st[p.code].zone !== p.zone) bad.push(`start lists ${p.code} in zone ${st[p.code].zone}, the rotation puts them in ${p.zone}`); }); }
       if (LBL(r) === 6) { const fi = listing(r, 'first'), a = listing(r, 'attack'); if (!(fi.R.zone === 4 && fi.O1.zone === 2 && a.O1.zone === 4 && a.R.zone === 2)) bad.push('R6 first ball / after first hit swap is not R 4→2, O1 2→4'); }
       return { ok: !bad.length, msg: bad.join('; ') || `R${LBL(r)}: ${phases.map(ph => `${ph} ${SHEET[LBL(r)][ph]}`).join(' · ')}` }; }) },
   { name: 'Legal in every rotation under all seven pairs', why: 'Recomputed from the rule text (column pairs 4/5, 3/6, 2/1 by depth; row pairs 4/3, 3/2, 5/6, 6/1 by width) at the moment of the service hit, with the 0.4 m margin, independently of the solver\'s own flag.',
@@ -772,27 +816,29 @@ function renderTab() {
   if (state.tab === 'rot') renderRot(); else if (state.tab === 'rules') renderRules(); else if (state.tab === 'roles') renderRoles(); else if (state.tab === 'checks') renderChecks();
 }
 function setRotation(r) { state.rotation = r; state.selected = null; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } renderBar(); renderTab(); }
-function setPhase(ph) { state.phase = ['atk', 'base'].includes(ph) ? ph : 'recv'; state.selected = null; try { localStorage.setItem('serveReceive.phase', state.phase); } catch (e) { /* ignore */ } renderRot(); }
+function setPhase(ph, step) { if (ph === 'atk') state.step = step || (state.phase === 'atk' ? state.step : 'first'); state.phase = ['start', 'atk', 'base'].includes(ph) ? ph : 'recv'; state.selected = null; try { localStorage.setItem('serveReceive.phase', state.phase); } catch (e) { /* ignore */ } renderRot(); }
 function setStep(st) { state.step = st === 'attack' ? 'attack' : 'first'; renderRot(); }
 function select(i) { state.selected = state.selected === i ? null : i; if (state.tab === 'rot') { stopPlayback(); renderRot(); const c = $(`.pcard[data-player="${state.selected}"]`); if (c && narrow.matches) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
 document.addEventListener('click', e => {
   if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.fab')) { stopPlayback(); e.preventDefault(); return; }
-  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-phase],[data-step],[data-play],#t-routes,#t-lanes');
+  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-phase],[data-step],[data-next],[data-prev],[data-play],#t-routes,#t-lanes');
   if (!t) return;
   if (t.hasAttribute('data-tab')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-rotation')) { setRotation(Number(t.getAttribute('data-rotation'))); return; }
   if (t.hasAttribute('data-player')) { select(Number(t.getAttribute('data-player'))); return; }
   if (t.hasAttribute('data-phase')) { setPhase(t.getAttribute('data-phase')); return; }
   if (t.hasAttribute('data-step')) { setStep(t.getAttribute('data-step')); return; }
+  if (t.hasAttribute('data-next')) { stepBy(1); return; }
+  if (t.hasAttribute('data-prev')) { stepBy(-1); return; }
   if (t.hasAttribute('data-play')) { play(); return; }
   if (t.id === 't-routes') { state.routes = !state.routes; t.setAttribute('aria-pressed', String(state.routes)); renderRot(); return; }
   if (t.id === 't-lanes') { state.lanes = !state.lanes; t.setAttribute('aria-pressed', String(state.lanes)); renderRot(); return; }
 });
-document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-player]')) { e.preventDefault(); e.target.closest('[data-player]').click(); } });
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-player]')) { e.preventDefault(); e.target.closest('[data-player]').click(); return; } if (state.tab === 'rot' && !e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.target.closest('input,textarea,select')) { e.preventDefault(); stepBy(e.key === 'ArrowRight' ? 1 : -1); } });
 renderBar();
 showTab('rot');
 { const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
-window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, showTab, select, RECV, BASE, OVERLAP, TARGET };
+window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, showTab, select, RECV, BASE, OVERLAP, TARGET };
 })();
 </script>
 </body>
