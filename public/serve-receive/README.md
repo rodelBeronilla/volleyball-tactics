@@ -1,11 +1,10 @@
-# Serve Receive Rotations · 5-1
+# Serve Receive · 5-1, six rotations
 
-A single-file, offline reference for a 5-1 team's serve receive: for each of the six rotations,
-where the six players stand before the serve, why the overlap rule puts them there, who passes and
-in which lane, where the setter hides and how far they release, and where everyone goes once the
-ball is passed. It is the serve-receive half of the [Setter Signals & Set Map](../setter-signals/)
-page, built on the same model, and the two link to each other. Modelled on the interactive 5-1
-formation pages at learnvolley.com, with the positions derived rather than drawn.
+A single-file, offline reference for one team's 5-1 (no libero): for each of the six rotations, where the six stand
+at the service hit, who passes, who shades the setter and the right side, where everyone goes once the ball is passed,
+and where they wait in base once the other side has the ball. The coach's sheet is the source of truth; the page turns
+it into a court, checks it against the overlap rule, and puts it on the rally clock. It links to the
+[Setter Signals & Set Map](../setter-signals/) page and shares its physics.
 
 ## Open it
 
@@ -15,90 +14,86 @@ formation pages at learnvolley.com, with the positions derived rather than drawn
 
 No build step, no frameworks, no CDNs.
 
+## The team
+
+| Code | Player |
+| --- | --- |
+| S | Setter |
+| O1, O2 | Outsides |
+| M1, M2 | Middles |
+| R | Right side |
+
+Lineup in service order: S, O1, M2, R, O2, M1. **R6 is the starting rotation**, the setter serving from zone 1; R1 is
+one rotation later with the setter in zone 6, and so on to R5 with the setter in zone 2. The Setter Signals page
+numbers the same rotations 1–6 starting from the setter in zone 1, so its rotation 1 is R6 here.
+
+**The golden rule:** R and S never receive. When either is in the back court they are shaded by a teammate, behind a
+passer or beside a front-row player at the attack line.
+
+## The sheet
+
+The page holds the coach's sheet verbatim. A zone digit, then who stands there; `X(f)Y` means Y stands behind X,
+`X(l)Y` means Y stands to the right of X.
+
+| Rotation | Serve receive | Attack | Base defence |
+| --- | --- | --- | --- |
+| R6 | `1O1(f)S 6M1 5O2 4R 3M2` | first ball `6M1 5O2 4R 3M2(l)S 2O1`, after the first hit `6M1 5O2 4O1 3M2(l)S 2R` | `1S 6M1 5O2 4O1 3M2 2R` |
+| R1 | `1O1 6M1 5O2 3R(l)S 2M2` | `6M1 5O1 4O2 3M2(l)S 2R` | `1S 6M1 5O1 4O2 3M2 2R` |
+| R2 | `1M2 6O1 5O2 4M1(l)S 2R` | `6M2 5O1 4O2 3M1(l)S 2R` | `1S 6M2 5O1 4O2 3M1 2R` |
+| R3 | `1M2(f)R 6O1 5O2 4S(l)M1` | `1R 6M2 5O1 4O2 3M1(l)S` | `1R 6M2 5O1 4O2 3M1(l)S` |
+| R4 | `1O2 6M2(f)R 5O1 3S(l)M1` | `1R 6M2 5O2 4O1 3S(l)M1` | `1R 6M2 5O2 4O1 3M1(l)S` |
+| R5 | `1M1 6O2 5O1(f)R 4M2 2S` | `1R 6M1 5O2 4O1 3M2(l)S` | `1R 6M1 5O2 4O1 3M2(l)S` |
+
+R6 is the exception to the switch: nobody moves off the receive shape until after our first hit, so R hits the first
+ball from 4 and O1 from 2, then they swap sides for the rest of the rally.
+
 ## Views
 
 | Tab | What it shows |
 | --- | --- |
-| Rotations · Serve receive | The court for the current rotation: passers in their lanes (cyan, the libero green), the setter (yellow) with the release run to the target, front-row hitters hiding at the net (violet), a back-row opposite tucked short (pink), and dotted routes to where each one attacks from after the pass (the 4, 2, 5, Pipe/A/B or D start). Tap a player to see which overlap pairs hold them there and how far the rule pushed them from where their job alone would put them. ▶ plays the serve, the pass and everyone's transition on the real clock. Toggles: libero on/off (without one the back-row middle passes), routes, lanes. |
-| Rotations · Base defence | The same rotation once the other side has the ball: three blockers at the net (outside left, middle centre, setter or opposite right) and three diggers deep (libero left back, outside middle back, setter or opposite right back). Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base and its distance; the server stands behind the end line and runs in. ▶ plays our serve and the switch on the clock, against the moment the other side's setter touches. Tap a player for which pair holds them in the stack, how far they switch and how much time they have. |
-| Overlap | FIVB 7.4 in plain words and the seven pairs it consists of, with the actual gap in metres for the current rotation and the pairs that sit on the margin. |
-| Roles | A table of every player's job in every rotation (lane, hide, tuck, set), where they transition to and their base defence spot, plus the responsibilities of each position in a 5-1. |
-| Checks | Ten rule sets, all six rotations: legal under all seven pairs (recomputed from the rule text, not the solver's flag), the right three passing from 5–7.5 m, the setter at the target before the pass comes down, hiders at the net and tuckers out of the lanes, every start and route on the court and deterministic, a serve that clears the tape and a pass that comes down at the hands,, a lineup that is a 5-1; and for base defence the six right spots one per zone, a legal stack at our serve with the server exempt and behind the end line, and every switch finished before the other side sets. |
+| Rotations · Serve receive | The court at the service hit: passers in their lanes (cyan), the setter (yellow) with the release run to the target, front-row players waiting at the net (violet), a back-row right side tucked behind a passer (pink), and dotted routes to where each one goes after the pass. Tap a player to see which overlap pairs hold them there and how far the rule moved them from where the sheet alone would put them. ▶ plays the serve, the pass and everyone's transition on the real clock. Toggles: routes, lanes. |
+| Rotations · Attack | Where everyone is once our ball is set: hitters at their approach starts (violet), the setter at the target, the back row covering (cyan), with dashed rings at the serve-receive spot each one came from. R6 has a First ball / After the first hit switch. |
+| Rotations · Base defence | Base once the other side has the ball: three blockers at the net (an outside left, a middle centre, the setter or right side right) and three diggers deep (an outside left back, a middle middle back, the setter or right side right back). Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base and its distance; the server stands behind the end line and runs in. ▶ plays our serve and the switch against the moment the other side's setter touches. |
+| Overlap | FIVB 7.4 in plain words and the seven pairs it consists of, with the actual gap in metres for the current rotation's receive formation and the pairs that sit on the margin. |
+| Roles | A table of every player's job in every rotation: receive job, where they go for the attack, and their base spot. Plus the team's rules. |
+| Checks | Twelve rule sets: the sheet complete and consistent (six players per phase, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; waiters at the net and nobody short in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the right six spots, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
 
-## How the positions are derived
+## From the sheet to the floor
 
-Nothing is typed per rotation. The lineup in service order (`S, OH, MB, OPP, OH, MB`, setter serving
-from zone 1 in rotation 1) gives who is where; the libero replaces the back-row middle. Each player
-wants a spot for their job: the libero and both outsides pass, spread left–centre–right about 6 m
-off (the centre passer 0.8 m deeper, a front-row outside a little shallower); the front-row middle
-and opposite hide at the net as close to their own attack start as they can; a back-row opposite
-tucks short at the attack line; the setter waits at the target when front row and at the attack line
-when back row. Then the seven overlap constraints of FIVB rule 7.4 (front-row player nearer the net
-than the back-row player in their column; each row in left-centre-right order; no diagonals) push
-players until legal with a 0.4 m margin, the least important job giving way first: passers hold,
-the setter yields a little, hiders yield first. A back-row setter or opposite forced deeper than a
-passer tucks into the near corner, and nobody tucked short stands in a passer's lane.
+The sheet gives zones and relations, not metres. Each player wants a spot for what the sheet says they do: a passer
+their lane (left, centre or right by the zone listed, spread 2.0 / 4.5 / 7.2 m across, about 6 m off, the centre
+passer 0.8 m deeper, a front-row passer a little shallower); a front-row player waiting at the net the column of their
+zone, 1 m off; a front-row setter the net (the target when listed in zone 2); a player shaded behind someone the spot
+1.2 m behind them, peeking half a metre toward the side the back-row order needs; a player beside someone the spot
+1 m to their right (at the attack line when they are back row). Then the seven overlap constraints of FIVB rule 7.4
+push players until legal with a 0.4 m margin, the least important job giving way first (passers hold, the setter yields
+a little, waiters yield first), nobody short stands in a passer's lane, and the relations are re-applied to the settled
+positions and solved once more. The Checks tab verifies the result against the rule text and against the sheet, so a
+line that cannot be made legal shows up as a fault rather than a quietly moved player.
 
-That reproduces the textbook 5-1 without per-rotation data: in rotation 1 the setter hides in the
-right-back corner behind the right passer and releases 5.6 m, and the middle and the opposite stack
-right at the net; in rotation 2 the setter stacks at the attack line behind the opposite; in
-rotation 3 they start left of centre; in rotation 4 they start at the net just left of the middle;
-in rotations 5 and 6 they are already at the target and the back-row opposite tucks short.
+Attack spots come from the attack line's zones: a hitter listed in zone 4, 3 or 2 at that approach start (just outside
+the left sideline, the centre, just outside the right sideline, about 3 m off), the setter at the target, a player
+listed in 5, 6 or 1 covering left back, middle back or right back. Base spots come from the defence line: blockers half
+an arm's length off the net with the pins pinched 2 m in from the sideline, wings 1.2 m in from the sideline and 1.2 m
+behind the attack line, the middle back deep in the centre; `X(l)S` at the net means the setter takes the block to the
+right of X.
 
 ## The clock
 
-The serve is a float that clears the tape by 0.3 m and comes down on the passer's platform (about
-1.1 s, inside the 0.6–1.1 s receivers are measured to get). The pass rises to a 3.8 m apex and
-comes down at jump-set height at the target (1.26 s). The setter releases 0.3 s after the service
-hit and runs at 4 m/s; hiders release with them; passers move once the ball is past them, the
-passer after passing; hitters run at 3.5 m/s to their attack starts. Sources and their validation
-are in the Setter Signals README, which this page shares its constants with.
+The serve is a float that clears the tape by 0.3 m and comes down on the passer's platform (about 1.1 s). The pass
+rises to a 3.8 m apex and comes down at jump-set height at the target (1.26 s). The setter releases 0.3 s after the
+service hit and runs at 4 m/s; passers move once the ball is past them, the passer after passing; everyone else runs
+at 3.5 m/s to their attack spot. The base view runs the same serve the other way: our serve lands on their centre
+passer, their pass hangs, and their setter touches about 2.3 s after our service hit; everyone leaves 0.3 s after the
+hit and must be home by then. Sources and their validation are in the Setter Signals README.
 
-## Base defence
+## Base defence sources
 
-Base is where the six wait from the moment the other side has the ball until their setter touches it; from there
-everyone reads the set and moves to their read position. The spots are the standard ones and, like serve receive,
-nothing is typed per rotation: the lineup says who is front and back row, and each position has one base spot.
-
-| Who | Base | Why |
-| --- | --- | --- |
-| Outside (front) | Left block, 2.0 m in from the left sideline, 0.5 m off the net | The outside blocks left after the switch; the two outside blockers start pinched toward the middle. The pinch distance is this page's choice (the sources describe it without metres). |
-| Middle (front) | Middle block, centre of the net, 0.5 m off | Anchors the block and closes to either pin. Blockers stand about half an arm's length off the net so they can jump without touching it. |
-| Setter or opposite (front) | Right block, 2.0 m in from the right sideline | The right-side player blocks right; a front-row setter blocks right and digs nothing. |
-| Setter or opposite (back) | Right back, 1.2 m in from the sideline, 1.2 m behind the attack line | A back-row setter defends zone 1 so they can release to set; the opposite takes the same spot when the setter is front row. |
-| Outside (back) | Middle back, centre, 7.0 m off the net | Deep in the centre, covering the deep corners in a perimeter defence. |
-| Libero, or the back-row middle | Left back, 1.2 m in from the sideline, 1.2 m behind the attack line | The libero digs zone 5. |
-
-Back-row wings about 4 ft from the sideline and 4 ft behind the 10-foot line is the figure the coaching sites give
-for base; the middle back is described as deep in the centre.
-
-### The stack at our serve and the switch
-
-At the service hit all six must still be in rotational order (FIVB 7.4), except the server. So the page runs the same
-overlap solver as serve receive with different wants: each player wants their base spot, the server wants the end line
-behind it, the five pairs that do not involve zone 1 push the others until legal with the 0.4 m margin, and the middle
-blocker is three times stiffer than the pins so the pins compress toward them. Whatever distance is left is the switch.
-That gives the familiar picture without per-rotation data: in rotations 1 and 4 the two pins stand either side of the
-middle and swap sides after the hit; in rotations 2 and 5 the opposite (or setter) stands just left of the middle; in
-rotations 3 and 6 the back-row setter (or opposite) stands just left of the middle-back outside and runs to zone 1.
-
-The clock starts at our service hit. The serve reaches their centre passer in about 1.07 s and their pass hangs about
-1.26 s (the same physics as our own serve receive, mirrored), so their setter touches about 2.3 s after the hit.
-Everyone leaves 0.3 s after the hit and runs at 3.5 m/s (the setter 4 m/s). The longest job is the server's run in from
-behind the end line (5.4 m); every switch finishes with at least 0.5 s to spare, and the Checks tab grades that.
-
-When the middle is due to serve (rotations 3 and 6) the libero cannot take their place, because under FIVB rules a
-libero may not serve; the middle serves and plays left back for that rally, and the libero replaces them at the next
-dead ball. USAV, NCAA and NFHS let a libero serve in one rotation position per set. The page shows the FIVB case and
-says so.
-
-Sources for the base spots and rules (read as search excerpts; several of these sites block automated fetching):
-Volleyball Vault and HoopsKing on base positions (4 ft off the sideline and behind the attack line; base is where
-the six start after serving or before the opponent sets); The Art of Coaching Volleyball on base position and
-defensive systems (outside blockers pinched toward the middle, middle blocker centred, back row spread deep,
-perimeter defence with the middle back deep); Improve Your Volley on the blocker's ready position (about half an arm's
-length off the net); Gold Medal Squared's 5-1 guide and learnvolley.com's 5-1 formation pages (outside switches to
-left front, right side to right front, back-row setter zone 1, libero zone 5, outside zone 6); Volleyball Rotations and
-The Art of Coaching on switching only after the service hit; FIVB rule 7.4 (the server is exempt from positional
-faults) and rule 19 with the USAV libero serving modification (coachingvb.com, playingvolley.com, the NCVA's USAV
-libero serve rule note).
+The base spots follow the standard conventions for a 5-1 without a libero, as the coach's defence line lists them:
+Volleyball Vault and HoopsKing on base positions (back-row wings about 4 ft off the sideline and 4 ft behind the
+attack line; base is where the six start after serving or before the opponent sets); The Art of Coaching Volleyball on
+base position and defensive systems (outside blockers pinched toward the middle, the middle blocker centred, the
+middle back deep); Improve Your Volley on the blocker's ready position (about half an arm's length off the net);
+Volleyball Rotations and The Art of Coaching on switching only after the service hit; FIVB rule 7.4 (the server is
+exempt from positional faults). The pinch distance (2 m in from the sideline) is this page's choice; the sources
+describe the pinch without metres.
