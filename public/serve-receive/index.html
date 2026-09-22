@@ -186,7 +186,7 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
         <div class="seg phase" role="group" aria-label="Phase"><button data-phase="start" aria-pressed="true">Start</button><button data-phase="recv" aria-pressed="false">Serve receive</button><button data-phase="atk" aria-pressed="false">Attack</button><button data-phase="base" aria-pressed="false">Base defence</button></div>
         <div class="seg step" id="step" role="group" aria-label="R6 step" hidden><button data-step="first" aria-pressed="true">First ball</button><button data-step="attack" aria-pressed="false">After the first hit</button></div>
         <button class="toggle" id="t-routes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span id="t-routes-lab">After the pass</span></button>
-        <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Passing lanes</span></button>
+        <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Receive coverage (6 back)</span></button>
       </div>
       <div class="two">
         <div>
@@ -431,7 +431,9 @@ function timeline(r) {
     return { x: p.x + (p.goes.x - p.x) * f, y: p.y + (p.goes.y - p.y) * f };
   };
   const arrivals = form.players.map(p => p.role === 'S' ? setterArrive : passAt + leaveTau(p, p === passer, serveSec) + p.moveM / RECV.hitterSpeed);
-  return { form, passer, pc, serve, serveSec, passSec, serveAt, passAt, releaseAt, readAt, setterArrive, setterSlack: -setterArrive, ballAt, playerAt, setterAt, arrivals, end: Math.max(0.3, ...arrivals) + 0.4 };
+  const leaveAtOf = p => p.role === 'S' ? releaseAt : passAt + leaveTau(p, p === passer, serveSec);
+  const speedOf = p => p.role === 'S' ? RECV.setterSpeed : p.moveM / Math.max(0.2, p.moveM / RECV.hitterSpeed);
+  return { form, passer, pc, serve, serveSec, passSec, serveAt, passAt, releaseAt, readAt, setterArrive, setterSlack: -setterArrive, ballAt, playerAt, setterAt, leaveAtOf, speedOf, arrivals, end: Math.max(0.3, ...arrivals) + 0.4 };
 }
 
 /* ============================================================
@@ -476,7 +478,7 @@ function baseTimeline(r) {
   const playerAt = (p, t) => { const sec = Math.max(0.01, p.moveM / speedOf(p)); const f = Math.max(0, Math.min(1, (t - leaveAt) / sec)); return { x: p.x + (p.goes.x - p.x) * f, y: p.y + (p.goes.y - p.y) * f }; };
   const arrivals = form.players.map(arrive);
   const last = form.players.reduce((a, p) => arrive(p) > arrive(a) ? p : a, form.players[0]);
-  return { form, serve, serveSec: serve.T, serveAt: 0, oppSet, leaveAt, ballAt, playerAt, arrivals, arrive, speedOf, last, slack: oppSet - arrive(last), end: Math.max(oppSet, ...arrivals) + 0.4 };
+  return { form, serve, serveSec: serve.T, serveAt: 0, oppSet, leaveAt, leaveAtOf: () => leaveAt, ballAt, playerAt, arrivals, arrive, speedOf, last, slack: oppSet - arrive(last), end: Math.max(oppSet, ...arrivals) + 0.4 };
 }
 
 /* ============================================================
@@ -513,11 +515,26 @@ function courtFrame(label, netText, endLabel, extraH) {
   return o;
 }
 const animSvg = () => `<g class="tok-anim" id="anim"></g><circle class="ball" id="ball" r="8" fill="#fff" stroke="#0f1117" stroke-width="2" opacity="0" style="filter:drop-shadow(0 0 3px rgba(255,255,255,.9))"/>`;
+/* Receive coverage, 6 back: the three passers split the court at the seams between them; the wings take short and
+   mid serves in their thirds, the centre passer (the deep one, playing 6 back) takes the middle and every deep serve
+   across the whole width. */
+const COVER_RECV = { short: 2.6, deep: 7.4 };
+function coverageSvg(form) {
+  const P = form.passers, seamL = (P[0].x + P[1].x) / 2, seamR = (P[1].x + P[2].x) / 2, sh = COVER_RECV.short, dp = COVER_RECV.deep;
+  const R = (x0, y0, x1, y1, op) => `<rect class="lane" x="${r1(cx(x0))}" y="${r1(cy(y0))}" width="${r1(cx(x1) - cx(x0))}" height="${r1(cy(y1) - cy(y0))}" style="opacity:${op}"/>`;
+  let o = R(0, sh, seamL, dp, 0.07) + R(seamR, sh, W, dp, 0.07) + R(seamL, sh, seamR, dp, 0.12) + R(0, dp, W, D, 0.12);
+  o += `<path d="M${r1(cx(seamL))} ${r1(cy(sh))}V${r1(cy(dp))}M${r1(cx(seamR))} ${r1(cy(sh))}V${r1(cy(dp))}M${r1(cx(0))} ${r1(cy(dp))}H${r1(cx(W))}" stroke="${COLOR.pass}" stroke-width="1.5" stroke-dasharray="4 5" opacity=".45" fill="none"/>`;
+  o += `<text x="${r1(cx(seamL / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[0].code)} short &amp; mid</text>`;
+  o += `<text x="${r1(cx((seamR + W) / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[2].code)} short &amp; mid</text>`;
+  o += `<text x="${r1(cx((seamL + seamR) / 2))}" y="${r1(cy(sh) + 14)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[1].code)} middle</text>`;
+  o += `<text x="${r1(cx(W / 2))}" y="${r1(cy(D) - 6)}" font-size="10" fill="${COLOR.pass}" opacity=".8" text-anchor="middle">${esc(P[1].code)} 6 back · every deep ball</text>`;
+  return o;
+}
 function courtSvg(r) {
   const form = receiveFormation(r), tl = timeline(r), sel = state.selected;
   let o = courtFrame(`Serve receive, rotation ${LBL(r)}`, 'NET · the serve comes from the far side', true, 0);
   o += `<g class="static-g">`;
-  if (state.lanes) form.passers.forEach(p => { o += `<rect class="lane" x="${r1(cx(p.x - 1.2))}" y="${r1(cy(2.6))}" width="${r1(2.4 / W * CL.cw)}" height="${r1(cy(9) - cy(2.6))}" rx="14"/>`; });
+  if (state.lanes) o += coverageSvg(form);
   o += `<circle cx="${r1(cx(TARGET.x))}" cy="${r1(cy(TARGET.y))}" r="${r1(CL.fs * 0.5)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/><text x="${r1(cx(TARGET.x) + 14)}" y="${r1(cy(TARGET.y) - 10)}" font-size="12" fill="#8b93ab">target</text>`;
   if (form.runM > 0.05) o += `<path class="route" d="M${r1(cx(form.setter.x))} ${r1(cy(form.setter.y))}L${r1(cx(TARGET.x))} ${r1(cy(TARGET.y))}" stroke="#fbbf24" stroke-width="2.5"/>`;
   if (state.routes) form.players.forEach(p => { if (p.role === 'S' || p.moveM < 0.2) return; o += `<path class="route" d="M${r1(cx(p.x))} ${r1(cy(p.y))}L${r1(cx(p.goes.x))} ${r1(cy(p.goes.y))}" stroke="${colorOf(p)}" stroke-width="2"/><circle cx="${r1(cx(p.goes.x))}" cy="${r1(cy(p.goes.y))}" r="5" fill="none" stroke="${colorOf(p)}" stroke-width="1.5" opacity=".7"/>`; });
@@ -580,7 +597,7 @@ const PHASE_TEXT = {
   start: { title: 'Start, rotation by rotation', desc: 'Rotational order at the start of the rotation: who is in which zone before anyone moves. From here everyone goes to their serve-receive spot when the other side serves, or to the stack and base when we serve. Step through Start, Receive, Attack and Defence with Next.', routes: 'To serve receive', play: '',
     legend: '<span><i style="background:var(--pass)"></i>will pass</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>will wait at the net</span><span><i style="background:var(--tuck)"></i>will tuck behind a passer</span><span>Dotted lines: to the serve-receive spot.</span>' },
   recv: { title: 'Serve receive, rotation by rotation', desc: 'Where the six stand at the service hit, who passes, who shades the setter and the right side, and where everyone goes once the ball is passed. The coach\'s sheet says who stands where; the overlap rule settles the exact spots. R6 is the starting rotation, the setter serving (the Setter Signals page calls it rotation 1).', routes: 'After the pass', play: 'Play the serve and the pass',
-    legend: '<span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>waits at the net</span><span><i style="background:var(--tuck)"></i>tucks behind a passer</span><span>Tap a player for the why.</span>' },
+    legend: '<span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>waits at the net</span><span><i style="background:var(--tuck)"></i>tucks behind a passer</span><span>Shaded: receive coverage, the centre passer 6 back for every deep ball.</span><span>Tap a player for the why.</span>' },
   atk: { title: 'Attack, rotation by rotation', desc: 'Where everyone is once our ball is set: hitters at their approach starts, the setter at the target, the back row covering. Dashed rings show the serve-receive spot each one came from. R6 keeps its receive shape for the first ball and switches after the first hit.', routes: 'From serve receive', play: '',
     legend: '<span><i style="background:#a78bfa"></i>hits</span><span><i style="background:var(--set)"></i>sets</span><span><i style="background:var(--pass)"></i>covers</span><span>Tap a player for their route.</span>' },
   base: { title: 'Base defence, rotation by rotation', desc: 'Where the six wait once the other side has the ball: three blockers at the net, three diggers deep. At our own serve everyone must still be in rotational order, so the stack shows where they stand at the service hit and how far each one switches to get home before the other side sets.', routes: 'Switch from the serve', play: 'Play our serve and the switch',
@@ -793,12 +810,13 @@ function play() {
   anim.innerHTML = form.players.map(p => `<g data-p="${p.i}"><circle r="${p.role === 'S' ? 13 : 12}" fill="${col(p)}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
   const toks = $$('#anim g');
   const t0 = tl.serveAt - 0.3, t1 = tl.end, rate = reduceMotion.matches ? 2.5 : 1;
+  const paths = runPaths(form.players.map(p => ({ from: { x: p.x, y: p.y }, to: p.role === 'S' && !base ? { x: TARGET.x, y: TARGET.y } : { x: p.goes.x, y: p.goes.y }, leaveAt: tl.leaveAtOf(p), speed: tl.speedOf(p) })), t0, t1);
   const begin = performance.now();
   const step = now => {
     const t = t0 + (now - begin) / 1000 * rate;
     const b = tl.ballAt(Math.min(t, t1));
     if (b.y >= -0.2 && t >= tl.serveAt) { ball.style.opacity = 1; ball.setAttribute('transform', `translate(${r1(cx(b.x))} ${r1(cy(Math.max(-0.2, b.y)))})`); ball.setAttribute('r', String(r1(8 + Math.max(0, b.z - 1) * 2.5))); } else ball.style.opacity = 0;
-    toks.forEach(g => { const p = form.players[Number(g.dataset.p)]; const q = tl.playerAt(p, t); g.setAttribute('transform', `translate(${r1(cx(q.x))} ${r1(cy(q.y))})`); });
+    toks.forEach(g => { const i = Number(g.dataset.p), q = paths.at(i, t); g.setAttribute('transform', `translate(${r1(cx(q.x))} ${r1(cy(q.y))})`); });
     if (t < t1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 900); }
   };
   raf = requestAnimationFrame(step);
@@ -821,6 +839,49 @@ function coloursOf(r, st) {
   return out;
 }
 const hereStep = () => ({ phase: state.phase, step: state.step });
+/* Nobody runs through anybody. Each mover heads for their spot at their own speed from their own leave time and steps
+   round anyone within a body's reach; when it is head-on both step to their right and pass. Positions come from a
+   fixed-step simulation, and everyone is exactly home by the end. */
+const BODY = 1.0, NET_KEEP = 0.3, MIN_SEP = 0.38;   // start going round inside a metre; nobody steps into the net; never closer than shoulder to shoulder
+function runPaths(movers, t0, tEnd) {
+  const dt = 1 / 60, pos = movers.map(m => ({ x: m.from.x, y: m.from.y })), done = movers.map(m => Math.hypot(m.to.x - m.from.x, m.to.y - m.from.y) < 1e-6);
+  const frames = [pos.map(p => ({ x: p.x, y: p.y }))], steps = Math.ceil((tEnd - t0) / dt);
+  for (let k = 1; k <= steps; k++) {
+    const t = t0 + k * dt, next = pos.map(p => ({ x: p.x, y: p.y }));
+    movers.forEach((m, i) => {
+      if (done[i] || t < m.leaveAt) return;
+      const p = pos[i], gx = m.to.x - p.x, gy = m.to.y - p.y, gd = Math.hypot(gx, gy);
+      if (gd <= m.speed * dt * 1.5) { next[i] = { x: m.to.x, y: m.to.y }; done[i] = true; return; }
+      const dx = gx / gd, dy = gy / gd; let vx = dx * m.speed, vy = dy * m.speed;
+      const near = Math.min(1, gd / 0.6);                                   // right at home: squeeze in rather than be pushed off it
+      movers.forEach((o, j) => {
+        if (j === i) return; const q = pos[j], ox = p.x - q.x, oy = p.y - q.y, d = Math.hypot(ox, oy); if (d >= BODY || d < 1e-6) return;
+        let px = ox / d, py = oy / d; const w = (1 - d / BODY) * near;
+        if (px * dx + py * dy < -0.5) {                                       // head-on: step round, not back
+          const side = -ox * dy + oy * dx;                                    // which side of my line they are on
+          let sx = dy, sy = -dx; if (side > 0.05) { sx = -dy; sy = dx; }      // go the other way round them; dead ahead → the right
+          const otherMoving = !done[j] && t >= o.leaveAt;
+          if (p.y + sy * 0.5 < NET_KEEP) { if (otherMoving) { sx = 0; sy = 0; } else { sx = -sx; sy = -sy; } }   // my side is the net: hold my line and let the other step round; go round a standing player the long way
+          px = sx; py = sy;
+        }
+        vx += px * m.speed * 2.4 * w; vy += py * m.speed * 2.4 * w;
+      });
+      const sp = Math.hypot(vx, vy); if (sp > m.speed * 1.8) { vx *= m.speed * 1.8 / sp; vy *= m.speed * 1.8 / sp; }
+      next[i] = { x: Math.min(W + 0.6, Math.max(-0.6, p.x + vx * dt)), y: Math.min(D + 0.8, Math.max(NET_KEEP, p.y + vy * dt)) };
+    });
+    // hard floor: nobody closer than shoulder to shoulder; a standing player is not pushed
+    for (let it = 0; it < 3; it++) movers.forEach((m, i) => movers.forEach((o, j) => {
+      if (j <= i) return; const a = next[i], b2 = next[j], ex = b2.x - a.x, ey = b2.y - a.y, d = Math.hypot(ex, ey); if (d >= MIN_SEP) return;
+      const ux = d < 1e-6 ? 1 : ex / d, uy = d < 1e-6 ? 0 : ey / d, gap = MIN_SEP - d;
+      const mi = !done[i] && t >= m.leaveAt, mj = !done[j] && t >= o.leaveAt; if (!mi && !mj) return;
+      const si = mi && mj ? 0.5 : (mi ? 1 : 0), sj = mi && mj ? 0.5 : (mj ? 1 : 0);
+      next[i] = { x: a.x - ux * gap * si, y: Math.max(NET_KEEP, a.y - uy * gap * si) }; next[j] = { x: b2.x + ux * gap * sj, y: Math.max(NET_KEEP, b2.y + uy * gap * sj) };
+    }));
+    next.forEach((p, i) => { pos[i] = p; }); frames.push(next);
+  }
+  const at = (i, t) => { if (t >= tEnd - 1e-9) return movers[i].to; const k = Math.max(0, Math.min(frames.length - 1, Math.round((t - t0) / dt))); return frames[k][i]; };
+  return { at, frames, done };
+}
 /* Move to another phase (or rotation): the six run from where they are now to their next spots in the scene that is
    on screen, and only then does the page switch to the new phase. Interrupting the move (a tap, Play, another step)
    completes it at once. */
@@ -835,10 +896,11 @@ function moveTo(r, st) {
   $$('.ptok').forEach(t => { t.style.opacity = 0; });
   anim.innerHTML = players.map(p => `<g data-c="${p.code}" transform="translate(${r1(cx(from[p.code].x))} ${r1(cy(from[p.code].y))})"><circle r="${p.role === 'S' ? 13 : 12}" fill="${col[p.code]}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
   const toks = $$('#anim g'), dur = 1000, begin = performance.now();
+  const paths = runPaths(players.map(p => ({ from: from[p.code], to: to[p.code], leaveAt: 0, speed: Math.hypot(to[p.code].x - from[p.code].x, to[p.code].y - from[p.code].y) / 0.8 })), 0, 1);
   const ease = f => f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
   const step = now => {
     const f = Math.min(1, (now - begin) / dur), e = ease(f);
-    toks.forEach(g => { const c = g.dataset.c, a = from[c], b = to[c]; g.setAttribute('transform', `translate(${r1(cx(a.x + (b.x - a.x) * e))} ${r1(cy(a.y + (b.y - a.y) * e))})`); });
+    toks.forEach((g, i) => { const q = paths.at(i, e); g.setAttribute('transform', `translate(${r1(cx(q.x))} ${r1(cy(q.y))})`); });
     if (f < 1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 120); }
   };
   raf = requestAnimationFrame(step);
@@ -880,7 +942,7 @@ document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === 
 renderBar();
 showTab('rot');
 { const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
-window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, moveTo, showTab, select, RECV, BASE, OVERLAP, TARGET };
+window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, moveTo, runPaths, showTab, select, RECV, BASE, OVERLAP, TARGET };
 })();
 </script>
 </body>

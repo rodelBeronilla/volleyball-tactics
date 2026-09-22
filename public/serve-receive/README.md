@@ -53,7 +53,7 @@ ball from 4 and O1 from 2, then they swap sides for the rest of the rally.
 | Tab | What it shows |
 | --- | --- |
 | Rotations · Start | The page opens here, at R6 Start: the rotational order before anyone moves, with dotted lines to each player's serve-receive spot. Next (or the right arrow key) runs the six to their next spots in the scene on screen and then switches to that phase: Start → Serve receive → Attack (→ after the first hit in R6) → Base defence, then on to the next rotation in match order, R6 → R1 → … → R5, the rotation itself animated. Back walks it the other way. A tap, Play or another press completes a move at once. |
-| Rotations · Serve receive | The court at the service hit: passers in their lanes (cyan), the setter (yellow) with the release run to the target, front-row players waiting at the net (violet), a back-row right side tucked behind a passer (pink), and dotted routes to where each one goes after the pass. Tap a player to see which overlap pairs hold them there and how far the rule moved them from where the sheet alone would put them. ▶ plays the serve, the pass and everyone's transition on the real clock. Toggles: routes, lanes. |
+| Rotations · Serve receive | The court at the service hit: passers (cyan) with their receive coverage shaded 6 back (the wings take short and mid serves in their thirds up to the seams, the centre passer takes the middle and every deep ball across the court), the setter (yellow) with the release run to the target, front-row players waiting at the net (violet), a back-row right side tucked behind a passer (pink), and dotted routes to where each one goes after the pass. Tap a player to see which overlap pairs hold them there and how far the rule moved them from where the sheet alone would put them. ▶ plays the serve, the pass and everyone's transition on the real clock. Toggles: routes, coverage. |
 | Rotations · Attack | Where everyone is once our ball is set: hitters at their approach starts (violet), the setter at the target, the back row covering (cyan), with dashed rings at the serve-receive spot each one came from. R6 has a First ball / After the first hit switch. |
 | Rotations · Base defence | Base once the other side has the ball: three blockers at the net (an outside left, a middle centre, the setter or right side right) and three diggers deep (an outside left back, a middle middle back, the setter or right side right back). Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base and its distance; the server stands behind the end line and runs in. ▶ plays our serve and the switch against the moment the other side's setter touches. |
 | Overlap | FIVB 7.4 in plain words and the seven pairs it consists of, with the actual gap in metres for the current rotation's receive formation and the pairs that sit on the margin. |
@@ -80,6 +80,24 @@ listed in 5, 6 or 1 covering left back, middle back or right back. Base spots co
 an arm's length off the net with the pins pinched 2 m in from the sideline, wings 1.2 m in from the sideline and 1.2 m
 behind the attack line, the middle back deep in the centre; `X(l)S` at the net means the setter takes the block to the
 right of X.
+
+## Nobody runs through anybody
+
+Every move on the page (the step from phase to phase, the serve-receive clip, the base-defence clip) comes from a
+small simulation rather than straight lines: each player heads for their spot at their own speed from their own leave
+time, steps round anyone within a body's reach (0.7 m), and when two meet head-on both step to their right and pass,
+so a pair swapping sides (O1 and R after R6's first hit, the pins switching at our serve) go round each other instead
+of through. Everyone is exactly on their spot when the move ends. The arrival times in the checks are the straight-line
+ones; a detour adds a few tenths at most.
+
+## Receive coverage, 6 back
+
+With three passers the court is split at the seams between them. The wing passers take short and mid serves in their
+thirds, from the 2.6 m line back to 7.4 m; the centre passer, who stands deepest, takes the middle strip and every deep
+ball across the whole width behind the wings. That is the "6 back" read of a three-passer receive: the deep passer owns
+the deep court, the wings own the short seams (coachingvb.com on seam responsibilities: the passer nearer the server
+takes the short seam, the one further away the deep seam; Vollyze and The Art of Coaching Volleyball on the three-passer
+arc with the middle passer deeper). The 2.6 m and 7.4 m lines are this page's choice for where "short" and "deep" start.
 
 ## The clock
 
