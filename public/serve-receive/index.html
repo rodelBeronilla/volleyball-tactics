@@ -541,7 +541,7 @@ function attackSvg(r) {
   if (state.routes) form.players.forEach(p => { const s = spots[p.code], f = from[p.code], c = ACOL[s.kind], d = Math.hypot(s.x - f.x, s.y - f.y); if (d > 0.2) o += `<path class="route" d="M${r1(cx(f.x))} ${r1(cy(f.y))}L${r1(cx(s.x))} ${r1(cy(s.y))}" stroke="${c}" stroke-width="2"/>`; if (d > 0.2) o += ghostSvg(f.x, f.y, p.code, c, null); });
   o += `</g>`;
   form.players.forEach(p => { const s = spots[p.code], dim = sel != null && sel !== p.i; o += tokenSvg(s.x, s.y, p.code, ACOL[s.kind], `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])}: ${esc(s.label)}"`, `<text y="28" font-size="10" fill="#c8cddb" text-anchor="middle">${esc(s.label.replace(/^(hits|covers|sets) /, ''))}</text>`, p.role === 'S'); });
-  return o + `</svg>`;
+  return o + animSvg() + `</svg>`;
 }
 function startSvg(r) {
   const rot = rotation(r), form = receiveFormation(r), sel = state.selected;
@@ -550,7 +550,7 @@ function startSvg(r) {
   if (state.routes) rot.players.forEach(p => { const q = form.players[p.i], c = colorOf(q), x0 = zoneX(p.zone), y0 = p.front ? START_Y.front : START_Y.back, d = Math.hypot(q.x - x0, q.y - y0); if (d > 0.2) o += `<path class="route" d="M${r1(cx(x0))} ${r1(cy(y0))}L${r1(cx(q.x))} ${r1(cy(q.y))}" stroke="${c}" stroke-width="2"/><circle cx="${r1(cx(q.x))}" cy="${r1(cy(q.y))}" r="5" fill="none" stroke="${c}" stroke-width="1.5" opacity=".7"/>`; });
   o += `</g>`;
   rot.players.forEach(p => { const q = form.players[p.i], dim = sel != null && sel !== p.i; o += tokenSvg(zoneX(p.zone), p.front ? START_Y.front : START_Y.back, p.code, colorOf(q), `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code])} in zone ${p.zone}"`, `<text y="-20" font-size="11" fill="#c8cddb" text-anchor="middle">${p.zone}</text>`, p.role === 'S'); });
-  return o + `</svg>`;
+  return o + animSvg() + `</svg>`;
 }
 function baseSvg(r) {
   const form = baseFormation(r), sel = state.selected, s = form.server;
@@ -604,10 +604,15 @@ function stepIndex() { const steps = stepsOf(state.rotation); const k = steps.fi
 const stepLabel = st => st.phase === 'start' ? 'Start' : st.phase === 'recv' ? 'Serve receive' : st.phase === 'base' ? 'Base defence' : st.step === 'first' ? 'Attack · first ball' : (LBL(state.rotation) === 6 ? 'Attack · after the first hit' : 'Attack');
 /* Next / Back walk Start → Receive → Attack (→ after the first hit in R6) → Defence, then on to the next rotation. */
 function stepBy(d) {
-  const steps = stepsOf(state.rotation); let k = stepIndex() + d;
-  if (k >= steps.length) { const r = state.rotation % 6 + 1; state.rotation = r; state.step = 'first'; state.phase = 'start'; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } state.selected = null; renderBar(); setPhase('start'); return; }
-  if (k < 0) { const r = (state.rotation + 4) % 6 + 1; state.rotation = r; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } state.selected = null; renderBar(); state.step = 'attack'; setPhase('base'); return; }
-  const st = steps[k]; setPhase(st.phase, st.step);
+  const from = positionsOf(state.rotation, hereStep());
+  const steps = stepsOf(state.rotation); const k = stepIndex() + d; let r = state.rotation, st;
+  if (k >= steps.length) { r = r % 6 + 1; st = { phase: 'start' }; }           // on to the next rotation: everyone rotates one place
+  else if (k < 0) { r = (r + 4) % 6 + 1; st = { phase: 'base', step: 'attack' }; }
+  else st = steps[k];
+  if (r !== state.rotation) { state.rotation = r; state.selected = null; state.step = 'first'; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } renderBar(); }
+  if (st.step) state.step = st.step;
+  setPhase(st.phase, st.step);
+  tweenTo(from);
 }
 function renderRecv() {
   const r = state.rotation, rot = rotation(r), form = receiveFormation(r), tl = timeline(r);
@@ -772,18 +777,18 @@ function renderChecks() {
 /* ============================================================
    PLAYBACK — the serve, the pass, everyone to their spots (or our serve and the switch to base)
    ============================================================ */
-let raf = null, endTimer = null;
+let raf = null, endTimer = null, tweening = false;
 function isPlaying() { return !!(raf || endTimer); }
 function stopPlayback() {
-  if (raf) cancelAnimationFrame(raf); if (endTimer) clearTimeout(endTimer); raf = null; endTimer = null;
+  if (raf) cancelAnimationFrame(raf); if (endTimer) clearTimeout(endTimer); raf = null; endTimer = null; tweening = false;
   document.body.classList.remove('playing');
   const fab = $('.fab'); if (fab) fab.textContent = '▶ Play';
   const anim = $('#anim'), ball = $('#ball'); if (anim) anim.innerHTML = ''; if (ball) ball.style.opacity = 0;
   $$('.ptok').forEach(t => { t.style.opacity = ''; });
 }
 function play() {
-  if (isPlaying()) { stopPlayback(); return; }
-  if (state.phase === 'atk') return;
+  if (isPlaying()) { const wasTween = tweening; stopPlayback(); if (!wasTween) return; }
+  if (state.phase === 'atk' || state.phase === 'start') return;
   const base = state.phase === 'base', tl = base ? baseTimeline(state.rotation) : timeline(state.rotation), form = tl.form, col = base ? baseColor : colorOf;
   const anim = $('#anim'), ball = $('#ball'); if (!anim || !ball) return;
   document.body.classList.add('playing'); $('.fab').textContent = '■ Stop';
@@ -798,6 +803,42 @@ function play() {
     if (b.y >= -0.2 && t >= tl.serveAt) { ball.style.opacity = 1; ball.setAttribute('transform', `translate(${r1(cx(b.x))} ${r1(cy(Math.max(-0.2, b.y)))})`); ball.setAttribute('r', String(r1(8 + Math.max(0, b.z - 1) * 2.5))); } else ball.style.opacity = 0;
     toks.forEach(g => { const p = form.players[Number(g.dataset.p)]; const q = tl.playerAt(p, t); g.setAttribute('transform', `translate(${r1(cx(q.x))} ${r1(cy(q.y))})`); });
     if (t < t1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 900); }
+  };
+  raf = requestAnimationFrame(step);
+}
+
+/* ---------- Moving between phases: everyone runs from where they were to where they are now ---------- */
+function positionsOf(r, st) {
+  const out = {};
+  if (st.phase === 'start') rotation(r).players.forEach(p => { out[p.code] = { x: zoneX(p.zone), y: p.front ? START_Y.front : START_Y.back }; });
+  else if (st.phase === 'recv') receiveFormation(r).players.forEach(p => { out[p.code] = { x: p.x, y: p.y }; });
+  else if (st.phase === 'atk') { const a = attackSpots(r, LBL(r) === 6 ? (st.step || 'first') : 'attack'); Object.keys(a).forEach(c => { out[c] = { x: a[c].x, y: a[c].y }; }); }
+  else baseFormation(r).players.forEach(p => { out[p.code] = { x: p.goes.x, y: p.goes.y }; });
+  return out;
+}
+function coloursOf(r, st) {
+  const out = {};
+  if (st.phase === 'atk') { const a = attackSpots(r, LBL(r) === 6 ? (st.step || 'first') : 'attack'); Object.keys(a).forEach(c => { out[c] = ACOL[a[c].kind]; }); }
+  else if (st.phase === 'base') baseFormation(r).players.forEach(p => { out[p.code] = baseColor(p); });
+  else receiveFormation(r).players.forEach(p => { out[p.code] = colorOf(p); });
+  return out;
+}
+const hereStep = () => ({ phase: state.phase, step: state.step });
+/* After a phase change: tween the six from `from` (code → x, y) to the spots of the phase now on screen. */
+function tweenTo(from) {
+  const anim = $('#anim'); if (!anim || !from || reduceMotion.matches) return;
+  const r = state.rotation, to = positionsOf(r, hereStep()), col = coloursOf(r, hereStep()), players = rotation(r).players;
+  if (players.every(p => Math.hypot(to[p.code].x - from[p.code].x, to[p.code].y - from[p.code].y) < 0.05)) return;
+  stopPlayback(); tweening = true;
+  document.body.classList.add('playing');
+  $$('.ptok').forEach(t => { t.style.opacity = 0.25; });
+  anim.innerHTML = players.map(p => `<g data-c="${p.code}"><circle r="${p.role === 'S' ? 13 : 12}" fill="${col[p.code]}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
+  const toks = $$('#anim g'), dur = 900, begin = performance.now();
+  const ease = f => f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+  const step = now => {
+    const f = Math.min(1, (now - begin) / dur), e = ease(f);
+    toks.forEach(g => { const c = g.dataset.c, a = from[c], b = to[c]; g.setAttribute('transform', `translate(${r1(cx(a.x + (b.x - a.x) * e))} ${r1(cy(a.y + (b.y - a.y) * e))})`); });
+    if (f < 1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 150); }
   };
   raf = requestAnimationFrame(step);
 }
@@ -820,14 +861,14 @@ function setPhase(ph, step) { if (ph === 'atk') state.step = step || (state.phas
 function setStep(st) { state.step = st === 'attack' ? 'attack' : 'first'; renderRot(); }
 function select(i) { state.selected = state.selected === i ? null : i; if (state.tab === 'rot') { stopPlayback(); renderRot(); const c = $(`.pcard[data-player="${state.selected}"]`); if (c && narrow.matches) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
 document.addEventListener('click', e => {
-  if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.fab')) { stopPlayback(); e.preventDefault(); return; }
+  if (isPlaying() && !tweening && e.target.closest('.scene-wrap') && !e.target.closest('.fab')) { stopPlayback(); e.preventDefault(); return; }
   const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-phase],[data-step],[data-next],[data-prev],[data-play],#t-routes,#t-lanes');
   if (!t) return;
   if (t.hasAttribute('data-tab')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-rotation')) { setRotation(Number(t.getAttribute('data-rotation'))); return; }
   if (t.hasAttribute('data-player')) { select(Number(t.getAttribute('data-player'))); return; }
-  if (t.hasAttribute('data-phase')) { setPhase(t.getAttribute('data-phase')); return; }
-  if (t.hasAttribute('data-step')) { setStep(t.getAttribute('data-step')); return; }
+  if (t.hasAttribute('data-phase')) { const from = positionsOf(state.rotation, hereStep()); setPhase(t.getAttribute('data-phase')); tweenTo(from); return; }
+  if (t.hasAttribute('data-step')) { const from = positionsOf(state.rotation, hereStep()); setStep(t.getAttribute('data-step')); tweenTo(from); return; }
   if (t.hasAttribute('data-next')) { stepBy(1); return; }
   if (t.hasAttribute('data-prev')) { stepBy(-1); return; }
   if (t.hasAttribute('data-play')) { play(); return; }
@@ -838,7 +879,7 @@ document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === 
 renderBar();
 showTab('rot');
 { const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
-window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, showTab, select, RECV, BASE, OVERLAP, TARGET };
+window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, tweenTo, showTab, select, RECV, BASE, OVERLAP, TARGET };
 })();
 </script>
 </body>
