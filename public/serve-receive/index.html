@@ -74,6 +74,9 @@ svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,s
 .ptok.dim{opacity:.35}
 .lane{fill:var(--pass);opacity:.07}
 .route{stroke-dasharray:3 5;fill:none;opacity:.6}
+.ghost{pointer-events:none}
+.ghost text{fill:#c8cddb}
+.toolbar .seg.phase button{padding:0 16px}
 .ball,.tok-anim{pointer-events:none}
 body.playing .static-g{opacity:.25}
 /* cards */
@@ -122,6 +125,8 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
   .scene-wrap svg{max-height:min(420px,58vh);display:block;margin:0 auto}
   .kv{grid-template-columns:1fr}
   .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px}
+  .toolbar .seg.phase{display:flex;flex:1 1 100%}
+  .toolbar .seg.phase button{flex:1;padding:0}
 }
 @media (min-width:900px){
   .app{display:grid;grid-template-columns:200px minmax(0,1fr);align-items:start;min-height:100vh}
@@ -168,18 +173,19 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
 
     <section class="tab" id="tab-rot" data-tab="rot" role="tabpanel">
       <div class="tab-head">
-        <h2>Serve receive, rotation by rotation</h2>
-        <p>Where the six stand before the serve, why the overlap rule puts them there, who passes, where the setter releases from, and where everyone goes once the ball is passed. Nothing is typed per rotation: the lineup, the rule and the jobs decide.</p>
+        <h2 id="rot-title">Serve receive, rotation by rotation</h2>
+        <p id="rot-desc">Where the six stand before the serve, why the overlap rule puts them there, who passes, where the setter releases from, and where everyone goes once the ball is passed. Nothing is typed per rotation: the lineup, the rule and the jobs decide.</p>
       </div>
       <div class="toolbar">
+        <div class="seg phase" role="group" aria-label="Phase"><button data-phase="recv" aria-pressed="true">Serve receive</button><button data-phase="base" aria-pressed="false">Base defence</button></div>
         <button class="toggle" id="t-libero" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Libero for the back-row middle</span></button>
-        <button class="toggle" id="t-routes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>After the pass</span></button>
+        <button class="toggle" id="t-routes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span id="t-routes-lab">After the pass</span></button>
         <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Passing lanes</span></button>
       </div>
       <div class="two">
         <div>
           <div class="scene-wrap"><div id="scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play the serve and the pass">▶ Play</button></div></div>
-          <div class="legend" style="margin-top:8px"><span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--lib)"></i>libero</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>hides at the net</span><span><i style="background:var(--tuck)"></i>tucks short</span><span>Tap a player for the why.</span></div>
+          <div class="legend" id="legend" style="margin-top:8px"><span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--lib)"></i>libero</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>hides at the net</span><span><i style="background:var(--tuck)"></i>tucks short</span><span>Tap a player for the why.</span></div>
         </div>
         <div>
           <div class="summary" id="summary"></div>
@@ -203,7 +209,7 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
     <section class="tab" id="tab-roles" data-tab="roles" role="tabpanel" hidden>
       <div class="tab-head">
         <h2>Who does what</h2>
-        <p>Each player's job in serve receive for every rotation, derived from the lineup: who passes and in which lane, who hides and where, where the setter waits, and where each one goes once the ball is passed.</p>
+        <p>Each player's job in serve receive for every rotation, derived from the lineup: who passes and in which lane, who hides and where, where the setter waits, and where each one goes once the ball is passed. Below it, their base defence spot once the other side has the ball.</p>
       </div>
       <div class="table-wrap"><table class="roles" id="roles"></table></div>
       <div class="summary">
@@ -221,7 +227,7 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
     <section class="tab" id="tab-checks" data-tab="checks" role="tabpanel" hidden>
       <div class="tab-head">
         <h2>Checks <span id="checks-badge"></span></h2>
-        <p>Every rotation is graded against the rule and against what a serve-receive formation has to do: legal under all seven pairs (recomputed independently of the solver), the right people passing from a realistic depth, the setter able to reach the target before a good pass comes down, hiders at the net, every transition on the court, and the same answer every time.</p>
+        <p>Every rotation is graded against the rule and against what a serve-receive formation has to do: legal under all seven pairs (recomputed independently of the solver), the right people passing from a realistic depth, the setter able to reach the target before a good pass comes down, hiders at the net, every transition on the court, and the same answer every time. Base defence is graded too: the right six spots, a legal stack at our serve, and every switch finished before the other side sets.</p>
       </div>
       <div class="summary rules" id="rules"></div>
     </section>
@@ -265,7 +271,7 @@ const zoneX = z => ({ 4: 1.5, 3: 4.5, 2: 7.5, 5: 1.5, 6: 4.5, 1: 7.5 })[z];
 const OVERLAP = [['x', 4, 3], ['x', 3, 2], ['x', 5, 6], ['x', 6, 1], ['y', 2, 1], ['y', 3, 6], ['y', 4, 5]];
 const PAIR_TEXT = { 'x43': 'zone 4 left of zone 3 (front row order)', 'x32': 'zone 3 left of zone 2 (front row order)', 'x56': 'zone 5 left of zone 6 (back row order)', 'x61': 'zone 6 left of zone 1 (back row order)', 'y21': 'zone 2 in front of zone 1 (right column)', 'y36': 'zone 3 in front of zone 6 (centre column)', 'y45': 'zone 4 in front of zone 5 (left column)' };
 
-const state = { rotation: (function () { try { const r = Number(localStorage.getItem('serveReceive.rotation')); if (r >= 1 && r <= 6) return r; } catch (e) { /* ignore */ } return 1; })(), tab: 'rot', libero: true, routes: true, lanes: true, selected: null };
+const state = { rotation: (function () { try { const r = Number(localStorage.getItem('serveReceive.rotation')); if (r >= 1 && r <= 6) return r; } catch (e) { /* ignore */ } return 1; })(), tab: 'rot', phase: (function () { try { return localStorage.getItem('serveReceive.phase') === 'base' ? 'base' : 'recv'; } catch (e) { return 'recv'; } })(), libero: true, routes: true, lanes: true, selected: null };
 const $ = (s, root) => (root || document).querySelector(s);
 const $$ = (s, root) => Array.from((root || document).querySelectorAll(s));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -358,6 +364,69 @@ function timeline(r) {
 }
 
 /* ============================================================
+   BASE DEFENCE — where the six wait once the other side has the ball, and the switch from our serve to get there
+   ============================================================ */
+const BASE = {
+  blockY: 0.5,                // blockers half an arm's length off the net
+  pinIn: 2.0,                 // outside blockers pinched toward the middle: 2 m in from the sideline (the sources say "pinched", not how far; this page's choice)
+  wingIn: 1.2, wingY: 4.2,    // back-row wings about 4 ft (1.2 m) in from the sideline and 4 ft behind the attack line
+  deepY: 7.0,                 // middle back deep in the centre
+  serveY: 9.6,                // the server stands behind the end line
+  stiff: { mb: 3, other: 1 }, // in the stack at our serve the middle keeps the centre of the net and the pins compress toward them
+  reaction: 0.3,              // everyone leaves 0.3 s after the service hit
+};
+const BASE_JOB = { 4: 'blocks left', 3: 'blocks middle', 2: 'blocks right', 5: 'digs left back', 6: 'digs middle back', 1: 'digs right back' };
+const BASE_SHORT = { 4: 'left block', 3: 'middle block', 2: 'right block', 5: 'left back', 6: 'middle back', 1: 'right back' };
+/* Where each player belongs once the switch is done: outside left, middle centre, setter or opposite right at the net;
+   setter or opposite right back, outside middle back, libero (or the back-row middle) left back. */
+function baseSpot(p) {
+  if (p.front) return p.role === 'OH' ? { x: BASE.pinIn, y: BASE.blockY, zone: 4 } : p.role === 'MB' ? { x: W / 2, y: BASE.blockY, zone: 3 } : { x: W - BASE.pinIn, y: BASE.blockY, zone: 2 };
+  return p.role === 'OH' ? { x: W / 2, y: BASE.deepY, zone: 6 } : p.role === 'MB' ? { x: BASE.wingIn, y: BASE.wingY, zone: 5 } : { x: W - BASE.wingIn, y: BASE.wingY, zone: 1 };
+}
+const baseCache = {};
+/* Everyone's base spot and where they stand at our own serve: each player wants their base spot (the server wants the end
+   line behind it), the overlap pairs that do not involve the server push the other five until legal, and the switch is
+   whatever distance is left. A middle due to serve stays on for that rally (a libero may not serve under FIVB rules). */
+function baseFormation(r) {
+  r = r || state.rotation;
+  const key = r + '|' + (state.libero ? 'L' : 'noL') + '|' + JSON.stringify(BASE);
+  if (baseCache[key]) return baseCache[key];
+  const m = RECV.margin;
+  const f = rotation(r).players.map(p => { const serves = p.zone === 1, backMB = !p.front && p.code === 'MB'; return { i: p.i, role: p.code, code: backMB && state.libero && !serves ? 'L' : p.code, zone: p.zone, front: p.front, serves, liberoWaits: backMB && state.libero && serves }; });
+  const at = z => f.find(p => p.zone === z);
+  f.forEach(p => { p.base = baseSpot(p); p.job = BASE_JOB[p.base.zone]; p.stiff = p.front && p.role === 'MB' ? BASE.stiff.mb : BASE.stiff.other; p.want = p.serves ? { x: p.base.x, y: BASE.serveY } : { x: p.base.x, y: p.base.y }; p.x = p.want.x; p.y = p.want.y; });
+  const pairs = OVERLAP.filter(([k, za, zb]) => za !== 1 && zb !== 1);   // FIVB 7.4: the server is exempt
+  let moved = 0;
+  const push = exact => pairs.forEach(([k, za, zb]) => { const a = at(za), b = at(zb); const gap = (b[k] - m) - a[k]; if (gap < 0) { if (exact) { if (a.stiff <= b.stiff) a[k] += gap; else b[k] -= gap; } else { const tot = a.stiff + b.stiff; a[k] += gap * (b.stiff / tot); b[k] -= gap * (a.stiff / tot); } moved -= gap; } });
+  for (let it = 0; it < 300; it++) { moved = 0; push(false); f.filter(p => !p.serves).forEach(p => { p.x = Math.min(W - 0.3, Math.max(0.3, p.x)); p.y = Math.min(D - 0.3, Math.max(0.3, p.y)); }); if (moved < 1e-5) break; }
+  for (let it = 0; it < 4; it++) push(true);
+  f.forEach(p => { p.binds = pairs.filter(([k, za, zb]) => (za === p.zone || zb === p.zone) && Math.abs((at(zb)[k] - m) - at(za)[k]) < 0.05).map(([k, za, zb]) => { const other = za === p.zone ? at(zb) : at(za); return { k, za, zb, other, text: k === 'x' ? `${za === p.zone ? 'left of' : 'right of'} the ${other.code} in zone ${other.zone}` : `${za === p.zone ? 'in front of' : 'behind'} the ${other.code} in zone ${other.zone}` }; }); });
+  const legal = pairs.every(([k, za, zb]) => at(za)[k] <= at(zb)[k] - m + 1e-6);
+  f.forEach(p => { p.r = r; p.goes = { x: p.base.x, y: p.base.y }; p.moveM = Math.hypot(p.goes.x - p.x, p.goes.y - p.y); p.wanted = { x: p.want.x, y: p.want.y }; p.pushedM = p.serves ? 0 : Math.hypot(p.x - p.want.x, p.y - p.want.y); p.switches = p.base.zone !== p.zone; });
+  const out = { r, players: f, server: at(1), legal, front: f.filter(p => p.front).sort((a, b) => a.base.x - b.base.x), back: f.filter(p => !p.front).sort((a, b) => a.base.x - b.base.x) };
+  baseCache[key] = out;
+  return out;
+}
+/* Our serve on the clock, t = 0 at the service hit: the ball reaches their centre passer, their pass hangs, and their
+   setter touches at oppSet. Everyone must be in base by then. */
+function baseTimeline(r) {
+  const form = baseFormation(r), s = form.server;
+  const pc = { x: W / 2, y: -RECV.centreDepth, z: RALLY.passContactZ };      // their centre passer, mirrored across the net
+  const serve = serveArc({ x: pc.x, y: RECV.centreDepth, z: pc.z });          // the same flight as a serve at our own centre passer
+  const oppSet = serve.T + passHang();
+  const from = { x: s.x, y: BASE.serveY, z: RALLY.server.z };
+  const arc = (a, b, k, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f + k * f * (1 - f) });
+  const ballAt = t => t <= 0 ? Object.assign({}, from) : t < serve.T ? arc(from, pc, serve.k, t / serve.T) : Object.assign({}, pc);
+  const speedOf = p => p.role === 'S' ? RECV.setterSpeed : RECV.hitterSpeed;
+  const leaveAt = BASE.reaction;
+  const arrive = p => leaveAt + p.moveM / speedOf(p);
+  const playerAt = (p, t) => { const sec = Math.max(0.01, p.moveM / speedOf(p)); const f = Math.max(0, Math.min(1, (t - leaveAt) / sec)); return { x: p.x + (p.goes.x - p.x) * f, y: p.y + (p.goes.y - p.y) * f }; };
+  const arrivals = form.players.map(arrive);
+  const last = form.players.reduce((a, p) => arrive(p) > arrive(a) ? p : a, form.players[0]);
+  return { form, serve, serveSec: serve.T, serveAt: 0, oppSet, leaveAt, ballAt, playerAt, arrivals, arrive, speedOf, last, slack: oppSet - arrive(last), end: Math.max(oppSet, ...arrivals) + 0.4 };
+}
+
+/* ============================================================
    COURT
    ============================================================ */
 const CL = { W: 620, H: 640, x0: 40, y0: 70, cw: 540, ch: 540, fs: 20 };
@@ -370,18 +439,22 @@ function jobText(p) {
   if (p.job === 'hide') return 'hides at the net';
   return p.y > 4.5 ? 'tucks deep in the corner' : 'tucks short at the attack line';
 }
-function courtSvg(r) {
-  const form = receiveFormation(r), tl = timeline(r), sel = state.selected;
-  let o = `<svg class="scene" viewBox="0 0 ${CL.W} ${CL.H}" role="img" aria-label="Serve receive, rotation ${r}">`;
+function courtFrame(label, netText, endLabel, extraH) {
+  let o = `<svg class="scene" viewBox="0 0 ${CL.W} ${CL.H + (extraH || 0)}" role="img" aria-label="${esc(label)}">`;
   o += `<rect x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${CL.ch}" fill="#1a2233" stroke="#e8ebf5" stroke-width="3"/>`;
   o += `<rect x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${r1(CL.ch / 3)}" fill="#22304a"/>`;
   o += `<path d="M${CL.x0} ${r1(cy(3))}H${CL.x0 + CL.cw}" stroke="#e8ebf5" stroke-width="3"/>`;
   o += `<path d="M${CL.x0 - 8} ${CL.y0}H${CL.x0 + CL.cw + 8}" stroke="#fff" stroke-width="8" stroke-linecap="round"/>`;
   [CL.x0 - 8, CL.x0 + CL.cw + 8].forEach(ax => { o += `<rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="40" fill="#ff4d4d"/><rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="10" fill="#fff"/><rect x="${ax - 3}" y="${CL.y0 - 6}" width="6" height="10" fill="#fff"/>`; });
-  o += `<text x="${r1(cx(4.5))}" y="${CL.y0 - 14}" font-size="15" fill="#8b93ab" text-anchor="middle">NET · the serve comes from the far side</text>`;
+  o += `<text x="${r1(cx(4.5))}" y="${CL.y0 - 14}" font-size="15" fill="#8b93ab" text-anchor="middle">${esc(netText)}</text>`;
   o += `<text transform="rotate(-90)" x="${r1(-cy(4.7))}" y="${CL.x0 - 10}" font-size="12" fill="#8b93ab" text-anchor="middle">↑ 3 m line</text>`;
-  o += `<text x="${r1(cx(4.5))}" y="${r1(cy(9) + 22)}" font-size="14" fill="#8b93ab" text-anchor="middle">END LINE</text>`;
+  if (endLabel) o += `<text x="${r1(cx(4.5))}" y="${r1(cy(9) + 22)}" font-size="14" fill="#8b93ab" text-anchor="middle">END LINE</text>`;
   [[4, 0, 0], [3, 1, 0], [2, 2, 0], [5, 0, 1], [6, 1, 1], [1, 2, 1]].forEach(([z, col, row]) => { o += `<g class="zone"><text x="${r1(cx((col + 0.5) * 3))}" y="${r1(row === 0 ? cy(1.8) : cy(6.8))}" font-size="${row === 0 ? 40 : 64}" text-anchor="middle" dominant-baseline="middle">${z}</text></g>`; });
+  return o;
+}
+function courtSvg(r) {
+  const form = receiveFormation(r), tl = timeline(r), sel = state.selected;
+  let o = courtFrame(`Serve receive, rotation ${r}`, 'NET · the serve comes from the far side', true, 0);
   o += `<g class="static-g">`;
   if (state.lanes) form.passers.forEach(p => { o += `<rect class="lane" x="${r1(cx(p.x - 1.2))}" y="${r1(cy(2.6))}" width="${r1(2.4 / W * CL.cw)}" height="${r1(cy(9) - cy(2.6))}" rx="14"/>`; });
   // target and the setter's release
@@ -406,6 +479,31 @@ function courtSvg(r) {
   o += `</svg>`;
   return o;
 }
+const BCOL = { block: '#a78bfa', dig: '#22d3ee', set: '#fbbf24', lib: '#34d399' };
+const baseColor = p => p.role === 'S' ? BCOL.set : p.code === 'L' ? BCOL.lib : p.front ? BCOL.block : BCOL.dig;
+const tokenSvg = (p, code, cls, attrs, extra) => `<g class="${cls}" ${attrs} transform="translate(${r1(cx(p.x))} ${r1(cy(p.y))})"><circle r="22" fill="transparent"/><circle class="body" r="${p.i === 0 ? 13 : 12}" fill="${baseColor(p)}" stroke="#0f1117" stroke-width="2"/><text y="4" font-size="${code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(code)}</text>${extra || ''}</g>`;
+function baseSvg(r) {
+  const form = baseFormation(r), sel = state.selected, s = form.server;
+  let o = courtFrame(`Base defence, rotation ${r}`, 'NET · we serve; they attack from the far side', false, 40);
+  o += `<text x="${r1(s.x < W / 2 ? cx(W) : cx(0))}" y="${r1(cy(9) + 22)}" font-size="12" fill="#8b93ab" text-anchor="${s.x < W / 2 ? 'end' : 'start'}">END LINE · the server stands behind it</text>`;
+  o += `<g class="static-g">`;
+  // where each one stands at the service hit (the stack) and the switch to base
+  if (state.routes) form.players.forEach(p => {
+    const c = baseColor(p);
+    if (p.moveM > 0.2) o += `<path class="route" d="M${r1(cx(p.x))} ${r1(cy(p.y))}L${r1(cx(p.goes.x))} ${r1(cy(p.goes.y))}" stroke="${c}" stroke-width="2"/>`;
+    if (p.moveM > 0.2 || p.serves) o += `<g class="ghost" transform="translate(${r1(cx(p.x))} ${r1(cy(p.y))})"><circle r="12" fill="#1a2233" stroke="${c}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".9"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" text-anchor="middle" opacity=".8">${esc(p.code)}</text><text y="-18" font-size="11" text-anchor="middle" opacity=".8">${p.serves ? 'serves' : p.zone}</text></g>`;
+  });
+  const selP = sel != null ? form.players[sel] : null;
+  if (selP) selP.binds.forEach(b => { const q = b.other; o += `<path d="M${r1(cx(selP.x))} ${r1(cy(selP.y))}L${r1(cx(q.x))} ${r1(cy(q.y))}" stroke="#fff" stroke-width="2" stroke-dasharray="2 4" opacity=".8"/>`; if (b.k === 'x') { const xm = (selP.x + q.x) / 2; o += `<path d="M${r1(cx(xm))} ${r1(cy(selP.y) - 14)}V${r1(cy(selP.y) + 14)}" stroke="#fff" stroke-width="2" opacity=".8"/>`; } else { const ym = (selP.y + q.y) / 2; o += `<path d="M${r1(cx(selP.x) - 14)} ${r1(cy(ym))}H${r1(cx(selP.x) + 14)}" stroke="#fff" stroke-width="2" opacity=".8"/>`; } });
+  o += `</g>`;
+  // the six in base
+  form.players.forEach(p => {
+    const dim = sel != null && sel !== p.i, q = { i: p.i, x: p.goes.x, y: p.goes.y, role: p.role, code: p.code, front: p.front };
+    o += tokenSvg(q, p.code, `ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}`, `data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code] || p.code)}: ${esc(p.job)}"`, `<text y="28" font-size="10" fill="#c8cddb" text-anchor="middle">${esc(BASE_SHORT[p.base.zone])}</text>`);
+  });
+  o += `<g class="tok-anim" id="anim"></g><circle class="ball" id="ball" r="8" fill="#fff" stroke="#0f1117" stroke-width="2" opacity="0" style="filter:drop-shadow(0 0 3px rgba(255,255,255,.9))"/>`;
+  return o + `</svg>`;
+}
 function rotationSvg(r) {
   const rot = rotation(r);
   const cell = z => { const col = [4, 3, 2].includes(z) ? [4, 3, 2].indexOf(z) : [5, 6, 1].indexOf(z), row = z >= 2 && z <= 4 ? 0 : 1; return { x: 4 + col * 30, y: 4 + row * 24 }; };
@@ -421,8 +519,40 @@ function renderBar() {
   $('#bar').innerHTML = `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}`;
   requestAnimationFrame(() => { const b = $('#bar'); if (b) document.documentElement.style.setProperty('--sticky-h', b.offsetHeight + 'px'); });
 }
+const PHASE_TEXT = {
+  recv: { title: 'Serve receive, rotation by rotation', desc: 'Where the six stand before the serve, why the overlap rule puts them there, who passes, where the setter releases from, and where everyone goes once the ball is passed. Nothing is typed per rotation: the lineup, the rule and the jobs decide.', routes: 'After the pass', play: 'Play the serve and the pass',
+    legend: '<span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--lib)"></i>libero</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>hides at the net</span><span><i style="background:var(--tuck)"></i>tucks short</span><span>Tap a player for the why.</span>' },
+  base: { title: 'Base defence, rotation by rotation', desc: 'Where the six wait once the other side has the ball: three blockers at the net, three diggers deep. At our own serve everyone must still be in rotational order, so the stack shows where they stand at the service hit and how far each one switches to get home before the other side sets.', routes: 'Switch from the serve', play: 'Play our serve and the switch',
+    legend: '<span><i style="background:#a78bfa"></i>blocks</span><span><i style="background:var(--pass)"></i>digs</span><span><i style="background:var(--lib)"></i>libero</span><span><i style="background:var(--set)"></i>setter</span><span>Dashed rings: where they stand at the service hit.</span><span>Tap a player for the why.</span>' },
+};
+function applyPhaseChrome() {
+  const t = PHASE_TEXT[state.phase];
+  $('#rot-title').textContent = t.title; $('#rot-desc').textContent = t.desc; $('#t-routes-lab').textContent = t.routes; $('#legend').innerHTML = t.legend;
+  $('#t-lanes').hidden = state.phase === 'base';
+  $$('[data-phase]').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-phase') === state.phase)));
+  const fab = $('.fab'); if (fab) fab.setAttribute('aria-label', t.play);
+}
+function renderBase() {
+  const r = state.rotation, form = baseFormation(r), tl = baseTimeline(r), s = form.server;
+  $('#scene').innerHTML = baseSvg(r);
+  const sw = form.players.filter(p => p.switches && !p.serves).map(p => `${p.code} ${p.zone}→${p.base.zone} (${p.moveM.toFixed(1)} m)`);
+  $('#summary').innerHTML = `<b>Rotation ${r}</b> · ${esc(NAMES[s.code] || s.code)} serves from zone 1 · after the switch, net ${form.front.map(p => p.code).join(' · ')} left to right, back row ${form.back.map(p => p.code).join(' · ')}.<br>` +
+    `<b>Switches:</b> ${sw.length ? sw.join(', ') : 'none'}${s.moveM > 0.2 ? `; the server runs ${s.moveM.toFixed(1)} m in to ${BASE_SHORT[s.base.zone]}` : ''}. ` +
+    `<b>Clock:</b> our serve lands in ${tl.serveSec.toFixed(2)} s and their pass hangs ${(tl.oppSet - tl.serveSec).toFixed(2)} s, so their setter touches ${tl.oppSet.toFixed(2)} s after the service hit; the last one home is ${tl.last.code}, ${tl.slack >= 0 ? `${tl.slack.toFixed(2)} s before that` : `${(-tl.slack).toFixed(2)} s late`}.` +
+    (form.players.some(p => p.liberoWaits) ? `<br><b>Libero:</b> the middle is due to serve and a libero may not serve under FIVB rules, so the middle serves and plays left back for this rally; the libero replaces them at the next dead ball. USAV and NCAA let a libero serve in one rotation.` : '') +
+    `<br><span class="hint">Base is where the six wait until the other side sets. From here each one reads the set and moves to their read position.</span>`;
+  $('#cards').innerHTML = form.players.map(p => {
+    const c = baseColor(p), sec = p.moveM / tl.speedOf(p), slack = tl.oppSet - tl.arrive(p);
+    const atServe = p.serves ? `Serves from behind the end line, ${p.x.toFixed(1)} m across, then runs ${p.moveM.toFixed(1)} m in (${sec.toFixed(2)} s).`
+      : `At the service hit stands ${p.x.toFixed(1)} m across, ${p.y.toFixed(1)} m off${p.binds.length ? `, held ${p.binds.map(b => b.text).join(' and ')}` : ''}${p.pushedM > 0.05 ? ` (${p.pushedM.toFixed(1)} m from base to stay legal)` : ' (already at base)'}.${p.moveM > 0.2 ? ` Switches zone ${p.zone} → ${p.base.zone}: ${p.moveM.toFixed(1)} m in ${sec.toFixed(2)} s.` : ''}`;
+    const home = p.moveM > 0.2 ? ` Home ${slack >= 0 ? `${slack.toFixed(2)} s before` : `${(-slack).toFixed(2)} s after`} their setter touches.` : '';
+    return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${c}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code] || p.code)}</b> <span class="job">· ${esc(p.job)} · base ${p.base.x.toFixed(1)} m across, ${p.base.y.toFixed(1)} m off</span><div class="why">${esc(atServe)}${esc(home)}${p.liberoWaits ? ' The libero comes on for them at the next dead ball.' : ''}</div></div></div>`;
+  }).join('');
+}
 function renderRot() {
   stopPlayback();
+  applyPhaseChrome();
+  if (state.phase === 'base') { renderBase(); return; }
   const r = state.rotation, rot = rotation(r), form = receiveFormation(r), tl = timeline(r);
   $('#scene').innerHTML = courtSvg(r);
   const setterWhere = form.setter.y > 4.5 ? 'deep' : form.setter.y > 1.5 ? 'at the attack line' : 'at the net';
@@ -447,8 +577,8 @@ function renderRules() {
 function renderRoles() {
   let o = `<thead><tr><th>Rotation</th>${SYSTEM.lineup.map((c, i) => `<th>${esc(NAMES[c])}${c === 'OH' || c === 'MB' ? ` ${SYSTEM.lineup.slice(0, i).filter(x => x === c).length + 1}` : ''}</th>`).join('')}</tr></thead><tbody>`;
   for (let r = 1; r <= 6; r++) {
-    const f = receiveFormation(r);
-    o += `<tr class="${r === state.rotation ? 'now' : ''}"><th>R${r}</th>` + f.players.map(p => `<td><b>${esc(p.code)}</b> zone ${p.zone}<br><span class="hint">${esc(jobText(p))}${p.ball && p.ball !== 'target' ? ` → ${esc(p.ball)} (${p.moveM.toFixed(1)} m)` : p.i === 0 && f.runM > 0.05 ? ` → target (${f.runM.toFixed(1)} m)` : ''}</span></td>`).join('') + `</tr>`;
+    const f = receiveFormation(r), b = baseFormation(r);
+    o += `<tr class="${r === state.rotation ? 'now' : ''}"><th>R${r}</th>` + f.players.map((p, i) => `<td><b>${esc(p.code)}</b> zone ${p.zone}<br><span class="hint">${esc(jobText(p))}${p.ball && p.ball !== 'target' ? ` → ${esc(p.ball)} (${p.moveM.toFixed(1)} m)` : p.i === 0 && f.runM > 0.05 ? ` → target (${f.runM.toFixed(1)} m)` : ''}</span><br><span class="hint">Base: ${esc(b.players[i].job)}${b.players[i].serves ? ' after serving' : ''}</span></td>`).join('') + `</tr>`;
   }
   $('#roles').innerHTML = o + `</tbody>`;
 }
@@ -491,6 +621,30 @@ const RULES = [
       if (tl.passSec < 1.1 || tl.passSec > 1.6) bad.push(`pass hangs ${tl.passSec.toFixed(2)} s`);
       const z = tl.ballAt(-1e-9).z; if (Math.abs(z - (NET_H + RALLY.handsAbove)) > 0.01) bad.push('pass does not come down at the hands');
       return { ok: !bad.length, msg: bad.join('; ') || `R${r}: serve ${tl.serveSec.toFixed(2)} s, ${(tl.serve.atNet - NET_H).toFixed(2)} m over the tape to ${tl.passer.code}; pass ${tl.passSec.toFixed(2)} s` }; }) },
+  { name: 'Base defence: blockers at the net left–middle–right, diggers deep in the right zones', why: 'After the switch the outside blocks left, the middle blocks middle and the setter or opposite blocks right, half an arm\'s length off the net; the setter or opposite digs right back, the outside middle back and the libero (or the back-row middle) left back, the wings 1.2 m in from the sideline and behind the attack line, the middle back deep. Six spots, one per zone.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = baseFormation(r), bad = [], fr = f.front, bk = f.back;
+      if (!(fr[0].role === 'OH' && fr[1].role === 'MB' && ['S', 'OPP'].includes(fr[2].role))) bad.push(`front row after the switch is ${fr.map(p => p.role).join('-')}`);
+      if (!(bk[0].role === 'MB' && bk[1].role === 'OH' && ['S', 'OPP'].includes(bk[2].role))) bad.push(`back row after the switch is ${bk.map(p => p.role).join('-')}`);
+      fr.forEach(p => { if (p.base.y > 1.0) bad.push(`${p.code} blocks from ${p.base.y.toFixed(1)} m off the net`); });
+      bk.forEach(p => { if (p.base.y < 4.0) bad.push(`${p.code} digs from ${p.base.y.toFixed(1)} m, inside the attack line`); if (p.base.zone !== 6 && (p.base.x < 1 || p.base.x > W - 1)) bad.push(`${p.code} is on the sideline`); });
+      if (!(fr[0].base.x < fr[1].base.x && fr[1].base.x < fr[2].base.x && bk[0].base.x < bk[1].base.x && bk[1].base.x < bk[2].base.x)) bad.push('not left–middle–right');
+      if (f.players.map(p => p.base.zone).sort().join('') !== '123456') bad.push('base zones are not one per zone');
+      if (f.players.filter(p => p.code === 'L').length > 1) bad.push('two liberos'); if (f.players.some(p => p.code === 'L' && p.serves)) bad.push('the libero serves');
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: ${fr.map(p => `${p.code} ${BASE_SHORT[p.base.zone]}`).join(', ')}; ${bk.map(p => `${p.code} ${BASE_SHORT[p.base.zone]}`).join(', ')}` }; }) },
+  { name: 'The stack at our serve is legal, the server behind the end line', why: 'FIVB 7.4 exempts the server, so the other five must satisfy the pairs that do not involve zone 1 at the service hit (recomputed from the rule text with the 0.4 m margin), stand inside the court, and be the same every time; the server stands behind the end line.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = baseFormation(r), at = z => f.players.find(p => p.zone === z), bad = [];
+      [[4, 5], [3, 6]].forEach(([fz, bz]) => { if (!(at(fz).y <= at(bz).y - RECV.margin + 1e-6)) bad.push(`zone ${fz} is not in front of zone ${bz}`); });
+      [[4, 3], [3, 2], [5, 6]].forEach(([l, rr]) => { if (!(at(l).x <= at(rr).x - RECV.margin + 1e-6)) bad.push(`zone ${l} is not left of zone ${rr}`); });
+      if (!f.legal) bad.push('the solver reports the stack illegal');
+      if (!(f.server.zone === 1 && f.server.y > D)) bad.push('the server is not behind the end line');
+      f.players.filter(p => !p.serves).forEach(p => { if (p.x < 0.3 || p.x > W - 0.3 || p.y < 0.3 || p.y > D - 0.3) bad.push(`${p.code} stands off the court`); });
+      const again = baseFormation(r); if (again !== f && !again.players.every((p, i) => Math.abs(p.x - f.players[i].x) < 1e-9 && Math.abs(p.y - f.players[i].y) < 1e-9)) bad.push('not deterministic');
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: ${f.players.map(p => `${p.code}(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' ')}` }; }) },
+  { name: 'Everyone is in base before the other side sets', why: 'Leaving 0.3 s after the service hit at 3.5 m/s (the setter at 4 m/s), every switch and the server\'s run in finish before our serve lands on their passer and their pass comes down at their setter, about 2.4 s after the hit.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const tl = baseTimeline(r), bad = [];
+      tl.form.players.forEach(p => { const a = tl.arrive(p); if (a > tl.oppSet) bad.push(`${p.code} is home ${(a - tl.oppSet).toFixed(2)} s after their set`); if (p.moveM > 12.8) bad.push(`${p.code} switch ${p.moveM.toFixed(1)} m`); });
+      if (tl.oppSet < 2.0 || tl.oppSet > 3.0) bad.push(`their set comes ${tl.oppSet.toFixed(2)} s after our serve`);
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: last home ${tl.last.code} after ${tl.last.moveM.toFixed(1)} m, ${tl.slack.toFixed(2)} s before their set at ${tl.oppSet.toFixed(2)} s` }; }) },
   { name: 'The lineup is a 5-1', why: 'One setter, two outsides, two middles, one opposite, alternating so the two outsides and the two middles are opposite each other; the setter and the opposite are opposite each other.',
     run: () => { const L = SYSTEM.lineup, bad = []; const count = c => L.filter(x => x === c).length; if (count('S') !== 1 || count('OH') !== 2 || count('MB') !== 2 || count('OPP') !== 1) bad.push('lineup is not 1 S, 2 OH, 2 MB, 1 OPP'); [['S', 'OPP'], ['OH', 'OH'], ['MB', 'MB']].forEach(([a, b]) => { const i = L.indexOf(a), j = L.indexOf(b, a === b ? i + 1 : 0); if ((j - i + 6) % 6 !== 3) bad.push(`${a} and ${b} are not opposite each other`); }); return [{ ok: !bad.length, msg: bad.join('; ') || L.join(' · ') }]; } }
 ];
@@ -515,11 +669,11 @@ function stopPlayback() {
 }
 function play() {
   if (isPlaying()) { stopPlayback(); return; }
-  const tl = timeline(state.rotation), form = tl.form;
+  const base = state.phase === 'base', tl = base ? baseTimeline(state.rotation) : timeline(state.rotation), form = tl.form, col = base ? baseColor : colorOf;
   const anim = $('#anim'), ball = $('#ball'); if (!anim || !ball) return;
   document.body.classList.add('playing'); $('.fab').textContent = '■ Stop';
   $$('.ptok').forEach(t => { t.style.opacity = 0.25; });
-  anim.innerHTML = form.players.map(p => `<g data-p="${p.i}"><circle r="${p.i === 0 ? 13 : 12}" fill="${colorOf(p)}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
+  anim.innerHTML = form.players.map(p => `<g data-p="${p.i}"><circle r="${p.i === 0 ? 13 : 12}" fill="${col(p)}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
   const toks = $$('#anim g');
   const t0 = tl.serveAt - 0.3, t1 = tl.end, rate = reduceMotion.matches ? 2.5 : 1;
   const begin = performance.now();
@@ -547,14 +701,16 @@ function renderTab() {
   if (state.tab === 'rot') renderRot(); else if (state.tab === 'rules') renderRules(); else if (state.tab === 'roles') renderRoles(); else if (state.tab === 'checks') renderChecks();
 }
 function setRotation(r) { state.rotation = r; state.selected = null; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } renderBar(); renderTab(); }
+function setPhase(ph) { state.phase = ph === 'base' ? 'base' : 'recv'; state.selected = null; try { localStorage.setItem('serveReceive.phase', state.phase); } catch (e) { /* ignore */ } renderRot(); }
 function select(i) { state.selected = state.selected === i ? null : i; if (state.tab === 'rot') { stopPlayback(); renderRot(); const c = $(`.pcard[data-player="${state.selected}"]`); if (c && narrow.matches) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
 document.addEventListener('click', e => {
   if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.fab')) { stopPlayback(); e.preventDefault(); return; }
-  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-play],#t-libero,#t-routes,#t-lanes');
+  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-phase],[data-play],#t-libero,#t-routes,#t-lanes');
   if (!t) return;
   if (t.hasAttribute('data-tab')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-rotation')) { setRotation(Number(t.getAttribute('data-rotation'))); return; }
   if (t.hasAttribute('data-player')) { select(Number(t.getAttribute('data-player'))); return; }
+  if (t.hasAttribute('data-phase')) { setPhase(t.getAttribute('data-phase')); return; }
   if (t.hasAttribute('data-play')) { play(); return; }
   if (t.id === 't-libero') { state.libero = !state.libero; t.setAttribute('aria-pressed', String(state.libero)); renderBar(); renderTab(); return; }
   if (t.id === 't-routes') { state.routes = !state.routes; t.setAttribute('aria-pressed', String(state.routes)); renderRot(); return; }
@@ -564,7 +720,7 @@ document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === 
 renderBar();
 showTab('rot');
 { const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
-window.ServeReceive = { state, rotation, receiveFormation, timeline, runChecks, setRotation, showTab, select, RECV, OVERLAP, STARTS, TARGET };
+window.ServeReceive = { state, rotation, receiveFormation, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, showTab, select, RECV, BASE, OVERLAP, STARTS, TARGET };
 })();
 </script>
 </body>
