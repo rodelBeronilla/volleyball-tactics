@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Serve Receive">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f1117'/%3E%3Crect x='10' y='14' width='44' height='36' rx='3' fill='none' stroke='%23e8ebf5' stroke-width='3'/%3E%3Cpath d='M10 26h44' stroke='%23e8ebf5' stroke-width='3'/%3E%3Ccircle cx='20' cy='40' r='4' fill='%2322d3ee'/%3E%3Ccircle cx='32' cy='43' r='4' fill='%2322d3ee'/%3E%3Ccircle cx='44' cy='40' r='4' fill='%2322d3ee'/%3E%3Ccircle cx='46' cy='20' r='4' fill='%23fbbf24'/%3E%3C/svg%3E">
+<meta name="description" content="Serve-receive rotations for a 5-1 volleyball offense: where the six players stand, why the overlap rule puts them there, who passes, where the setter releases from, and where everyone goes after the pass.">
+<title>Serve Receive Rotations · 5-1</title>
+<style>
+:root{
+  --bg:#0f1117; --panel:#161a25; --panel2:#1e2332; --panel3:#262c3d; --line:#2b3144;
+  --text:#f5f6fa; --muted:#9aa3b8; --accent:#4da3ff; --good:#34d399; --bad:#ff4d4d; --warn:#fbbf24;
+  --pass:#22d3ee; --hide:#a78bfa; --tuck:#f472b6; --set:#fbbf24; --lib:#34d399;
+  --nav-h:64px; --radius:14px; --safe-b:env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box}
+html{background:var(--bg);overscroll-behavior-x:none}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4;overflow-x:hidden;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+a{color:var(--accent)}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{margin:0;line-height:1.2}
+p{margin:0}
+.app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+.main{flex:1;width:100%;max-width:100%;padding:14px 16px calc(var(--nav-h) + 24px + var(--safe-b))}
+.tab{display:flex;flex-direction:column;gap:14px}
+.tab-head h2{font-size:22px;font-weight:700}
+.tab-head p{color:var(--muted);font-size:14px;margin-top:4px}
+.brand{display:none}
+.hint{color:var(--muted);font-size:13px}
+.lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(15,17,23,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.nav button,.nav a{flex:1;min-height:44px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;letter-spacing:.01em;text-decoration:none}
+.nav button[aria-selected="true"]{color:var(--text)}
+.nav .ico{width:22px;height:22px;display:block}
+.nav .ico *{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* controls */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.seg button{min-height:44px;padding:0 14px;border:0;background:none;color:var(--muted);font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--panel3);color:var(--text)}
+.seg.rot button{min-width:44px;padding:0 10px}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.bar.sticky{position:sticky;top:0;z-index:20;background:var(--bg);box-shadow:-28px 0 0 var(--bg),28px 0 0 var(--bg),0 8px 12px -8px rgba(0,0,0,.6);padding:8px 0}
+.rotmini{width:98px;height:56px;flex:0 0 auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:14px;font-weight:600}
+.toggle .sw{width:38px;height:22px;border-radius:999px;background:var(--panel3);position:relative;transition:background .2s;flex:0 0 auto}
+.toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle[aria-pressed="true"] .sw{background:#22d3ee}
+.toggle[aria-pressed="true"] .sw::after{transform:translateX(16px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-weight:600;text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06101f}
+.btn.small{min-height:40px;padding:0 12px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:14px;font-weight:600}
+.chip.active{background:var(--panel3);border-color:var(--accent)}
+/* scene */
+.scene-wrap{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px;max-width:640px}
+.scene{display:block;width:100%;height:auto}
+.overlay{position:absolute;inset:8px;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-end;gap:8px}
+.overlay>*{pointer-events:auto}
+.fab{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:48px;height:48px;padding:0 16px;border-radius:999px;border:0;background:var(--accent);color:#06101f;font-weight:800;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;user-select:none}
+.zone text{fill:#fff;opacity:.14;font-weight:800}
+.ptok{cursor:pointer}
+.ptok circle{transition:stroke-width .15s}
+.ptok.sel circle.body{stroke:#fff;stroke-width:3}
+.ptok.dim{opacity:.35}
+.lane{fill:var(--pass);opacity:.07}
+.route{stroke-dasharray:3 5;fill:none;opacity:.6}
+.ball,.tok-anim{pointer-events:none}
+body.playing .static-g{opacity:.25}
+/* cards */
+.cards{display:flex;flex-direction:column;gap:8px}
+.pcard{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;cursor:pointer}
+.pcard.sel{border-color:var(--c)}
+.pcard .tok{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0f1117;background:var(--c)}
+.pcard b{font-size:15px}
+.pcard .job{color:var(--muted);font-size:13px}
+.pcard .why{font-size:13px;margin-top:4px}
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;font-size:14px}
+.summary b{color:var(--text)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:14px}
+.kv dt{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.kv dd{margin:0}
+table.roles{border-collapse:collapse;width:100%;font-size:14px}
+table.roles th,table.roles td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rules .rule{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.rules .rule:last-child{border-bottom:0}
+.rules .st{font-weight:800}
+.rules .st.ok{color:var(--good)}
+.rules .st.err{color:var(--bad)}
+.rules .name{font-weight:600}
+.rules .why{color:var(--muted);font-size:13px;margin-top:2px}
+.rules .msgs{font-size:13px;margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;margin-left:8px;vertical-align:middle}
+.status.ok{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good)}
+.status.err{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.pair{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.pair small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.pair.tight{border-color:var(--warn)}
+.two{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (max-width:899px){
+  .tab{gap:12px}
+  .tab-head p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .bar .lab{display:none}
+  .bar .seg{display:flex;flex:1}
+  .bar .seg button{flex:1;padding:0;min-width:0}
+  .bar .rotmini{width:78px;height:44px}
+  .bar.sticky{box-shadow:-16px 0 0 var(--bg),16px 0 0 var(--bg),0 8px 12px -8px rgba(0,0,0,.6);padding:6px 0}
+  .scene-wrap svg{max-height:min(420px,58vh);display:block;margin:0 auto}
+  .kv{grid-template-columns:1fr}
+  .toolbar .toggle{font-size:13px;padding:0 10px;gap:8px}
+}
+@media (min-width:900px){
+  .app{display:grid;grid-template-columns:200px minmax(0,1fr);align-items:start;min-height:100vh}
+  .nav{position:sticky;top:0;bottom:auto;height:100vh;flex-direction:column;padding:18px 12px;gap:4px;border-top:0;border-right:1px solid var(--line);background:var(--bg);backdrop-filter:none}
+  .nav button,.nav a{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 12px;font-size:15px;font-weight:600}
+  .nav button[aria-selected="true"]{background:var(--panel2);border-radius:10px}
+  .nav a{margin-top:auto;color:var(--muted);font-size:13px}
+  .brand{display:block;padding:6px 12px 14px;font-size:15px;font-weight:800;letter-spacing:-.01em}
+  .brand small{display:block;font-weight:500;color:var(--muted);font-size:12px;margin-top:2px}
+  .main{padding:26px 28px 40px;min-width:0;max-width:1100px}
+  .two{grid-template-columns:minmax(0,640px) minmax(280px,1fr);align-items:start}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="nav" role="tablist" aria-label="Views">
+    <div class="brand">Serve Receive<small>5-1 rotations</small></div>
+    <button role="tab" data-tab="rot" aria-selected="true" aria-controls="tab-rot">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 11h18"/><circle cx="8" cy="15.5" r="1.2"/><circle cx="12" cy="16.5" r="1.2"/><circle cx="16" cy="15.5" r="1.2"/></svg>
+      <span>Rotations</span>
+    </button>
+    <button role="tab" data-tab="rules" aria-selected="false" aria-controls="tab-rules">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/><path d="M18 15l2 2 3-3"/></svg>
+      <span>Overlap</span>
+    </button>
+    <button role="tab" data-tab="roles" aria-selected="false" aria-controls="tab-roles">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20a5 5 0 0 1 6-4.6"/></svg>
+      <span>Roles</span>
+    </button>
+    <button role="tab" data-tab="checks" aria-selected="false" aria-controls="tab-checks">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>Checks</span>
+    </button>
+    <a href="../setter-signals/" title="Setter Signals &amp; Set Map">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v6M11 12V4a1.5 1.5 0 0 1 3 0v8M14 12V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-2-2a1.4 1.4 0 0 0-2 2l4 6a5 5 0 0 0 4 2h2a5 5 0 0 0 5-5v-3"/></svg>
+      <span>Setter Signals</span>
+    </a>
+  </nav>
+
+  <main class="main">
+    <div class="bar sticky" id="bar"></div>
+
+    <section class="tab" id="tab-rot" data-tab="rot" role="tabpanel">
+      <div class="tab-head">
+        <h2>Serve receive, rotation by rotation</h2>
+        <p>Where the six stand before the serve, why the overlap rule puts them there, who passes, where the setter releases from, and where everyone goes once the ball is passed. Nothing is typed per rotation: the lineup, the rule and the jobs decide.</p>
+      </div>
+      <div class="toolbar">
+        <button class="toggle" id="t-libero" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Libero for the back-row middle</span></button>
+        <button class="toggle" id="t-routes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>After the pass</span></button>
+        <button class="toggle" id="t-lanes" aria-pressed="true"><span class="sw" aria-hidden="true"></span><span>Passing lanes</span></button>
+      </div>
+      <div class="two">
+        <div>
+          <div class="scene-wrap"><div id="scene"></div><div class="overlay"><button class="fab" data-play aria-label="Play the serve and the pass">▶ Play</button></div></div>
+          <div class="legend" style="margin-top:8px"><span><i style="background:var(--pass)"></i>passes</span><span><i style="background:var(--lib)"></i>libero</span><span><i style="background:var(--set)"></i>setter</span><span><i style="background:var(--hide)"></i>hides at the net</span><span><i style="background:var(--tuck)"></i>tucks short</span><span>Tap a player for the why.</span></div>
+        </div>
+        <div>
+          <div class="summary" id="summary"></div>
+          <div class="cards" id="cards" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-rules" data-tab="rules" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>The overlap rule, and how it shapes each rotation</h2>
+        <p>FIVB rule 7.4: at the moment the server hits the ball, each front-row player must be at least partly closer to the net than the back-row player in their column, and the three players of each row must keep their left-to-right order. Only those seven pairs matter; there is no rule between a front-row player and a back-row player in another column. After the service hit everyone may move anywhere.</p>
+      </div>
+      <div class="summary" id="rules-summary"></div>
+      <div class="pairs" id="pairs"></div>
+      <div class="summary">
+        <b>What counts.</b> Positions are judged by the feet touching the floor at the instant of the service hit, with a 0.4 m safety margin here so nobody is standing on the line of legality. A back-row player may be as close to the net as they like as long as the front-row player in their column is closer; a front-row player may stand as deep as they like as long as they stay ahead of their column partner. The libero counts as the back-row middle they replaced. The setter hides as close to the target as the seven pairs allow, then releases at the service hit.
+      </div>
+    </section>
+
+    <section class="tab" id="tab-roles" data-tab="roles" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>Who does what</h2>
+        <p>Each player's job in serve receive for every rotation, derived from the lineup: who passes and in which lane, who hides and where, where the setter waits, and where each one goes once the ball is passed.</p>
+      </div>
+      <div class="table-wrap"><table class="roles" id="roles"></table></div>
+      <div class="summary">
+        <h3 style="font-size:16px;margin-bottom:6px">Responsibilities in a 5-1</h3>
+        <dl class="kv">
+          <dt>Setter</dt><dd>Hides as close to the target as the rule allows, releases at the service hit, sets every second ball. Front row (rotations 4–6): blocks right and can dump. Back row: digs zone 1.</dd>
+          <dt>Outside hitters</dt><dd>Pass in every rotation (the wing lanes and, with the libero, the centre when the libero is elsewhere), attack the left pin in front, the Pipe, A or B from the back row, and play zone 6 on defence.</dd>
+          <dt>Middle</dt><dd>Hides at the net in front, transitions to the centre for the quick and the 2; blocks middle. In the back row the libero plays for them.</dd>
+          <dt>Opposite</dt><dd>Does not pass. Hides at the net when front row and attacks the right pin; tucks short at the attack line when back row and attacks the D. Blocks left when front row.</dd>
+          <dt>Libero</dt><dd>Passes the centre lane (or a wing when the rotation puts the outsides elsewhere), digs zone 5, never attacks, may not finger-set an attack from inside the attack line.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-checks" data-tab="checks" role="tabpanel" hidden>
+      <div class="tab-head">
+        <h2>Checks <span id="checks-badge"></span></h2>
+        <p>Every rotation is graded against the rule and against what a serve-receive formation has to do: legal under all seven pairs (recomputed independently of the solver), the right people passing from a realistic depth, the setter able to reach the target before a good pass comes down, hiders at the net, every transition on the court, and the same answer every time.</p>
+      </div>
+      <div class="summary rules" id="rules"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+'use strict';
+/* ============================================================
+   THE 5-1, derived from one fact: the lineup in service order, rotation 1 = setter serving from zone 1.
+   ============================================================ */
+const SYSTEM = { name: '5-1', lineup: ['S', 'OH', 'MB', 'OPP', 'OH', 'MB'] };
+const NAMES = { S: 'Setter', OH: 'Outside', MB: 'Middle', OPP: 'Opposite', L: 'Libero' };
+function zoneOf(i, r) { return ((i - r + 1) % 6 + 6) % 6 + 1; }
+function rotation(r) {
+  const players = SYSTEM.lineup.map((code, i) => { const zone = zoneOf(i, r); return { code, i, zone, front: zone >= 2 && zone <= 4 }; });
+  const setter = players[0];
+  return { r, players, setterFront: setter.front, setterZone: setter.zone, front: players.filter(p => p.front).map(p => p.code), back: players.filter(p => !p.front).map(p => (p.code === 'MB' && state.libero) ? 'L' : p.code) };
+}
+/* Where each hitter attacks from after the pass: the start of their always-on ball (court fractions, x across from the
+   left sideline, y off the net). Front: the outside's 4 outside the left sideline, the middle's 2 in the centre, the
+   opposite's 5 outside the right sideline. Back row: the outside's A, B or Pipe (whichever is nearest the lane they
+   passed in), the opposite's D. These are the same starts the Setter Signals page uses. */
+const STARTS = {
+  front: { OH: { x: -0.05, y: 0.36, ball: '4' }, MB: { x: 0.55, y: 0.32, ball: '2' }, OPP: { x: 1.05, y: 0.36, ball: '5' } },
+  back: { OH: [{ x: 0.15, y: 0.55, ball: 'A' }, { x: 0.33, y: 0.55, ball: 'B' }, { x: 0.50, y: 0.55, ball: 'Pipe' }], OPP: [{ x: 0.85, y: 0.55, ball: 'D' }], MB: [] }
+};
+const W = 9, D = 9, SETTER_X = 0.66, RELEASE_Y = 0.9, NET_H = 2.43;
+const TARGET = { x: SETTER_X * W, y: RELEASE_Y };
+const RECV = {
+  wingDepth: 6.0, frontWingDepth: 5.6, centreDepth: 6.8, slots: [2.0, 4.5, 7.2],
+  hideY: 1.0, tuckY: 3.0, tuckX: 6.0, cornerIn: 0.7,
+  margin: 0.4, lane: 0.9, stiff: { pass: 30, set: 2, hide: 1 },
+  setterSpeed: 4.0, hitterSpeed: 3.5, reaction: 0.3, read: 0.3, seesItPast: 0.2
+};
+const RALLY = { serveClear: 0.3, passApex: 3.8, server: { x: 4.5, y: -9.6, z: 1.9 }, passContactZ: 1.0, handsAbove: 0.10 };
+const G = 9.81;
+const zoneX = z => ({ 4: 1.5, 3: 4.5, 2: 7.5, 5: 1.5, 6: 4.5, 1: 7.5 })[z];
+/* FIVB 7.4: a[k] must be < b[k] − margin. Columns (front in front of back): 4/5, 3/6, 2/1. Rows (left of): 4/3, 3/2, 5/6, 6/1. */
+const OVERLAP = [['x', 4, 3], ['x', 3, 2], ['x', 5, 6], ['x', 6, 1], ['y', 2, 1], ['y', 3, 6], ['y', 4, 5]];
+const PAIR_TEXT = { 'x43': 'zone 4 left of zone 3 (front row order)', 'x32': 'zone 3 left of zone 2 (front row order)', 'x56': 'zone 5 left of zone 6 (back row order)', 'x61': 'zone 6 left of zone 1 (back row order)', 'y21': 'zone 2 in front of zone 1 (right column)', 'y36': 'zone 3 in front of zone 6 (centre column)', 'y45': 'zone 4 in front of zone 5 (left column)' };
+
+const state = { rotation: (function () { try { const r = Number(localStorage.getItem('serveReceive.rotation')); if (r >= 1 && r <= 6) return r; } catch (e) { /* ignore */ } return 1; })(), tab: 'rot', libero: true, routes: true, lanes: true, selected: null };
+const $ = (s, root) => (root || document).querySelector(s);
+const $$ = (s, root) => Array.from((root || document).querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const r1 = n => Math.round(n * 10) / 10;
+const narrow = window.matchMedia('(max-width: 899px)');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/* Where a player attacks from after the pass (metres). The setter goes to the target; the libero stays; a back-row
+   outside takes the back-row start nearest where they pass. */
+function transitionTarget(p) {
+  if (p.role === 'S') return { x: TARGET.x, y: TARGET.y, ball: 'target' };
+  if (p.code === 'L') return { x: p.x, y: p.y, ball: null };
+  if (p.front) { const s = STARTS.front[p.role]; return { x: Math.min(W + 0.5, Math.max(-0.5, s.x * W)), y: s.y * D, ball: s.ball }; }
+  const opts = STARTS.back[p.role]; if (!opts.length) return { x: p.x, y: p.y, ball: null };
+  const s = opts.slice().sort((a, b) => Math.abs(a.x * W - p.x) - Math.abs(b.x * W - p.x))[0];
+  return { x: s.x * W, y: s.y * D, ball: s.ball };
+}
+const formationCache = {};
+/* Everyone's serve-receive position, solved from the lineup: each player wants a spot for their job (pass, hide, tuck,
+   set), and the seven overlap constraints push them until legal, the least important job giving way first. Identical
+   to the solver in Setter Signals. */
+function receiveFormation(r) {
+  r = r || state.rotation;
+  const key = r + '|' + (state.libero ? 'L' : 'noL') + '|' + JSON.stringify(RECV);
+  if (formationCache[key]) return formationCache[key];
+  const rot = rotation(r), m = RECV.margin;
+  const f = rot.players.map(p => ({ i: p.i, role: p.code, code: (!p.front && p.code === 'MB' && state.libero) ? 'L' : p.code, zone: p.zone, front: p.front }));
+  const at = z => f.find(p => p.zone === z);
+  // passers: the libero (or the back-row middle without one) and both outsides, left → centre → right
+  const passers = f.filter(p => p.role === 'OH' || p.code === 'L' || (!state.libero && p.role === 'MB' && !p.front)).sort((a, b) => zoneX(a.zone) - zoneX(b.zone) || (a.front ? -1 : 1));
+  passers.forEach((p, k) => { p.job = 'pass'; p.lane = ['left', 'centre', 'right'][k]; p.want = { x: RECV.slots[k], y: k === 1 ? RECV.centreDepth : (p.front ? RECV.frontWingDepth : RECV.wingDepth) }; p.stiff = RECV.stiff.pass; });
+  f.forEach(p => {
+    if (p.job) return;
+    if (p.role === 'S') { p.job = 'set'; p.want = { x: TARGET.x, y: p.front ? TARGET.y : RECV.tuckY }; p.stiff = RECV.stiff.set; }
+    else if (p.front) { p.job = 'hide'; const tt = transitionTarget(p); p.want = { x: Math.min(W - 0.5, Math.max(0.5, tt.x)), y: RECV.hideY }; p.stiff = RECV.stiff.hide; }
+    else { p.job = 'tuck'; p.want = { x: RECV.tuckX, y: RECV.tuckY }; p.stiff = RECV.stiff.hide; }
+  });
+  f.filter(p => !p.front && p.job !== 'pass').forEach(p => { const fr = { 1: 2, 6: 3, 5: 4 }[p.zone]; const q = at(fr); if (q && q.job === 'pass') p.want = { x: p.zone === 1 ? W - RECV.cornerIn : p.zone === 5 ? RECV.cornerIn : p.want.x, y: q.want.y + m }; });
+  f.forEach(p => { p.x = p.want.x; p.y = p.want.y; });
+  for (let it = 0; it < 300; it++) {
+    let moved = 0;
+    OVERLAP.forEach(([k, za, zb]) => { const a = at(za), b = at(zb); const gap = (b[k] - m) - a[k]; if (gap < 0) { const tot = a.stiff + b.stiff; a[k] += gap * (b.stiff / tot); b[k] -= gap * (a.stiff / tot); moved -= gap; } });
+    f.filter(p => p.job === 'tuck' || (p.job === 'set' && !p.front)).forEach(p => passers.forEach(q => { if (p.y < q.y - 0.5 && Math.abs(p.x - q.x) < RECV.lane) { const dir = p.x < q.x ? -1 : (p.x > q.x ? 1 : (q.x > W / 2 ? -1 : 1)); const nx2 = q.x + dir * RECV.lane; moved += Math.abs(nx2 - p.x); p.x = nx2; } }));
+    f.forEach(p => { p.x = Math.min(W - 0.3, Math.max(0.3, p.x)); p.y = Math.min(D - 0.3, Math.max(0.3, p.y)); });
+    if (moved < 1e-5) break;
+  }
+  for (let it = 0; it < 4; it++) OVERLAP.forEach(([k, za, zb]) => { const a = at(za), b = at(zb); const gap = (b[k] - m) - a[k]; if (gap < 0) { if (a.stiff <= b.stiff) a[k] += gap; else b[k] -= gap; } });
+  // which pairs bind each player (within 5 cm of the margin), in words
+  f.forEach(p => { p.binds = OVERLAP.filter(([k, za, zb]) => (za === p.zone || zb === p.zone) && Math.abs((at(zb)[k] - m) - at(za)[k]) < 0.05).map(([k, za, zb]) => { const other = za === p.zone ? at(zb) : at(za); return { k, za, zb, other, text: k === 'x' ? `${za === p.zone ? 'left of' : 'right of'} the ${other.code} in zone ${other.zone}` : `${za === p.zone ? 'in front of' : 'behind'} the ${other.code} in zone ${other.zone}` }; }); });
+  const legal = OVERLAP.every(([k, za, zb]) => at(za)[k] <= at(zb)[k] - m + 1e-6);
+  f.forEach(p => { p.r = r; const g = transitionTarget(p); p.goes = { x: g.x, y: g.y }; p.ball = g.ball; p.moveM = Math.hypot(p.goes.x - p.x, p.goes.y - p.y); p.wanted = { x: p.want.x, y: p.want.y }; p.pushedM = Math.hypot(p.x - p.want.x, p.y - p.want.y); });
+  const s = f.find(p => p.i === 0);
+  const out = { r, players: f, setter: s, passers, target: TARGET, runM: Math.hypot(s.x - TARGET.x, s.y - TARGET.y), legal };
+  formationCache[key] = out;
+  return out;
+}
+
+/* ---------- The rally clock: a float serve that clears the tape, a good pass to target, the setter's honest release ---------- */
+function serveArc(pc) {
+  const S = RALLY.server, f0 = (0 - S.y) / (pc.y - S.y);
+  const k = Math.max(0.5, (NET_H + RALLY.serveClear - (S.z + (pc.z - S.z) * f0)) / (f0 * (1 - f0)));
+  return { T: Math.sqrt(2 * k / G), k, atNet: S.z + (pc.z - S.z) * f0 + k * f0 * (1 - f0) };
+}
+function passHang() { const z0 = RALLY.passContactZ, z1 = NET_H + RALLY.handsAbove; return Math.sqrt(2 * (RALLY.passApex - z0) / G) + Math.sqrt(2 * (RALLY.passApex - z1) / G); }
+function leaveTau(p, isPasser, serveSec) { return p.job === 'pass' ? (isPasser ? RECV.reaction : -RECV.seesItPast) : -serveSec + RECV.reaction; }
+/* Everything on one clock, t = 0 at the setter's contact with a perfect pass at the target. */
+function timeline(r) {
+  const form = receiveFormation(r);
+  const passer = form.passers.find(p => p.lane === 'centre') || form.passers[0];
+  const pc = { x: passer.x, y: passer.y, z: RALLY.passContactZ };
+  const serve = serveArc(pc), serveSec = serve.T, passSec = passHang(), kPass = G * passSec * passSec / 2;
+  const passAt = -passSec, serveAt = passAt - serveSec;
+  const s0 = { x: form.setter.x, y: form.setter.y }, toTarget = Math.hypot(TARGET.x - s0.x, TARGET.y - s0.y);
+  const releaseAt = serveAt + RECV.reaction, readAt = passAt + RECV.read;
+  const lerp = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f });
+  const clamp01 = f => Math.max(0, Math.min(1, f));
+  const setterAt = t => toTarget < 1e-6 ? { x: TARGET.x, y: TARGET.y } : lerp(s0, TARGET, clamp01((t - releaseAt) * RECV.setterSpeed / toTarget));   // toward the target from the serve; a perfect pass lands there, so the read changes nothing
+  const setterArrive = releaseAt + toTarget / RECV.setterSpeed;
+  const arc = (a, b, k, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f + k * f * (1 - f) });
+  const hands = { x: TARGET.x, y: TARGET.y, z: NET_H + RALLY.handsAbove };
+  const ballAt = t => t < serveAt ? Object.assign({}, RALLY.server) : t < passAt ? arc(RALLY.server, pc, serve.k, (t - serveAt) / serveSec) : t < 0 ? arc(pc, hands, kPass, (t - passAt) / passSec) : Object.assign({}, hands);
+  const playerAt = (p, t) => {
+    if (p.i === 0) { const q = setterAt(t); return { x: q.x, y: q.y }; }
+    const leaveAt = passAt + leaveTau(p, p === passer, serveSec), sec = Math.max(0.2, p.moveM / RECV.hitterSpeed);
+    const f = clamp01((t - leaveAt) / sec);
+    return { x: p.x + (p.goes.x - p.x) * f, y: p.y + (p.goes.y - p.y) * f };
+  };
+  const arrivals = form.players.map(p => p.i === 0 ? setterArrive : passAt + leaveTau(p, p === passer, serveSec) + p.moveM / RECV.hitterSpeed);
+  return { form, passer, pc, serve, serveSec, passSec, serveAt, passAt, releaseAt, readAt, setterArrive, setterSlack: -setterArrive, ballAt, playerAt, setterAt, arrivals, end: Math.max(0.3, ...arrivals) + 0.4 };
+}
+
+/* ============================================================
+   COURT
+   ============================================================ */
+const CL = { W: 620, H: 640, x0: 40, y0: 70, cw: 540, ch: 540, fs: 20 };
+const cx = x => CL.x0 + x / W * CL.cw, cy = y => CL.y0 + y / D * CL.ch;
+const COLOR = { pass: '#22d3ee', lib: '#34d399', set: '#fbbf24', hide: '#a78bfa', tuck: '#f472b6' };
+const colorOf = p => p.code === 'L' ? COLOR.lib : COLOR[p.job];
+function jobText(p) {
+  if (p.job === 'pass') return `passes in the ${p.lane} lane`;
+  if (p.job === 'set') return p.front ? 'waits at the net, then sets' : 'hides, then releases to set';
+  if (p.job === 'hide') return 'hides at the net';
+  return p.y > 4.5 ? 'tucks deep in the corner' : 'tucks short at the attack line';
+}
+function courtSvg(r) {
+  const form = receiveFormation(r), tl = timeline(r), sel = state.selected;
+  let o = `<svg class="scene" viewBox="0 0 ${CL.W} ${CL.H}" role="img" aria-label="Serve receive, rotation ${r}">`;
+  o += `<rect x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${CL.ch}" fill="#1a2233" stroke="#e8ebf5" stroke-width="3"/>`;
+  o += `<rect x="${CL.x0}" y="${CL.y0}" width="${CL.cw}" height="${r1(CL.ch / 3)}" fill="#22304a"/>`;
+  o += `<path d="M${CL.x0} ${r1(cy(3))}H${CL.x0 + CL.cw}" stroke="#e8ebf5" stroke-width="3"/>`;
+  o += `<path d="M${CL.x0 - 8} ${CL.y0}H${CL.x0 + CL.cw + 8}" stroke="#fff" stroke-width="8" stroke-linecap="round"/>`;
+  [CL.x0 - 8, CL.x0 + CL.cw + 8].forEach(ax => { o += `<rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="40" fill="#ff4d4d"/><rect x="${ax - 3}" y="${CL.y0 - 26}" width="6" height="10" fill="#fff"/><rect x="${ax - 3}" y="${CL.y0 - 6}" width="6" height="10" fill="#fff"/>`; });
+  o += `<text x="${r1(cx(4.5))}" y="${CL.y0 - 14}" font-size="15" fill="#8b93ab" text-anchor="middle">NET · the serve comes from the far side</text>`;
+  o += `<text transform="rotate(-90)" x="${r1(-cy(4.7))}" y="${CL.x0 - 10}" font-size="12" fill="#8b93ab" text-anchor="middle">↑ 3 m line</text>`;
+  o += `<text x="${r1(cx(4.5))}" y="${r1(cy(9) + 22)}" font-size="14" fill="#8b93ab" text-anchor="middle">END LINE</text>`;
+  [[4, 0, 0], [3, 1, 0], [2, 2, 0], [5, 0, 1], [6, 1, 1], [1, 2, 1]].forEach(([z, col, row]) => { o += `<g class="zone"><text x="${r1(cx((col + 0.5) * 3))}" y="${r1(row === 0 ? cy(1.8) : cy(6.8))}" font-size="${row === 0 ? 40 : 64}" text-anchor="middle" dominant-baseline="middle">${z}</text></g>`; });
+  o += `<g class="static-g">`;
+  if (state.lanes) form.passers.forEach(p => { o += `<rect class="lane" x="${r1(cx(p.x - 1.2))}" y="${r1(cy(2.6))}" width="${r1(2.4 / W * CL.cw)}" height="${r1(cy(9) - cy(2.6))}" rx="14"/>`; });
+  // target and the setter's release
+  o += `<circle cx="${r1(cx(TARGET.x))}" cy="${r1(cy(TARGET.y))}" r="${r1(CL.fs * 0.5)}" fill="none" stroke="#8b93ab" stroke-width="2" stroke-dasharray="3 3"/><text x="${r1(cx(TARGET.x) + 14)}" y="${r1(cy(TARGET.y) - 10)}" font-size="12" fill="#8b93ab">target</text>`;
+  if (form.runM > 0.05) o += `<path class="route" d="M${r1(cx(form.setter.x))} ${r1(cy(form.setter.y))}L${r1(cx(TARGET.x))} ${r1(cy(TARGET.y))}" stroke="#fbbf24" stroke-width="2.5"/>`;
+  if (state.routes) form.players.forEach(p => { if (p.i === 0 || p.moveM < 0.2) return; o += `<path class="route" d="M${r1(cx(p.x))} ${r1(cy(p.y))}L${r1(cx(p.goes.x))} ${r1(cy(p.goes.y))}" stroke="${colorOf(p)}" stroke-width="2"/><circle cx="${r1(cx(p.goes.x))}" cy="${r1(cy(p.goes.y))}" r="5" fill="none" stroke="${colorOf(p)}" stroke-width="1.5" opacity=".7"/>${p.ball ? `<text x="${r1(cx(p.goes.x) + 8)}" y="${r1(cy(p.goes.y) + 4)}" font-size="12" fill="${colorOf(p)}" opacity=".85">${esc(p.ball)}</text>` : ''}`; });
+  // the constraints that bind the selected player
+  const selP = sel != null ? form.players[sel] : null;
+  if (selP) selP.binds.forEach(b => { const q = b.other; o += `<path d="M${r1(cx(selP.x))} ${r1(cy(selP.y))}L${r1(cx(q.x))} ${r1(cy(q.y))}" stroke="#fff" stroke-width="2" stroke-dasharray="2 4" opacity=".8"/>`; if (b.k === 'x') { const xm = (selP.x + q.x) / 2; o += `<path d="M${r1(cx(xm))} ${r1(cy(selP.y) - 14)}V${r1(cy(selP.y) + 14)}" stroke="#fff" stroke-width="2" opacity=".8"/>`; } else { const ym = (selP.y + q.y) / 2; o += `<path d="M${r1(cx(selP.x) - 14)} ${r1(cy(ym))}H${r1(cx(selP.x) + 14)}" stroke="#fff" stroke-width="2" opacity=".8"/>`; } });
+  // serve target and pass line
+  o += `<circle cx="${r1(cx(tl.pc.x))}" cy="${r1(cy(tl.pc.y))}" r="6" fill="#fff" opacity=".6"/><path class="route" d="M${r1(cx(tl.pc.x))} ${r1(cy(tl.pc.y))}L${r1(cx(TARGET.x))} ${r1(cy(TARGET.y))}" stroke="#fff" stroke-width="1.5" opacity=".5"/>`;
+  o += `</g>`;
+  // players
+  form.players.forEach(p => {
+    const c = colorOf(p), dim = sel != null && sel !== p.i;
+    o += `<g class="ptok${sel === p.i ? ' sel' : ''}${dim ? ' dim' : ''}" data-player="${p.i}" tabindex="0" role="button" aria-label="${esc(NAMES[p.code] || p.code)} in zone ${p.zone}: ${esc(jobText(p))}" transform="translate(${r1(cx(p.x))} ${r1(cy(p.y))})">` +
+      `<circle r="22" fill="transparent"/><circle class="body" r="${p.i === 0 ? 13 : 12}" fill="${c}" stroke="#0f1117" stroke-width="2"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text>` +
+      `<text y="-20" font-size="11" fill="#c8cddb" text-anchor="middle">${p.zone}</text></g>`;
+  });
+  // animation markers
+  o += `<g class="tok-anim" id="anim"></g><circle class="ball" id="ball" r="8" fill="#fff" stroke="#0f1117" stroke-width="2" opacity="0" style="filter:drop-shadow(0 0 3px rgba(255,255,255,.9))"/>`;
+  o += `</svg>`;
+  return o;
+}
+function rotationSvg(r) {
+  const rot = rotation(r);
+  const cell = z => { const col = [4, 3, 2].includes(z) ? [4, 3, 2].indexOf(z) : [5, 6, 1].indexOf(z), row = z >= 2 && z <= 4 ? 0 : 1; return { x: 4 + col * 30, y: 4 + row * 24 }; };
+  let o = `<svg class="rotmini" viewBox="0 0 98 56" role="img" aria-label="Rotation ${r}: ${rot.front.join(', ')} front row; ${rot.back.join(', ')} back row"><rect x="2" y="2" width="94" height="52" rx="4" fill="#1a2233" stroke="#3a4157"/><rect x="2" y="2" width="94" height="26" fill="#22304a"/><path d="M2 28H96" stroke="#e8ebf5" stroke-width="1"/><path d="M2 2H96" stroke="#e8ebf5" stroke-width="2.5"/>`;
+  rot.players.forEach(p => { const c = cell(p.zone); const code = p.code === 'MB' && !p.front && state.libero ? 'L' : p.code; const isS = p.code === 'S'; o += `<rect x="${c.x}" y="${c.y}" width="28" height="20" rx="4" fill="${isS ? '#fbbf24' : p.front ? '#2b3550' : '#1c2333'}" stroke="${isS ? '#fbbf24' : '#3a4157'}"/><text x="${c.x + 14}" y="${c.y + 14}" font-size="10" font-weight="800" text-anchor="middle" fill="${isS ? '#0f1117' : '#e8ebf5'}">${code}</text>`; });
+  return o + `</svg>`;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderBar() {
+  $('#bar').innerHTML = `<span class="lab">Rotation</span><div class="seg rot" role="group" aria-label="Rotation">${[1, 2, 3, 4, 5, 6].map(r => `<button data-rotation="${r}" aria-pressed="${state.rotation === r}">${r}</button>`).join('')}</div>${rotationSvg(state.rotation)}`;
+  requestAnimationFrame(() => { const b = $('#bar'); if (b) document.documentElement.style.setProperty('--sticky-h', b.offsetHeight + 'px'); });
+}
+function renderRot() {
+  stopPlayback();
+  const r = state.rotation, rot = rotation(r), form = receiveFormation(r), tl = timeline(r);
+  $('#scene').innerHTML = courtSvg(r);
+  const setterWhere = form.setter.y > 4.5 ? 'deep' : form.setter.y > 1.5 ? 'at the attack line' : 'at the net';
+  const setterSide = form.setter.x < 3 ? 'on the left' : form.setter.x < 5 ? 'left of centre' : form.setter.x > 7.5 ? 'in the right corner' : 'on the right';
+  const late = form.players.filter(p => p.i !== 0 && p.ball && p.moveM > 4).map(p => `${p.code} has ${p.moveM.toFixed(1)} m to the ${p.ball}`);
+  $('#summary').innerHTML = `<b>Rotation ${r}</b> · setter in zone ${rot.setterZone}, ${rot.setterFront ? 'front' : 'back'} row · front row ${rot.front.join(' · ')} · back row ${rot.back.join(' · ')}.<br>` +
+    `<b>Passers:</b> ${form.passers.map(p => `${p.code} (${p.lane})`).join(', ')}. <b>Setter</b> waits ${setterWhere} ${setterSide}${form.setter.binds.length ? ` — ${form.setter.binds.map(b => b.text).join(', ')}` : ''}, releases at the service hit and ${form.runM > 0.05 ? `runs ${form.runM.toFixed(1)} m to target, arriving ${tl.setterSlack.toFixed(2)} s before a good pass comes down` : 'is already at target'}.` +
+    (late.length ? `<br><b>Long transitions:</b> ${late.join('; ')}.` : '') +
+    `<br><span class="hint">Serve ${tl.serveSec.toFixed(2)} s, pass ${tl.passSec.toFixed(2)} s; ${tl.passer.code} takes this serve in the ${tl.passer.lane} lane.</span>`;
+  $('#cards').innerHTML = form.players.map(p => {
+    const c = colorOf(p), pushed = p.pushedM > 0.05 ? `Moved ${p.pushedM.toFixed(1)} m from where the job alone would put them (${p.wanted.x.toFixed(1)}, ${p.wanted.y.toFixed(1)}) to stay legal.` : 'Stands exactly where the job wants.';
+    const goes = p.i === 0 ? (form.runM > 0.05 ? `Releases ${form.runM.toFixed(1)} m to the target.` : 'Already at the target.') : p.ball ? `Then ${p.moveM.toFixed(1)} m to the ${p.ball} start${p.job === 'pass' ? ' after the ball is past them' : ''}.` : 'Stays home after the pass.';
+    return `<div class="pcard${state.selected === p.i ? ' sel' : ''}" data-player="${p.i}" style="--c:${c}" role="button" tabindex="0"><div class="tok">${esc(p.code)}</div><div><b>${esc(NAMES[p.code] || p.code)}</b> <span class="job">· zone ${p.zone}, ${p.front ? 'front' : 'back'} row · ${esc(jobText(p))} · ${p.x.toFixed(1)} m across, ${p.y.toFixed(1)} m off</span><div class="why">${p.binds.length ? `Held ${p.binds.map(b => b.text).join(' and ')}. ` : ''}${esc(pushed)} ${esc(goes)}</div></div></div>`;
+  }).join('');
+}
+function renderRules() {
+  const r = state.rotation, form = receiveFormation(r), m = RECV.margin, at = z => form.players.find(p => p.zone === z);
+  const rows = OVERLAP.map(([k, za, zb]) => { const a = at(za), b = at(zb); const gap = (b[k] - a[k]); return { k, za, zb, a, b, gap, tight: gap - m < 0.05, legal: gap >= m - 1e-6 }; });
+  $('#rules-summary').innerHTML = `<b>Rotation ${r}.</b> ${rows.filter(x => x.tight).length} of the 7 pairs are on the margin: ${rows.filter(x => x.tight).map(x => `${x.a.code} (${x.za}) and ${x.b.code} (${x.zb})`).join(', ') || 'none'}. ${form.legal ? 'Every pair is satisfied with the 0.4 m margin.' : 'A pair is violated.'}`;
+  $('#pairs').innerHTML = rows.map(x => `<div class="pair${x.tight ? ' tight' : ''}"><b>${esc(x.a.code)}</b> zone ${x.za} ${x.k === 'x' ? 'left of' : 'in front of'} <b>${esc(x.b.code)}</b> zone ${x.zb}<small>${PAIR_TEXT[x.k + x.za + x.zb]} · ${x.gap.toFixed(2)} m apart${x.tight ? ' — on the margin' : ''}${x.legal ? '' : ' — FAULT'}</small></div>`).join('');
+}
+function renderRoles() {
+  let o = `<thead><tr><th>Rotation</th>${SYSTEM.lineup.map((c, i) => `<th>${esc(NAMES[c])}${c === 'OH' || c === 'MB' ? ` ${SYSTEM.lineup.slice(0, i).filter(x => x === c).length + 1}` : ''}</th>`).join('')}</tr></thead><tbody>`;
+  for (let r = 1; r <= 6; r++) {
+    const f = receiveFormation(r);
+    o += `<tr class="${r === state.rotation ? 'now' : ''}"><th>R${r}</th>` + f.players.map(p => `<td><b>${esc(p.code)}</b> zone ${p.zone}<br><span class="hint">${esc(jobText(p))}${p.ball && p.ball !== 'target' ? ` → ${esc(p.ball)} (${p.moveM.toFixed(1)} m)` : p.i === 0 && f.runM > 0.05 ? ` → target (${f.runM.toFixed(1)} m)` : ''}</span></td>`).join('') + `</tr>`;
+  }
+  $('#roles').innerHTML = o + `</tbody>`;
+}
+
+/* ============================================================
+   CHECKS
+   ============================================================ */
+const RULES = [
+  { name: 'Legal in every rotation under all seven pairs', why: 'Recomputed from the rule text (column pairs 4/5, 3/6, 2/1 by depth; row pairs 4/3, 3/2, 5/6, 6/1 by width) at the moment of the service hit, with the 0.4 m margin, independently of the solver\'s own flag.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = receiveFormation(r), at = z => f.players.find(p => p.zone === z), bad = [];
+      [[4, 5], [3, 6], [2, 1]].forEach(([fz, bz]) => { if (!(at(fz).y <= at(bz).y - RECV.margin + 1e-6)) bad.push(`zone ${fz} is not in front of zone ${bz}`); });
+      [[4, 3], [3, 2], [5, 6], [6, 1]].forEach(([l, rr]) => { if (!(at(l).x <= at(rr).x - RECV.margin + 1e-6)) bad.push(`zone ${l} is not left of zone ${rr}`); });
+      if (!f.legal) bad.push('the solver reports the formation illegal');
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: legal, ${f.players.map(p => `${p.code}(${p.x.toFixed(1)},${p.y.toFixed(1)})`).join(' ')}` }; }) },
+  { name: 'The right three pass, from a realistic depth', why: 'The libero (or the back-row middle without one) and both outsides pass, spread left–centre–right between 5 and 7.5 m off the net; the opposite and the setter never pass.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = receiveFormation(r), bad = [];
+      if (f.passers.length !== 3) bad.push(`${f.passers.length} passers`);
+      f.passers.forEach(p => { if (!(p.role === 'OH' || p.code === 'L' || (!state.libero && p.role === 'MB'))) bad.push(`${p.code} passes`); if (p.y < 5 || p.y > 7.5) bad.push(`${p.code} passes from ${p.y.toFixed(1)} m`); });
+      const xs = f.passers.map(p => p.x); if (!(xs[0] < xs[1] && xs[1] < xs[2])) bad.push('passers are not left, centre, right');
+      if (f.players.some(p => (p.role === 'OPP' || p.role === 'S') && p.job === 'pass')) bad.push('the opposite or the setter passes');
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: ${f.passers.map(p => `${p.code} ${p.lane} (${p.x.toFixed(1)}, ${p.y.toFixed(1)})`).join(', ')}` }; }) },
+  { name: 'The setter reaches the target before a good pass comes down', why: 'Releasing at the service hit after a 0.3 s reaction and running at 4 m/s, the setter is at the target before the pass lands; a back-row setter starts behind the front row, a front-row setter at the net.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = receiveFormation(r), tl = timeline(r), bad = [], front = rotation(r).setterFront;
+      if (tl.setterSlack < 0) bad.push(`arrives ${(-tl.setterSlack).toFixed(2)} s late`);
+      if (front && f.setter.y > 1.5) bad.push('a front-row setter should start at the net'); if (!front && f.setter.y < 1.4) bad.push('a back-row setter must start behind the front row');
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: starts ${f.setter.x.toFixed(1)}, ${f.setter.y.toFixed(1)}, runs ${f.runM.toFixed(1)} m, there ${tl.setterSlack.toFixed(2)} s before the pass` }; }) },
+  { name: 'Hiders are at the net, tuckers out of the passing lanes', why: 'Front-row non-passers wait at the net; a back-row opposite tucks short or in the corner and never stands in front of a passer within the lane width.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = receiveFormation(r), bad = [];
+      f.players.filter(p => p.job === 'hide').forEach(p => { if (p.y > 1.6) bad.push(`${p.code} hides ${p.y.toFixed(1)} m off the net`); });
+      f.players.filter(p => p.job === 'tuck' || (p.job === 'set' && !p.front)).forEach(p => f.passers.forEach(q => { if (p.y < q.y - 0.5 && Math.abs(p.x - q.x) < RECV.lane - 1e-6) bad.push(`${p.code} stands in ${q.code}'s lane`); }));
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: ok` }; }) },
+  { name: 'Every start and every transition is on the court', why: 'Receive spots inside the lines (pin hitters may start a half metre outside the sideline for the approach), no route longer than the court diagonal, and the same formation every time it is asked for.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const f = receiveFormation(r), bad = [];
+      f.players.forEach(p => { if (p.x < 0.3 || p.x > W - 0.3 || p.y < 0.3 || p.y > D - 0.3) bad.push(`${p.code} starts off the court`); if (p.goes.x < -0.5 || p.goes.x > W + 0.5 || p.goes.y < 0 || p.goes.y > D) bad.push(`${p.code} transitions off the court`); if (p.moveM > 12.8) bad.push(`${p.code} route ${p.moveM.toFixed(1)} m`); });
+      const again = receiveFormation(r); if (again !== f) { const same = again.players.every((p, i) => Math.abs(p.x - f.players[i].x) < 1e-9 && Math.abs(p.y - f.players[i].y) < 1e-9); if (!same) bad.push('not deterministic'); }
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: ok` }; }) },
+  { name: 'The serve clears the tape and the pass is a real flight', why: 'A float that clears the tape by 0.3 m over the net line and comes down on the passer\'s platform in 0.6–1.3 s; a pass to a 3.8 m apex that comes down at jump-set height in 1.1–1.6 s.',
+    run: () => [1, 2, 3, 4, 5, 6].map(r => { const tl = timeline(r), bad = [];
+      if (tl.serve.atNet < NET_H + RALLY.serveClear - 1e-6) bad.push(`serve crosses at ${tl.serve.atNet.toFixed(2)} m`); if (tl.serveSec < 0.6 || tl.serveSec > 1.3) bad.push(`serve hangs ${tl.serveSec.toFixed(2)} s`);
+      if (tl.passSec < 1.1 || tl.passSec > 1.6) bad.push(`pass hangs ${tl.passSec.toFixed(2)} s`);
+      const z = tl.ballAt(-1e-9).z; if (Math.abs(z - (NET_H + RALLY.handsAbove)) > 0.01) bad.push('pass does not come down at the hands');
+      return { ok: !bad.length, msg: bad.join('; ') || `R${r}: serve ${tl.serveSec.toFixed(2)} s, ${(tl.serve.atNet - NET_H).toFixed(2)} m over the tape to ${tl.passer.code}; pass ${tl.passSec.toFixed(2)} s` }; }) },
+  { name: 'The lineup is a 5-1', why: 'One setter, two outsides, two middles, one opposite, alternating so the two outsides and the two middles are opposite each other; the setter and the opposite are opposite each other.',
+    run: () => { const L = SYSTEM.lineup, bad = []; const count = c => L.filter(x => x === c).length; if (count('S') !== 1 || count('OH') !== 2 || count('MB') !== 2 || count('OPP') !== 1) bad.push('lineup is not 1 S, 2 OH, 2 MB, 1 OPP'); [['S', 'OPP'], ['OH', 'OH'], ['MB', 'MB']].forEach(([a, b]) => { const i = L.indexOf(a), j = L.indexOf(b, a === b ? i + 1 : 0); if ((j - i + 6) % 6 !== 3) bad.push(`${a} and ${b} are not opposite each other`); }); return [{ ok: !bad.length, msg: bad.join('; ') || L.join(' · ') }]; } }
+];
+function runChecks() { const results = RULES.map(r => ({ rule: r, findings: r.run() })); const all = results.flatMap(x => x.findings); return { results, errs: all.filter(f => !f.ok).length, total: all.length }; }
+function renderChecks() {
+  const c = runChecks();
+  $('#checks-badge').innerHTML = c.errs ? `<span class="status err">✗ ${c.errs} failing</span>` : `<span class="status ok">✓ all ${c.total} pass</span>`;
+  $('#rules').innerHTML = c.results.map(x => { const bad = x.findings.filter(f => !f.ok); return `<div class="rule"><div class="st ${bad.length ? 'err' : 'ok'}">${bad.length ? '✗' : '✓'}</div><div><div class="name">${esc(x.rule.name)}</div><div class="why">${esc(x.rule.why)}</div><div class="msgs">${x.findings.map(f => `<span>${f.ok ? '' : '✗ '}${esc(f.msg)}</span>`).join('')}</div></div></div>`; }).join('');
+}
+
+/* ============================================================
+   PLAYBACK — the serve, the pass, everyone to their spots
+   ============================================================ */
+let raf = null, endTimer = null;
+function isPlaying() { return !!(raf || endTimer); }
+function stopPlayback() {
+  if (raf) cancelAnimationFrame(raf); if (endTimer) clearTimeout(endTimer); raf = null; endTimer = null;
+  document.body.classList.remove('playing');
+  const fab = $('.fab'); if (fab) fab.textContent = '▶ Play';
+  const anim = $('#anim'), ball = $('#ball'); if (anim) anim.innerHTML = ''; if (ball) ball.style.opacity = 0;
+  $$('.ptok').forEach(t => { t.style.opacity = ''; });
+}
+function play() {
+  if (isPlaying()) { stopPlayback(); return; }
+  const tl = timeline(state.rotation), form = tl.form;
+  const anim = $('#anim'), ball = $('#ball'); if (!anim || !ball) return;
+  document.body.classList.add('playing'); $('.fab').textContent = '■ Stop';
+  $$('.ptok').forEach(t => { t.style.opacity = 0.25; });
+  anim.innerHTML = form.players.map(p => `<g data-p="${p.i}"><circle r="${p.i === 0 ? 13 : 12}" fill="${colorOf(p)}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
+  const toks = $$('#anim g');
+  const t0 = tl.serveAt - 0.3, t1 = tl.end, rate = reduceMotion.matches ? 2.5 : 1;
+  const begin = performance.now();
+  const step = now => {
+    const t = t0 + (now - begin) / 1000 * rate;
+    const b = tl.ballAt(Math.min(t, t1));
+    if (b.y >= -0.2 && t >= tl.serveAt) { ball.style.opacity = 1; ball.setAttribute('transform', `translate(${r1(cx(b.x))} ${r1(cy(Math.max(-0.2, b.y)))})`); ball.setAttribute('r', String(r1(8 + Math.max(0, b.z - 1) * 2.5))); } else ball.style.opacity = 0;
+    toks.forEach(g => { const p = form.players[Number(g.dataset.p)]; const q = tl.playerAt(p, t); g.setAttribute('transform', `translate(${r1(cx(q.x))} ${r1(cy(q.y))})`); });
+    if (t < t1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 900); }
+  };
+  raf = requestAnimationFrame(step);
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+function showTab(id) {
+  stopPlayback(); state.tab = id;
+  $$('.nav [role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === id)));
+  $$('.tab').forEach(t => { t.hidden = t.getAttribute('data-tab') !== id; });
+  renderTab();
+  window.scrollTo({ top: 0 });
+}
+function renderTab() {
+  if (state.tab === 'rot') renderRot(); else if (state.tab === 'rules') renderRules(); else if (state.tab === 'roles') renderRoles(); else if (state.tab === 'checks') renderChecks();
+}
+function setRotation(r) { state.rotation = r; state.selected = null; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } renderBar(); renderTab(); }
+function select(i) { state.selected = state.selected === i ? null : i; if (state.tab === 'rot') { stopPlayback(); renderRot(); const c = $(`.pcard[data-player="${state.selected}"]`); if (c && narrow.matches) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+document.addEventListener('click', e => {
+  if (isPlaying() && e.target.closest('.scene-wrap') && !e.target.closest('.fab')) { stopPlayback(); e.preventDefault(); return; }
+  const t = e.target.closest('[data-tab],[data-rotation],[data-player],[data-play],#t-libero,#t-routes,#t-lanes');
+  if (!t) return;
+  if (t.hasAttribute('data-tab')) { showTab(t.getAttribute('data-tab')); return; }
+  if (t.hasAttribute('data-rotation')) { setRotation(Number(t.getAttribute('data-rotation'))); return; }
+  if (t.hasAttribute('data-player')) { select(Number(t.getAttribute('data-player'))); return; }
+  if (t.hasAttribute('data-play')) { play(); return; }
+  if (t.id === 't-libero') { state.libero = !state.libero; t.setAttribute('aria-pressed', String(state.libero)); renderBar(); renderTab(); return; }
+  if (t.id === 't-routes') { state.routes = !state.routes; t.setAttribute('aria-pressed', String(state.routes)); renderRot(); return; }
+  if (t.id === 't-lanes') { state.lanes = !state.lanes; t.setAttribute('aria-pressed', String(state.lanes)); renderRot(); return; }
+});
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-player]')) { e.preventDefault(); e.target.closest('[data-player]').click(); } });
+renderBar();
+showTab('rot');
+{ const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
+window.ServeReceive = { state, rotation, receiveFormation, timeline, runChecks, setRotation, showTab, select, RECV, OVERLAP, STARTS, TARGET };
+})();
+</script>
+</body>
+</html>
