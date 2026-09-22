@@ -305,11 +305,8 @@ const LANE = { 5: 'left', 6: 'centre', 1: 'right' };       // a passer's lane, b
 const OVERLAP = [['x', 4, 3], ['x', 3, 2], ['x', 5, 6], ['x', 6, 1], ['y', 2, 1], ['y', 3, 6], ['y', 4, 5]];
 const PAIR_TEXT = { 'x43': 'zone 4 left of zone 3 (front row order)', 'x32': 'zone 3 left of zone 2 (front row order)', 'x56': 'zone 5 left of zone 6 (back row order)', 'x61': 'zone 6 left of zone 1 (back row order)', 'y21': 'zone 2 in front of zone 1 (right column)', 'y36': 'zone 3 in front of zone 6 (centre column)', 'y45': 'zone 4 in front of zone 5 (left column)' };
 
-const state = {
-  rotation: (function () { try { const r = Number(localStorage.getItem('serveReceive.rotation')); if (r >= 1 && r <= 6) return r; } catch (e) { /* ignore */ } return 1; })(),
-  tab: 'rot', phase: (function () { try { const p = localStorage.getItem('serveReceive.phase'); return ['start', 'recv', 'atk', 'base'].includes(p) ? p : 'start'; } catch (e) { return 'start'; } })(),
-  step: 'first', routes: true, lanes: true, selected: null
-};
+/* The page always opens at R6 Start, the setter about to serve. */
+const state = { rotation: 1, tab: 'rot', phase: 'start', step: 'first', routes: true, lanes: true, selected: null };
 const $ = (s, root) => (root || document).querySelector(s);
 const $$ = (s, root) => Array.from((root || document).querySelectorAll(s));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -604,15 +601,12 @@ function stepIndex() { const steps = stepsOf(state.rotation); const k = steps.fi
 const stepLabel = st => st.phase === 'start' ? 'Start' : st.phase === 'recv' ? 'Serve receive' : st.phase === 'base' ? 'Base defence' : st.step === 'first' ? 'Attack · first ball' : (LBL(state.rotation) === 6 ? 'Attack · after the first hit' : 'Attack');
 /* Next / Back walk Start → Receive → Attack (→ after the first hit in R6) → Defence, then on to the next rotation. */
 function stepBy(d) {
-  const from = positionsOf(state.rotation, hereStep());
+  if (tweening) stopPlayback();                                                // a step already under way completes first
   const steps = stepsOf(state.rotation); const k = stepIndex() + d; let r = state.rotation, st;
   if (k >= steps.length) { r = r % 6 + 1; st = { phase: 'start' }; }           // on to the next rotation: everyone rotates one place
   else if (k < 0) { r = (r + 4) % 6 + 1; st = { phase: 'base', step: 'attack' }; }
   else st = steps[k];
-  if (r !== state.rotation) { state.rotation = r; state.selected = null; state.step = 'first'; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } renderBar(); }
-  if (st.step) state.step = st.step;
-  setPhase(st.phase, st.step);
-  tweenTo(from);
+  moveTo(r, st);
 }
 function renderRecv() {
   const r = state.rotation, rot = rotation(r), form = receiveFormation(r), tl = timeline(r);
@@ -777,14 +771,16 @@ function renderChecks() {
 /* ============================================================
    PLAYBACK — the serve, the pass, everyone to their spots (or our serve and the switch to base)
    ============================================================ */
-let raf = null, endTimer = null, tweening = false;
+let raf = null, endTimer = null, tweening = false, pendingDone = null;
 function isPlaying() { return !!(raf || endTimer); }
 function stopPlayback() {
   if (raf) cancelAnimationFrame(raf); if (endTimer) clearTimeout(endTimer); raf = null; endTimer = null; tweening = false;
   document.body.classList.remove('playing');
+  const done = pendingDone; pendingDone = null;
   const fab = $('.fab'); if (fab) fab.textContent = '▶ Play';
   const anim = $('#anim'), ball = $('#ball'); if (anim) anim.innerHTML = ''; if (ball) ball.style.opacity = 0;
   $$('.ptok').forEach(t => { t.style.opacity = ''; });
+  if (done) done();
 }
 function play() {
   if (isPlaying()) { const wasTween = tweening; stopPlayback(); if (!wasTween) return; }
@@ -824,21 +820,25 @@ function coloursOf(r, st) {
   return out;
 }
 const hereStep = () => ({ phase: state.phase, step: state.step });
-/* After a phase change: tween the six from `from` (code → x, y) to the spots of the phase now on screen. */
-function tweenTo(from) {
-  const anim = $('#anim'); if (!anim || !from || reduceMotion.matches) return;
-  const r = state.rotation, to = positionsOf(r, hereStep()), col = coloursOf(r, hereStep()), players = rotation(r).players;
-  if (players.every(p => Math.hypot(to[p.code].x - from[p.code].x, to[p.code].y - from[p.code].y) < 0.05)) return;
-  stopPlayback(); tweening = true;
+/* Move to another phase (or rotation): the six run from where they are now to their next spots in the scene that is
+   on screen, and only then does the page switch to the new phase. Interrupting the move (a tap, Play, another step)
+   completes it at once. */
+function moveTo(r, st) {
+  stopPlayback();
+  const from = positionsOf(state.rotation, hereStep()), to = positionsOf(r, st), col = coloursOf(state.rotation, hereStep()), players = rotation(state.rotation).players;
+  const apply = () => { if (r !== state.rotation) { state.rotation = r; state.selected = null; state.step = 'first'; renderBar(); } if (st.step) state.step = st.step; setPhase(st.phase, st.step); };
+  const anim = $('#anim');
+  if (!anim || reduceMotion.matches || players.every(p => Math.hypot(to[p.code].x - from[p.code].x, to[p.code].y - from[p.code].y) < 0.05)) { apply(); return; }
+  tweening = true; pendingDone = apply;
   document.body.classList.add('playing');
-  $$('.ptok').forEach(t => { t.style.opacity = 0.25; });
-  anim.innerHTML = players.map(p => `<g data-c="${p.code}"><circle r="${p.role === 'S' ? 13 : 12}" fill="${col[p.code]}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
-  const toks = $$('#anim g'), dur = 900, begin = performance.now();
+  $$('.ptok').forEach(t => { t.style.opacity = 0; });
+  anim.innerHTML = players.map(p => `<g data-c="${p.code}" transform="translate(${r1(cx(from[p.code].x))} ${r1(cy(from[p.code].y))})"><circle r="${p.role === 'S' ? 13 : 12}" fill="${col[p.code]}" stroke="#0f1117" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(255,255,255,.7))"/><text y="4" font-size="${p.code.length > 2 ? 9.5 : 11}" font-weight="800" fill="#0f1117" text-anchor="middle">${esc(p.code)}</text></g>`).join('');
+  const toks = $$('#anim g'), dur = 1000, begin = performance.now();
   const ease = f => f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
   const step = now => {
     const f = Math.min(1, (now - begin) / dur), e = ease(f);
     toks.forEach(g => { const c = g.dataset.c, a = from[c], b = to[c]; g.setAttribute('transform', `translate(${r1(cx(a.x + (b.x - a.x) * e))} ${r1(cy(a.y + (b.y - a.y) * e))})`); });
-    if (f < 1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 150); }
+    if (f < 1) raf = requestAnimationFrame(step); else { raf = null; endTimer = setTimeout(() => { endTimer = null; stopPlayback(); }, 120); }
   };
   raf = requestAnimationFrame(step);
 }
@@ -856,8 +856,8 @@ function showTab(id) {
 function renderTab() {
   if (state.tab === 'rot') renderRot(); else if (state.tab === 'rules') renderRules(); else if (state.tab === 'roles') renderRoles(); else if (state.tab === 'checks') renderChecks();
 }
-function setRotation(r) { state.rotation = r; state.selected = null; try { localStorage.setItem('serveReceive.rotation', String(r)); } catch (e) { /* ignore */ } renderBar(); renderTab(); }
-function setPhase(ph, step) { if (ph === 'atk') state.step = step || (state.phase === 'atk' ? state.step : 'first'); state.phase = ['start', 'atk', 'base'].includes(ph) ? ph : 'recv'; state.selected = null; try { localStorage.setItem('serveReceive.phase', state.phase); } catch (e) { /* ignore */ } renderRot(); }
+function setRotation(r) { stopPlayback(); state.rotation = r; state.selected = null; state.step = 'first'; renderBar(); renderTab(); }
+function setPhase(ph, step) { if (ph === 'atk') state.step = step || (state.phase === 'atk' ? state.step : 'first'); state.phase = ['start', 'atk', 'base'].includes(ph) ? ph : 'recv'; state.selected = null; renderRot(); }
 function setStep(st) { state.step = st === 'attack' ? 'attack' : 'first'; renderRot(); }
 function select(i) { state.selected = state.selected === i ? null : i; if (state.tab === 'rot') { stopPlayback(); renderRot(); const c = $(`.pcard[data-player="${state.selected}"]`); if (c && narrow.matches) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
 document.addEventListener('click', e => {
@@ -867,8 +867,8 @@ document.addEventListener('click', e => {
   if (t.hasAttribute('data-tab')) { showTab(t.getAttribute('data-tab')); return; }
   if (t.hasAttribute('data-rotation')) { setRotation(Number(t.getAttribute('data-rotation'))); return; }
   if (t.hasAttribute('data-player')) { select(Number(t.getAttribute('data-player'))); return; }
-  if (t.hasAttribute('data-phase')) { const from = positionsOf(state.rotation, hereStep()); setPhase(t.getAttribute('data-phase')); tweenTo(from); return; }
-  if (t.hasAttribute('data-step')) { const from = positionsOf(state.rotation, hereStep()); setStep(t.getAttribute('data-step')); tweenTo(from); return; }
+  if (t.hasAttribute('data-phase')) { const ph = t.getAttribute('data-phase'); moveTo(state.rotation, { phase: ph, step: ph === 'atk' ? 'first' : undefined }); return; }
+  if (t.hasAttribute('data-step')) { moveTo(state.rotation, { phase: 'atk', step: t.getAttribute('data-step') }); return; }
   if (t.hasAttribute('data-next')) { stepBy(1); return; }
   if (t.hasAttribute('data-prev')) { stepBy(-1); return; }
   if (t.hasAttribute('data-play')) { play(); return; }
@@ -879,7 +879,7 @@ document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === 
 renderBar();
 showTab('rot');
 { const c = runChecks(); if (c.errs) console.warn(`Serve Receive: ${c.errs} failing check(s).`); else console.info(`Serve Receive: all ${c.total} checks pass.`); }
-window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, tweenTo, showTab, select, RECV, BASE, OVERLAP, TARGET };
+window.ServeReceive = { state, SYSTEM, SHEET, LBL, ORDER, rotation, listing, receiveFormation, attackSpots, defenceSpots, timeline, baseFormation, baseTimeline, runChecks, setRotation, setPhase, setStep, stepBy, stepsOf, positionsOf, moveTo, showTab, select, RECV, BASE, OVERLAP, TARGET };
 })();
 </script>
 </body>
