@@ -55,10 +55,10 @@ ball from 4 and O1 from 2, then they swap sides for the rest of the rally.
 | Rotations · Start | The page opens here, at R6 Start: the rotational order before anyone moves, with dotted lines to each player's serve-receive spot. Next (or the right arrow key) runs the six to their next spots in the scene on screen and then switches to that phase: Start → Serve receive → Attack (→ after the first hit in R6) → Base defence, then on to the next rotation in match order, R6 → R1 → … → R5, the rotation itself animated. Back walks it the other way. A tap, Play or another press completes a move at once. |
 | Rotations · Serve receive | The court at the service hit: passers (cyan) with their receive coverage shaded 6 back (the wings take short and mid serves in their thirds up to the seams, the centre passer takes the middle and every deep ball across the court), the setter (yellow) with the release run to the target, front-row players waiting at the net (violet), a back-row right side tucked behind a passer (pink), and dotted routes to where each one goes after the pass. Tap a player to see which overlap pairs hold them there and how far the rule moved them from where the sheet alone would put them. ▶ plays the serve, the pass and everyone's transition on the real clock. Toggles: routes, coverage. |
 | Rotations · Attack | Where everyone is once our ball is set: hitters at their approach starts (violet), the setter at the target, the back row covering (cyan), with dashed rings at the serve-receive spot each one came from. R6 has a First ball / After the first hit switch. |
-| Rotations · Base defence | Base once the other side has the ball: three blockers at the net (an outside left, a middle centre, the setter or right side right) and three diggers deep (an outside left back, a middle middle back, the setter or right side right back). Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base and its distance; the server stands behind the end line and runs in. ▶ plays our serve and the switch against the moment the other side's setter touches. |
+| Rotations · Base defence | The team's 6-back defence. Base once the other side has the ball: three blockers at the net, the wings out on the sidelines, the middle back deep on the end line, with who-is-where from the sheet's defence line. Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base; the server stands behind the end line and runs in. ▶ plays our serve and the switch against the moment the other side's setter touches. Their outside / Their middle / Their right side show the read once their ball is set: two on the block, the off-blocker to the attack line, line and cross from the sidelines, the middle back on the end line, with each player's coverage shaded and the campfire marked. |
 | Overlap | FIVB 7.4 in plain words and the seven pairs it consists of, with the actual gap in metres for the current rotation's receive formation and the pairs that sit on the margin. |
 | Roles | A table of every player's job in every rotation: receive job, where they go for the attack, and their base spot. Plus the team's rules. |
-| Checks | Twelve rule sets: the sheet complete and consistent (six players per phase, the start line matching the rotational order, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; anyone who shifts forward tight to the net or stacked, and nobody in mid-court in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the right six spots, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
+| Checks | Thirteen rule sets: the sheet complete and consistent (six players per phase, the start line matching the rotational order, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; anyone who shifts forward tight to the net or stacked, and nobody in mid-court in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the six 6-back spots on the perimeter, the three reads with two on the block, the off-blocker at the attack line, wings on the sidelines and the middle back on the end line, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
 
 ## From the sheet to the floor
 
@@ -90,14 +90,15 @@ so a pair swapping sides (O1 and R after R6's first hit, the pins switching at o
 of through. Everyone is exactly on their spot when the move ends. The arrival times in the checks are the straight-line
 ones; a detour adds a few tenths at most.
 
-## Receive coverage, 6 back
+## Receive coverage
 
-With three passers the court is split at the seams between them. The wing passers take short and mid serves in their
-thirds, from the 2.6 m line back to 7.4 m; the centre passer, who stands deepest, takes the middle strip and every deep
-ball across the whole width behind the wings. That is the "6 back" read of a three-passer receive: the deep passer owns
-the deep court, the wings own the short seams (coachingvb.com on seam responsibilities: the passer nearer the server
-takes the short seam, the one further away the deep seam; Vollyze and The Art of Coaching Volleyball on the three-passer
-arc with the middle passer deeper). The 2.6 m and 7.4 m lines are this page's choice for where "short" and "deep" start.
+With three passers the court is split at the two seams between them, and each seam is shared by the seam rule: the
+passer nearer the server takes the short seam, the passer further away takes the deep seam (coachingvb.com, "Whose
+ball? Seam responsibilities in serve receive and defense"; The Art of Coaching Volleyball on the four seams of a
+three-passer formation). With the serve coming from the far centre the wings are nearer, so a wing owns their third and
+the short part of the seam, and the deep centre passer owns the middle and the deep part of both seams. The overlay
+draws exactly that: three regions, the centre one widening behind 6.4 m. The 2.6 m and 6.4 m lines are this page's
+choice for where "short" and "deep" start.
 
 ## The clock
 
@@ -108,9 +109,44 @@ at 3.5 m/s to their attack spot. The base view runs the same serve the other way
 passer, their pass hangs, and their setter touches about 2.3 s after our service hit; everyone leaves 0.3 s after the
 hit and must be home by then. Sources and their validation are in the Setter Signals README.
 
-## Base defence sources
+## Base defence: 6 back
 
-The base spots follow the standard conventions for a 5-1 without a libero, as the coach's defence line lists them:
+The team plays a 6-back (perimeter, middle-back) defence, and the Base defence view shows it two ways.
+
+**Base**, before the other side sets: three blockers at the net with the pins pinched 2 m in, the two wings out on the
+sidelines (1 m in, 6 m off), the middle back deep on the end line (8 m off): a loose triangle on the perimeter. Who is
+where comes from the sheet's defence line (an outside left back, a middle middle back, the setter or right side right
+back).
+
+**Read**, once their ball is set, chosen with the Their outside / Their middle / Their right side control:
+
+| Their attack | Block | Off-blocker | Line | Cross-court | End line |
+| --- | --- | --- | --- | --- | --- |
+| Outside (over our right) | our right blocker and middle, on the ball | our left blocker, off to the attack line (1.8 m in, 3 m off) for tips and the sharp angle | right back, on the sideline 6.5 m off | left back, on the sideline 6 m off | middle back on the end line in line with the hitter, for what comes through or over the block |
+| Middle | our middle, the right blocker joining | our left blocker, off to the attack line for tips | left back and right back each take their angle from the sidelines | | middle back on the end line |
+| Right side (over our left) | mirror of the outside | | | | |
+
+Shaded areas show who covers what; the dashed red box is the campfire in the middle that a perimeter defence leaves
+thin against tips. The read spots are this page's placement of the principles below; the sources give the shape and
+the responsibilities, not metres.
+
+Sources (search excerpts; the sites block automated fetching): The Art of Coaching Volleyball, defensive systems
+(6-back or middle-back defence, "6" being the international designation of the middle back; perimeter defence places
+at least three defenders on the court lines, the middle back deep in the centre, the wings back and toward the
+sidelines; the middle-up alternative has one defender behind the block on the 3 m line); The Art of Coaching Volleyball,
+defending the outside attack in perimeter defence (the middle back reads the set and takes a position on the end line
+in line with the hitter's approach to cover the attack through or over the block; the right back drops back and
+defends the line; the fourth digger, the off-blocker, positions near or on the attack line behind their starting point
+at the net; the wing diggers take a position on the sidelines outside the blockers' shoulders and read attack or tip);
+HoopsKing, base positions and systems (base with the outside blockers pinched toward the middle and the three back-row
+defenders spread across the deep court in a loose triangle; wings use the sidelines and the middle back the end line;
+the strength of the perimeter is four diggers on the hard spike, its weakness is the tip to the centre, the campfire);
+Gold Medal Squared and The Volleyball Drill Shop on perimeter versus rotational defence; coachingvb.com on the middle
+back playing deep in 6 or about 3 m in from the end line depending on the read.
+
+## Earlier base-position sources
+
+The blocker and stack conventions also draw on:
 Volleyball Vault and HoopsKing on base positions (back-row wings about 4 ft off the sideline and 4 ft behind the
 attack line; base is where the six start after serving or before the opponent sets); The Art of Coaching Volleyball on
 base position and defensive systems (outside blockers pinched toward the middle, the middle blocker centred, the
