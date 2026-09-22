@@ -28,7 +28,8 @@ one rotation later with the setter in zone 6, and so on to R5 with the setter in
 numbers the same rotations 1–6 starting from the setter in zone 1, so its rotation 1 is R6 here.
 
 **The golden rule:** R and S never receive. When either is in the back court they are shaded by a teammate, behind a
-passer or beside a front-row player at the attack line.
+passer or stacked tight behind a front-row player at the net. Anyone who shifts forward stays tight to the net or
+stacked, never in mid-court, so the receivers keep a clear view of the server.
 
 ## The sheet
 
@@ -57,7 +58,7 @@ ball from 4 and O1 from 2, then they swap sides for the rest of the rally.
 | Rotations · Base defence | Base once the other side has the ball: three blockers at the net (an outside left, a middle centre, the setter or right side right) and three diggers deep (an outside left back, a middle middle back, the setter or right side right back). Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base and its distance; the server stands behind the end line and runs in. ▶ plays our serve and the switch against the moment the other side's setter touches. |
 | Overlap | FIVB 7.4 in plain words and the seven pairs it consists of, with the actual gap in metres for the current rotation's receive formation and the pairs that sit on the margin. |
 | Roles | A table of every player's job in every rotation: receive job, where they go for the attack, and their base spot. Plus the team's rules. |
-| Checks | Twelve rule sets: the sheet complete and consistent (six players per phase, the start line matching the rotational order, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; waiters at the net and nobody short in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the right six spots, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
+| Checks | Twelve rule sets: the sheet complete and consistent (six players per phase, the start line matching the rotational order, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; anyone who shifts forward tight to the net or stacked, and nobody in mid-court in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the right six spots, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
 
 ## From the sheet to the floor
 
@@ -65,10 +66,11 @@ The sheet gives zones and relations, not metres. Each player wants a spot for wh
 their lane (left, centre or right by the zone listed, spread 2.0 / 4.5 / 7.2 m across, about 6 m off, the centre
 passer 0.8 m deeper, a front-row passer a little shallower); a front-row player waiting at the net the column of their
 zone, 1 m off; a front-row setter the net (the target when listed in zone 2); a player shaded behind someone the spot
-1.2 m behind them, peeking half a metre toward the side the back-row order needs; a player beside someone the spot
-1 m to their right (at the attack line when they are back row). Then the seven overlap constraints of FIVB rule 7.4
+1.2 m behind them, peeking half a metre toward the side the back-row order needs; a front-row player beside someone the
+spot 1 m to their right at the net; a back-row player beside a front-row player stacks tight behind them, 0.6 m to
+their right and just behind them (1.45 m off the net), out of the receivers' sightline. Then the seven overlap constraints of FIVB rule 7.4
 push players until legal with a 0.4 m margin, the least important job giving way first (passers hold, the setter yields
-a little, waiters yield first), nobody short stands in a passer's lane, and the relations are re-applied to the settled
+a little, waiters yield first), nobody in mid-court stands in a passer's lane, and the relations are re-applied to the settled
 positions and solved once more. The Checks tab verifies the result against the rule text and against the sheet, so a
 line that cannot be made legal shows up as a fault rather than a quietly moved player.
 
