@@ -35,14 +35,14 @@ passer or beside a front-row player at the attack line.
 The page holds the coach's sheet verbatim. A zone digit, then who stands there; `X(f)Y` means Y stands behind X,
 `X(l)Y` means Y stands to the right of X.
 
-| Rotation | Serve receive | Attack | Base defence |
-| --- | --- | --- | --- |
-| R6 | `1O1(f)S 6M1 5O2 4R 3M2` | first ball `6M1 5O2 4R 3M2(l)S 2O1`, after the first hit `6M1 5O2 4O1 3M2(l)S 2R` | `1S 6M1 5O2 4O1 3M2 2R` |
-| R1 | `1O1 6M1 5O2 3R(l)S 2M2` | `6M1 5O1 4O2 3M2(l)S 2R` | `1S 6M1 5O1 4O2 3M2 2R` |
-| R2 | `1M2 6O1 5O2 4M1(l)S 2R` | `6M2 5O1 4O2 3M1(l)S 2R` | `1S 6M2 5O1 4O2 3M1 2R` |
-| R3 | `1M2(f)R 6O1 5O2 4S(l)M1` | `1R 6M2 5O1 4O2 3M1(l)S` | `1R 6M2 5O1 4O2 3M1(l)S` |
-| R4 | `1O2 6M2(f)R 5O1 3S(l)M1` | `1R 6M2 5O2 4O1 3S(l)M1` | `1R 6M2 5O2 4O1 3M1(l)S` |
-| R5 | `1M1 6O2 5O1(f)R 4M2 2S` | `1R 6M1 5O2 4O1 3M2(l)S` | `1R 6M1 5O2 4O1 3M2(l)S` |
+| Rotation | Start | Serve receive | Attack | Base defence |
+| --- | --- | --- | --- | --- |
+| R6 | `1S 6M1 5O2 4R 3M2 2O1` | `1O1(f)S 6M1 5O2 4R 3M2` | first ball `6M1 5O2 4R 3M2(l)S 2O1`, after the first hit `6M1 5O2 4O1 3M2(l)S 2R` | `1S 6M1 5O2 4O1 3M2 2R` |
+| R1 | `1O1 6S 5M1 4O2 3R 2M2` | `1O1 6M1 5O2 3R(l)S 2M2` | `6M1 5O1 4O2 3M2(l)S 2R` | `1S 6M1 5O1 4O2 3M2 2R` |
+| R2 | `1M2 6O1 5S 4M1 3O2 2R` | `1M2 6O1 5O2 4M1(l)S 2R` | `6M2 5O1 4O2 3M1(l)S 2R` | `1S 6M2 5O1 4O2 3M1 2R` |
+| R3 | `1R 6M2 5O1 4S 3M1 2O2` | `1M2(f)R 6O1 5O2 4S(l)M1` | `1R 6M2 5O1 4O2 3M1(l)S` | `1R 6M2 5O1 4O2 3M1(l)S` |
+| R4 | `1O2 6R 5M2 4O1 3S 2M1` | `1O2 6M2(f)R 5O1 3S(l)M1` | `1R 6M2 5O2 4O1 3M1(l)S` | `1R 6M2 5O2 4O1 3M1(l)S` |
+| R5 | `1M1 6O2 5R 4M2 3O1 2S` | `1M1 6O2 5O1(f)R 4M2 2S` | `1R 6M1 5O2 4O1 3M2(l)S` | `1R 6M1 5O2 4O1 3M2(l)S` |
 
 R6 is the exception to the switch: nobody moves off the receive shape until after our first hit, so R hits the first
 ball from 4 and O1 from 2, then they swap sides for the rest of the rally.
@@ -51,12 +51,13 @@ ball from 4 and O1 from 2, then they swap sides for the rest of the rally.
 
 | Tab | What it shows |
 | --- | --- |
+| Rotations · Start | The rotational order before anyone moves: who is in which zone, with dotted lines to each player's serve-receive spot. Back / Next (or the arrow keys) walk a rotation through Start → Serve receive → Attack (→ after the first hit in R6) → Base defence, then on to the next rotation in match order, R6 → R1 → … → R5. |
 | Rotations · Serve receive | The court at the service hit: passers in their lanes (cyan), the setter (yellow) with the release run to the target, front-row players waiting at the net (violet), a back-row right side tucked behind a passer (pink), and dotted routes to where each one goes after the pass. Tap a player to see which overlap pairs hold them there and how far the rule moved them from where the sheet alone would put them. ▶ plays the serve, the pass and everyone's transition on the real clock. Toggles: routes, lanes. |
 | Rotations · Attack | Where everyone is once our ball is set: hitters at their approach starts (violet), the setter at the target, the back row covering (cyan), with dashed rings at the serve-receive spot each one came from. R6 has a First ball / After the first hit switch. |
 | Rotations · Base defence | Base once the other side has the ball: three blockers at the net (an outside left, a middle centre, the setter or right side right) and three diggers deep (an outside left back, a middle middle back, the setter or right side right back). Dashed rings show where each one stands at our own service hit, still in rotational order, with the switch to base and its distance; the server stands behind the end line and runs in. ▶ plays our serve and the switch against the moment the other side's setter touches. |
 | Overlap | FIVB 7.4 in plain words and the seven pairs it consists of, with the actual gap in metres for the current rotation's receive formation and the pairs that sit on the margin. |
 | Roles | A table of every player's job in every rotation: receive job, where they go for the attack, and their base spot. Plus the team's rules. |
-| Checks | Twelve rule sets: the sheet complete and consistent (six players per phase, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; waiters at the net and nobody short in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the right six spots, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
+| Checks | Twelve rule sets: the sheet complete and consistent (six players per phase, the start line matching the rotational order, net zones front row, R6's first-ball swap); every receive formation legal under all seven pairs, recomputed from the rule text; the formation matching the sheet's zones and relations; the golden rule (the two outsides and the back-row middle pass from 5–7.5 m, R and S never pass and are shaded when back row); the setter at the target before a good pass comes down; waiters at the net and nobody short in a lane; every start and route on the court and deterministic; a serve that clears the tape and a pass that comes down at the hands; base defence with the right six spots, a legal stack at our serve with the server exempt and behind the end line, every switch finished before the other side sets; and a lineup that is a 5-1. |
 
 ## From the sheet to the floor
 
