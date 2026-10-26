@@ -131,6 +131,14 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Desktop only: links back to the landing page and the other tools */}
+      <nav className="hidden md:flex items-center gap-5 px-4 py-2 text-xs font-semibold text-gray-400 bg-[#12121f] border-b border-white/5 shrink-0" aria-label="Volleyball Tactics">
+        <a href={import.meta.env.BASE_URL} className="text-white hover:text-[var(--color-accent)]">← Volleyball Tactics</a>
+        <span className="text-white/20">|</span>
+        <span className="text-gray-300">Coaching App</span>
+        <a href={`${import.meta.env.BASE_URL}setter-signals/`} className="ml-auto hover:text-white">Setter Signals</a>
+        <a href={`${import.meta.env.BASE_URL}serve-receive/`} className="hover:text-white">Serve Receive</a>
+      </nav>
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
         {/* ── Court Tab ── */}

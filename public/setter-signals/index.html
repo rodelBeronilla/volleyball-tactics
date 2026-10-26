@@ -29,6 +29,8 @@ h1,h2,h3{margin:0;line-height:1.2}
 p{margin:0}
 .app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 .main{flex:1;width:100%;max-width:100%;padding:14px 16px calc(var(--nav-h) + 24px + var(--safe-b))}
+.crumb{display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.crumb:hover{color:var(--text)}
 .tab{display:flex;flex-direction:column;gap:14px}
 .tab-head h2{font-size:22px;font-weight:700}
 .tab-head p{color:var(--muted);font-size:14px;margin-top:4px}
@@ -400,6 +402,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
   </nav>
 
   <main class="main">
+    <a class="crumb" href="../">← Volleyball Tactics</a>
     <div class="rolebar" id="rolebar"></div>
     <div class="rolebar sticky" id="rolebar-sticky"></div>
     <section class="tab" id="tab-plan" data-tab="plan" role="tabpanel">
@@ -484,6 +487,7 @@ table.spec .dot{display:inline-block;width:10px;height:10px;border-radius:50%;ma
       <div class="more-list">
         <button class="btn more" data-goto="quiz"><b>Quiz</b><span>Signal → Set and Trajectory → Set, for your role.</span></button>
         <button class="btn more" data-goto="checks"><b>Checks</b><span id="more-checks">Every set and every rule graded against the model.</span></button>
+        <a class="btn more" href="../app/"><b>Coaching App →</b><span>Rotation playbook, stat tracking and lineup analytics for the whole team.</span></a>
         <a class="btn more" href="../serve-receive/"><b>Serve Receive Rotations →</b><span>Where the six stand before every serve, why the overlap rule puts them there, and where they go after the pass.</span></a>
       </div>
       <p class="hint">Net height, hitter reach and BIC tempo are on the 3D Court tab. Made for a 5-1; nothing per rotation is typed in.</p>

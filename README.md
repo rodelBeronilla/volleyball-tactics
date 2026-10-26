@@ -6,8 +6,14 @@ A coaching tool for a 6v6 volleyball team: an interactive rotation playbook, ral
 capture, and an analytics layer that turns the event log into player ratings, rotation reports and
 lineup recommendations.
 
-**Live demo:** https://rodelberonilla.github.io/volleyball-tactics/ (mobile-first; it opens on a demo
-season so every screen has data)
+**Live site:** https://rodelberonilla.github.io/volleyball-tactics/
+
+| Page | URL |
+| --- | --- |
+| Landing page | [`/volleyball-tactics/`](https://rodelberonilla.github.io/volleyball-tactics/) |
+| Coaching app (opens on a demo season so every screen has data) | [`/volleyball-tactics/app/`](https://rodelberonilla.github.io/volleyball-tactics/app/) |
+| Setter Signals & Set Map | [`/volleyball-tactics/setter-signals/`](https://rodelberonilla.github.io/volleyball-tactics/setter-signals/) |
+| Serve Receive Rotations | [`/volleyball-tactics/serve-receive/`](https://rodelberonilla.github.io/volleyball-tactics/serve-receive/) |
 
 | Rotation playbook | Match log | Player profile | Rotation analytics |
 | --- | --- | --- | --- |
@@ -29,7 +35,8 @@ season so every screen has data)
 - **Practice / Film**: a drill library and practice planner, plus a rally builder that replays
   tagged touches on the court.
 - **Reference pages**: two standalone pages, [Setter Signals](public/setter-signals/README.md)
-  and [Serve Receive](public/serve-receive/README.md), served from the same site.
+  and [Serve Receive](public/serve-receive/README.md), served from the same site and linked from
+  the landing page.
 
 ## Data flow
 
@@ -119,6 +126,8 @@ src/
   data/                domain data: formations, responsibilities, stat categories, drills, demo season
   utils/               aggregation, ratings, profile engine, optimizer, overlap rules, storage
   __tests__/           Vitest suites
+index.html             landing page (Tailwind, no JS)
+app/index.html         entry for the React coaching app
 public/
   setter-signals/      standalone set-map reference page
   serve-receive/       standalone serve-receive reference page
@@ -128,7 +137,7 @@ public/
 
 ```bash
 npm ci
-npm run dev       # http://localhost:5173/volleyball-tactics/
+npm run dev       # http://localhost:5173/volleyball-tactics/ (app at /app/)
 npm test          # unit + data-quality tests
 npm run lint
 npm run build     # production build in dist/

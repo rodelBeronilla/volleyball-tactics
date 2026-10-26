@@ -85,6 +85,9 @@ export default function SettingsPanel({ state, dispatch }) {
             The roster is fictional and the match history is a simulated demo season.
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+            <a href={import.meta.env.BASE_URL} className="text-[var(--color-accent)] font-semibold">
+              ← All tools
+            </a>
             <a href={`${import.meta.env.BASE_URL}setter-signals/`} className="text-[var(--color-accent)] font-semibold">
               Setter Signals →
             </a>

@@ -29,6 +29,8 @@ h1,h2,h3,h4{margin:0;line-height:1.2}
 p{margin:0}
 .app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 .main{flex:1;width:100%;max-width:100%;padding:14px 16px calc(var(--nav-h) + 24px + var(--safe-b))}
+.crumb{display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.crumb:hover{color:var(--text)}
 .tab{display:flex;flex-direction:column;gap:14px}
 .tab-head h2{font-size:22px;font-weight:700}
 .tab-head p{color:var(--muted);font-size:14px;margin-top:4px}
@@ -178,6 +180,7 @@ table.roles th{color:var(--muted);font-size:12px;text-transform:uppercase;letter
   </nav>
 
   <main class="main">
+    <a class="crumb" href="../">← Volleyball Tactics</a>
     <div class="bar sticky" id="bar"></div>
 
     <section class="tab" id="tab-rot" data-tab="rot" role="tabpanel">

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="description" content="Volleyball Tactics: a coaching toolkit for a 5-1 team. Rotation playbook and stat tracker, setter signals and set map, and a serve-receive reference." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/landing.css" />
+    <title>Volleyball Tactics</title>
+  </head>
+  <body class="min-h-screen">
+    <header class="sticky top-0 z-10 border-b border-line/60 bg-bg/85 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3 sm:px-6">
+        <a href="./" class="flex items-center gap-2.5 font-extrabold tracking-tight">
+          <img src="/favicon.svg" alt="" width="28" height="28" />
+          <span>Volleyball Tactics</span>
+        </a>
+        <nav class="ml-auto hidden items-center gap-6 text-sm font-semibold text-muted md:flex" aria-label="Tools">
+          <a href="app/" class="hover:text-ink">Coaching App</a>
+          <a href="setter-signals/" class="hover:text-ink">Setter Signals</a>
+          <a href="serve-receive/" class="hover:text-ink">Serve Receive</a>
+          <a href="https://github.com/rodelBeronilla/volleyball-tactics" class="hover:text-ink">GitHub</a>
+        </nav>
+        <a href="app/" class="ml-auto rounded-lg bg-accent px-3.5 py-2 text-sm font-bold text-bg hover:brightness-110 md:hidden">Open app</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:pt-20">
+        <div>
+          <p class="mb-4 text-sm font-bold uppercase tracking-widest text-good">Coaching toolkit · 5-1 system</p>
+          <h1 class="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
+            Plan the rotation, call the set, read the numbers.
+          </h1>
+          <p class="mt-5 max-w-xl text-lg leading-relaxed text-muted">
+            Three browser tools for a volleyball team: a rotation playbook and stat tracker, a
+            setter's signal and set map, and a serve-receive reference. They run on a phone
+            courtside and need no account or backend.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="app/" class="rounded-xl bg-accent px-5 py-3 font-bold text-bg hover:brightness-110">Open the coaching app</a>
+            <a href="setter-signals/" class="rounded-xl border border-line bg-panel px-5 py-3 font-bold hover:border-muted">Setter Signals</a>
+            <a href="serve-receive/" class="rounded-xl border border-line bg-panel px-5 py-3 font-bold hover:border-muted">Serve Receive</a>
+          </div>
+        </div>
+        <a href="app/" class="mx-auto block w-full max-w-[300px] rounded-[2.2rem] border border-line bg-panel p-2.5 shadow-2xl shadow-black/50 transition hover:-translate-y-1" tabindex="-1" aria-hidden="true">
+          <img src="/src/assets/landing/app.webp" alt="" width="560" height="1120" class="block h-auto w-full rounded-[1.7rem]" />
+        </a>
+      </section>
+
+      <!-- Tools -->
+      <section id="tools" class="border-t border-line/60 bg-panel/40">
+        <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">The tools</h2>
+          <p class="mt-2 max-w-2xl text-muted">Each one stands alone and links to the others.</p>
+
+          <div class="mt-10 grid gap-6 lg:grid-cols-3">
+            <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-panel">
+              <div class="flex aspect-[16/10] items-start justify-center overflow-hidden bg-panel-2 pt-5">
+                <img src="/src/assets/landing/app.webp" alt="" width="560" height="1120" loading="lazy" class="w-[46%] rounded-xl border border-line" />
+              </div>
+              <div class="flex flex-1 flex-col p-6">
+                <h3 class="text-xl font-bold">Coaching App</h3>
+                <p class="mt-2 text-muted">The team's playbook and stat book in one place.</p>
+                <ul class="mt-4 space-y-2 text-sm text-muted">
+                  <li><span class="text-good">●</span> All six rotations in offense, receive and defense, with tap-for-details player cards</li>
+                  <li><span class="text-good">●</span> Rally-by-rally stat entry, box scores and side-out rates by rotation</li>
+                  <li><span class="text-good">●</span> Data-adjusted player ratings and a lineup optimizer</li>
+                </ul>
+                <a href="app/" class="mt-6 inline-flex w-fit rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-bg hover:brightness-110">Open the app →</a>
+              </div>
+            </article>
+
+            <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-panel">
+              <img src="/src/assets/landing/setter.webp" alt="Setter Signals: the plan for rotation 1 on a perfect pass" width="1200" height="750" loading="lazy" class="aspect-[16/10] w-full object-cover object-left-top" />
+              <div class="flex flex-1 flex-col p-6">
+                <h3 class="text-xl font-bold">Setter Signals &amp; Set Map</h3>
+                <p class="mt-2 text-muted">What to set to whom, in this rotation, off this pass.</p>
+                <ul class="mt-4 space-y-2 text-sm text-muted">
+                  <li><span class="text-warm">●</span> Hand signals and a card for every front- and back-row set</li>
+                  <li><span class="text-warm">●</span> A 3D court that flies each set with real timing</li>
+                  <li><span class="text-warm">●</span> A view for each role, plus quizzes for the hitters</li>
+                </ul>
+                <a href="setter-signals/" class="mt-6 inline-flex w-fit rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-bg hover:brightness-110">Open Setter Signals →</a>
+              </div>
+            </article>
+
+            <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-panel">
+              <img src="/src/assets/landing/receive.webp" alt="Serve Receive: passing lanes and the setter's release in rotation 6" width="1200" height="750" loading="lazy" class="aspect-[16/10] w-full object-cover object-left-top" />
+              <div class="flex flex-1 flex-col p-6">
+                <h3 class="text-xl font-bold">Serve Receive Rotations</h3>
+                <p class="mt-2 text-muted">Where the six stand before every serve, and where they go next.</p>
+                <ul class="mt-4 space-y-2 text-sm text-muted">
+                  <li><span class="text-accent">●</span> Receive, attack and base-defence spots for all six rotations</li>
+                  <li><span class="text-accent">●</span> Every spot checked against the overlap rule</li>
+                  <li><span class="text-accent">●</span> Animated step-through from the serve to the attack</li>
+                </ul>
+                <a href="serve-receive/" class="mt-6 inline-flex w-fit rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-bg hover:brightness-110">Open Serve Receive →</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Under the hood -->
+      <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl">Under the hood</h2>
+        <p class="mt-2 max-w-2xl text-muted">
+          Every stat, whether entered live, from video, or simulated, lands in one flat event log.
+          Everything the app reports is computed from that log.
+        </p>
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-2xl border border-line bg-panel p-5">
+            <h3 class="font-bold">Event pipeline</h3>
+            <p class="mt-2 text-sm text-muted">Rallies flatten into touch events, which are aggregated by player, rotation, match and set.</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-panel p-5">
+            <h3 class="font-bold">Ratings from data</h3>
+            <p class="mt-2 text-sm text-muted">Each rating starts from a baseline and moves toward what the stats show, weighted by sample size.</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-panel p-5">
+            <h3 class="font-bold">Data-quality tests</h3>
+            <p class="mt-2 text-sm text-muted">CI checks that scores reconcile, every event references a real player and rally, and roll-ups lose nothing.</p>
+          </div>
+          <div class="rounded-2xl border border-line bg-panel p-5">
+            <h3 class="font-bold">Seeded demo season</h3>
+            <p class="mt-2 text-sm text-muted">A rally simulator plays 7 matches (about 900 rallies) so every screen has data from the first visit.</p>
+          </div>
+        </div>
+        <a href="https://github.com/rodelBeronilla/volleyball-tactics#readme" class="mt-8 inline-block font-semibold text-accent hover:underline">Read how it's built on GitHub →</a>
+      </section>
+    </main>
+
+    <footer class="border-t border-line/60">
+      <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p>Built by Rodel Beronilla · React, Vite, Tailwind</p>
+        <p>The roster and match data in the app are fictional.</p>
+      </div>
+    </footer>
+  </body>
+</html>

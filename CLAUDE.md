@@ -16,7 +16,11 @@ CI (`.github/workflows/deploy.yml`) runs lint, tests and build on every push and
 
 ## Architecture
 
-Single-page React 19 app (plain JavaScript, no TypeScript) for volleyball coaching — visualize rotations, formations, and player strategy on an interactive court diagram.
+Volleyball coaching site built as a Vite multi-page app (inputs in `vite.config.js`):
+
+- `index.html` — static landing page styled by `src/landing.css` (Tailwind), linking to the three tools
+- `app/index.html` — the React 19 coaching app (plain JavaScript, no TypeScript), served at `/volleyball-tactics/app/`
+- `public/setter-signals/` and `public/serve-receive/` — standalone single-file pages copied as-is; each has a `← Volleyball Tactics` link back to the landing page. In `npm run dev` open them as `.../setter-signals/index.html` (the dev server doesn't resolve the directory index for public files)
 
 **Stack:** Vite 8, React 19, Tailwind CSS v4 (via `@tailwindcss/vite` plugin), ESLint 9 flat config. Deployed to GitHub Pages at `/volleyball-tactics/` base path.
 
