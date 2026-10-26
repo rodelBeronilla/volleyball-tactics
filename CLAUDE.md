@@ -9,9 +9,10 @@ npm run dev        # Start Vite dev server with HMR
 npm run build      # Production build to dist/
 npm run preview    # Preview production build locally
 npm run lint       # ESLint (flat config, JS/JSX only)
+npm test           # Vitest (src/__tests__/)
 ```
 
-No test framework is configured. No CI pipeline exists yet.
+CI (`.github/workflows/deploy.yml`) runs lint, tests and build on every push and PR, and deploys `main` to GitHub Pages.
 
 ## Architecture
 
@@ -32,13 +33,14 @@ The hook also derives computed data: `activeLineup`, `currentSlots` (who occupie
 - **Rotations** 1-6 are standard volleyball rotations derived in `src/utils/rotations.js` via `deriveRotation()`
 - **Formations** (`src/data/formations.js`) define x/y placements for each slot in each rotation (e.g., serve-receive 5-1)
 - **Responsibilities** (`src/data/responsibilities.js`) define per-rotation duties by role
-- **Strategy data** (`src/data/strategyData.js`) and **route data** (`src/data/routeData.js`) power the strategy cards and movement arrows
+- **Strategy data** (`src/data/strategyData.js`) and **route data** (`src/data/routeData.js`) power the strategy cards and movement arrows. Formations, routes and responsibilities assume the slot template in `SLOT_ROLE_MAP` (1=S, 2=OPP, 3=MB1, 4=OH1, 5=MB2, 6=OH2)
+- **Demo season** (`src/data/demoSeason.js`) is a seeded rally simulator; its output fills matches/rallies/statEntries on first launch. The default roster is fictional — keep real people's names and notes out of the repo
 
 ### Component Layout
 
-- `src/App.jsx` — tab-based layout (court, roster, lineups, analysis) controlled by `state.activeTab`
-- `src/components/court/` — SVG court rendering: `Court.jsx` (main SVG), `PlayerToken.jsx`, `CourtMarkings.jsx`, `MovementArrows.jsx`, `ArrowDefs.jsx`, `OverlapIndicator.jsx`, `PlayerStrategyCard.jsx`, `RotationSummary.jsx`
-- `src/components/controls/` — UI controls: rotation nav, formation picker, responsibility selector, bottom tab nav
+- `src/App.jsx` — tab-based layout (court, game day, stats, practice, film, more) controlled by `state.activeTab`
+- `src/components/court/` — SVG court rendering: `Court.jsx` (main SVG), `PlayerToken.jsx`, `CourtMarkings.jsx`, `MovementArrows.jsx`, `ArrowDefs.jsx`, `OverlapIndicator.jsx`, `PlayerStrategyCard.jsx`
+- `src/components/controls/` — UI controls: rotation nav, bottom tab nav
 - `src/components/roster/` — player CRUD (RosterPanel, PlayerForm)
 - `src/components/lineup/` — lineup management and composition analysis
 
