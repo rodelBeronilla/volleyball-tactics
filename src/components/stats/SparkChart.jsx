@@ -25,7 +25,7 @@ export default function SparkChart({ values, height = 40, colorFn, labels }) {
         }
         const pct = Math.max(5, ((v - min) / range) * 100);
         return (
-          <div key={i} className="flex-1 flex flex-col items-center justify-end gap-0.5">
+          <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-0.5">
             <div
               className="w-full rounded-sm transition-all"
               style={{ height: `${pct}%`, background: getColor(v), minHeight: 2 }}

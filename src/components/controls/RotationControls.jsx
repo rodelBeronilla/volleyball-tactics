@@ -18,7 +18,7 @@ export default function RotationControls({ currentRotation, dispatch, onRotation
           <button key={n}
             onClick={() => handleChange(n)}
             className={`w-9 h-9 rounded-full text-xs font-bold transition-all ${
-              n === currentRotation ? 'bg-[var(--color-accent)] text-white scale-110' : 'bg-[var(--color-surface-3)] text-gray-400'
+              n === currentRotation ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)] scale-110' : 'bg-[var(--color-surface-3)] text-gray-400'
             }`}>
             R{n}
           </button>

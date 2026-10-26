@@ -86,7 +86,7 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
             key={s.number}
             onClick={() => dispatch({ type: 'SET_ACTIVE_SET', setNumber: s.number })}
             className={`px-2 py-1 rounded text-xs font-bold shrink-0 ${
-              s.number === activeSetNumber ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-surface-3)] text-gray-400'
+              s.number === activeSetNumber ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]' : 'bg-[var(--color-surface-3)] text-gray-400'
             }`}
           >
             S{s.number}
@@ -98,7 +98,7 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
             key={r}
             onClick={() => dispatch({ type: 'SET_ROTATION', rotation: r })}
             className={`px-2 py-1 rounded text-xs font-bold shrink-0 ${
-              r === currentRotation ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-surface-3)] text-gray-400'
+              r === currentRotation ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]' : 'bg-[var(--color-surface-3)] text-gray-400'
             }`}
           >
             R{r}

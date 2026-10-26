@@ -2,11 +2,11 @@
   "name": "Volleyball Tactics",
   "short_name": "VB Tactics",
   "description": "Volleyball rotation playbook, stat tracking and lineup analytics",
-  "start_url": "/volleyball-tactics/app/",
+  "start_url": "/volleyball-tactics/",
   "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#1a1a2e",
-  "background_color": "#1a1a2e",
+  "orientation": "any",
+  "theme_color": "#0f1117",
+  "background_color": "#0f1117",
   "icons": [
     {
       "src": "favicon.svg",

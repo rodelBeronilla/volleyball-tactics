@@ -4,9 +4,7 @@ import PlayerToken from './PlayerToken';
 import OverlapIndicator from './OverlapIndicator';
 import ArrowDefs from './ArrowDefs';
 import MovementArrows from './MovementArrows';
-import ZoneHeatmap from './ZoneHeatmap';
 import CoverageOverlay from './CoverageOverlay';
-import RallyBall from './RallyBall';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 function screenToSVG(svgEl, clientX, clientY) {
@@ -24,7 +22,7 @@ const TAP_TIME = 250;
 export default function Court({
   placements, dispatch, onSwipeLeft, onSwipeRight,
   responsibilities, selectedSlot, showRoutes, rotation,
-  heatmapData, heatmapMode, playerProfiles, showCoverage, courtPhase, rallyStep,
+  playerProfiles, showCoverage, courtPhase,
   coverageZones, attackIndicator,
 }) {
   const svgRef = useRef(null);
@@ -192,9 +190,6 @@ export default function Court({
         </g>
       )}
 
-      {/* Heatmap layer */}
-      {heatmapData && <ZoneHeatmap data={heatmapData} mode={heatmapMode} />}
-
       {/* Overlap violations — only valid pre-serve */}
       {courtPhase === 'serve' && (
         <OverlapIndicator placements={renderPlacements} />
@@ -243,7 +238,6 @@ export default function Court({
       ))}
 
       {/* Rally ball — position from current step */}
-      {rallyStep && <RallyBall step={rallyStep} />}
     </svg>
   );
 }

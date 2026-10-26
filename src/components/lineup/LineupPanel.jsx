@@ -55,14 +55,14 @@ export default function LineupPanel({ lineups, activeLineupId, players, dispatch
   const emptySlots = activeLineup ? [1,2,3,4,5,6].filter(s => !activeLineup.slots[s]).length : 6;
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-surface)]">
+    <div className="max-w-2xl">
       {/* Lineup selector */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-surface-2)] border-b border-white/5 overflow-x-auto shrink-0">
+      <div className="flex items-center gap-2 pb-3 overflow-x-auto">
         {lineups.map(l => (
           <button key={l.id}
             onClick={() => dispatch({ type: 'SET_ACTIVE_LINEUP', id: l.id })}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-              l.id === activeLineupId ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-surface-3)] text-gray-400'
+              l.id === activeLineupId ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]' : 'bg-[var(--color-surface-3)] text-gray-400'
             }`}
           >{l.name}</button>
         ))}
@@ -73,7 +73,7 @@ export default function LineupPanel({ lineups, activeLineupId, players, dispatch
       </div>
 
       {activeLineup ? (
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        <div className="space-y-3">
           {/* Court visual + Auto-fill */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-300">Starting 6</span>
@@ -266,7 +266,7 @@ export default function LineupPanel({ lineups, activeLineupId, players, dispatch
           <p className="text-lg mb-2 text-white font-bold">Create a Lineup</p>
           <p className="text-sm mb-4 text-center">Tap court positions to assign players.</p>
           <button onClick={() => dispatch({ type: 'ADD_LINEUP', name: 'Lineup 1' })}
-            className="px-5 py-2.5 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95">
+            className="px-5 py-2.5 rounded-lg bg-[var(--color-accent)] text-[var(--color-accent-ink)] text-sm font-bold active:scale-95">
             + New Lineup
           </button>
         </div>
@@ -274,8 +274,8 @@ export default function LineupPanel({ lineups, activeLineupId, players, dispatch
 
       {/* Player picker modal */}
       {assigning !== null && activeLineup && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={() => setAssigning(null)}>
-          <div className="w-full max-w-lg mx-auto bg-[var(--color-surface-2)] rounded-t-2xl p-4 max-h-[65vh] overflow-y-auto"
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center" onClick={() => setAssigning(null)}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg mx-auto bg-[var(--color-surface-2)] border border-[var(--color-line)] rounded-t-2xl sm:rounded-2xl p-4 max-h-[65vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-white font-bold text-sm">Slot {assigning} — {SLOT_ROLE[assigning]}</h3>

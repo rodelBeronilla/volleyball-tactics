@@ -32,11 +32,14 @@ export const SYSTEM_LIST = Object.values(SYSTEMS);
 /**
  * Validate fairness: nobody sits back-to-back sets.
  * FLOW sets count as ON for everyone (trio rotation).
+ * The set's lineup libero plays the back row, so counts as on court even though
+ * a libero never appears in the serving order.
  * @param {Object} nightPlan
  * @param {Object[]} players
+ * @param {Object[]} [lineups]
  * @returns {{ valid: boolean, violations: { playerId, sets: [number, number] }[] }}
  */
-export function validateFairness(nightPlan, players) {
+export function validateFairness(nightPlan, players, lineups = []) {
   if (!nightPlan?.matches) return { valid: true, violations: [] };
   const allIds = players.map(p => p.id);
   const setSequence = [];
@@ -48,6 +51,8 @@ export function validateFairness(nightPlan, players) {
   const sittingPerSet = setSequence.map(set => {
     if (set.system === 'FLOW') return new Set();
     const onCourt = new Set(set.servingOrder || []);
+    const libero = lineups.find(l => l.id === set.lineupId)?.liberoId;
+    if (libero) onCourt.add(libero);
     const sitting = new Set();
     for (const pid of allIds) {
       if (!onCourt.has(pid)) sitting.add(pid);

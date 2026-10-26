@@ -379,7 +379,7 @@ export default function SetCard({
           {isReady && !isLive && !isCompleted && (
             <button
               onClick={() => onGoLive?.(matchIndex, setIndex)}
-              className="w-full h-12 rounded-xl bg-(--color-accent) text-white font-semibold text-sm
+              className="w-full h-12 rounded-xl bg-(--color-accent) text-(--color-accent-ink) font-semibold text-sm
                          active:opacity-80 transition-opacity flex items-center justify-center gap-2"
             >
               <svg

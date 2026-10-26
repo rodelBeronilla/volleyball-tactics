@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { validateFairness } from '../../data/systems';
 
-export default function FairnessIndicator({ plan, players }) {
+export default function FairnessIndicator({ plan, players, lineups }) {
   const result = useMemo(() => {
     if (!plan || !players?.length) return { valid: true, violations: [] };
-    return validateFairness(plan, players);
-  }, [plan, players]);
+    return validateFairness(plan, players, lineups);
+  }, [plan, players, lineups]);
 
   const playerMap = useMemo(
     () => Object.fromEntries((players || []).map((p) => [p.id, p])),

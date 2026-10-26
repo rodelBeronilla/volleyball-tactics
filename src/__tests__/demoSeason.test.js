@@ -3,7 +3,8 @@
  * a real ingest of rally-by-rally data should satisfy.
  */
 import { describe, expect, it } from 'vitest';
-import { buildDemoSeason } from '../data/demoSeason';
+import { buildDemoSeason, buildDemoNightPlan } from '../data/demoSeason';
+import { validateFairness } from '../data/systems';
 import { DEFAULT_PLAYERS, DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW } from '../data/defaults';
 import { STATS } from '../data/statCategories';
 import { deriveRotation } from '../utils/rotations';
@@ -95,5 +96,32 @@ describe('demo season', () => {
       const nAssists = r.actions.filter(a => a.stat === 'assist').length;
       expect(nAssists).toBe(nKills);
     }
+  });
+});
+
+describe('demo game night', () => {
+  const plan = buildDemoNightPlan(LINEUPS);
+
+  it('plans every set with a lineup and a full serving order', () => {
+    for (const m of plan.matches) {
+      expect(m.opponent).toBeTruthy();
+      for (const s of m.sets) {
+        expect(LINEUPS.some(l => l.id === s.lineupId)).toBe(true);
+        expect(s.servingOrder).toHaveLength(6);
+        expect(new Set(s.servingOrder).size).toBe(6);
+        for (const id of s.servingOrder) expect(playerIds.has(id)).toBe(true);
+      }
+    }
+  });
+
+  it("follows the league's fairness rule: nobody sits two sets in a row", () => {
+    expect(validateFairness(plan, DEFAULT_PLAYERS, LINEUPS).violations).toEqual([]);
+  });
+
+  it('counts the lineup libero as playing, not sitting', () => {
+    const lockedIn = { matches: [{ sets: [plan.matches[0].sets[0], plan.matches[0].sets[0]] }] };
+    const sitting = validateFairness(lockedIn, DEFAULT_PLAYERS, LINEUPS).violations.map(v => v.playerId);
+    expect(sitting).not.toContain(DEFAULT_LINEUP.liberoId);
+    expect(sitting).toContain('p2'); // Jordan really is on the bench in Locked In
   });
 });

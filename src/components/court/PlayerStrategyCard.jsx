@@ -29,11 +29,16 @@ const FIELD_LABELS = {
   serve: 'Serve Strategy',
 };
 
-export default function PlayerStrategyCard({ selectedSlot, rotation, placements, onClose }) {
+/**
+ * `inline`: rendered in the court page's side column (desktop) instead of as a
+ * bottom sheet over the court (mobile).
+ */
+export default function PlayerStrategyCard({ selectedSlot, rotation, placements, onClose, inline = false }) {
   const cardRef = useRef(null);
 
-  // Close on outside tap
+  // Close on outside tap (bottom sheet only)
   useEffect(() => {
+    if (inline) return undefined;
     const handle = (e) => {
       if (cardRef.current && !cardRef.current.contains(e.target)) {
         onClose();
@@ -47,7 +52,7 @@ export default function PlayerStrategyCard({ selectedSlot, rotation, placements,
       clearTimeout(timer);
       document.removeEventListener('pointerdown', handle);
     };
-  }, [onClose]);
+  }, [onClose, inline]);
 
   if (selectedSlot == null) return null;
 
@@ -66,16 +71,12 @@ export default function PlayerStrategyCard({ selectedSlot, rotation, placements,
   return (
     <div
       ref={cardRef}
-      className="fixed bottom-14 left-0 right-0 z-50 animate-slide-up"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      className={inline ? '' : 'fixed bottom-14 left-0 right-0 z-50 animate-slide-up'}
+      style={inline ? undefined : { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div
-        className="mx-2 rounded-t-2xl overflow-hidden shadow-2xl"
-        style={{
-          background: 'linear-gradient(180deg, rgba(30,30,40,0.98) 0%, rgba(20,20,30,0.99) 100%)',
-          borderTop: `3px solid ${displayColor}`,
-          maxHeight: '55vh',
-        }}
+        className={inline ? 'rounded-xl overflow-hidden border border-[var(--color-line)] bg-[var(--color-surface-2)]' : 'mx-2 rounded-t-2xl overflow-hidden shadow-2xl bg-[var(--color-surface-2)]'}
+        style={{ borderTop: `3px solid ${displayColor}`, maxHeight: inline ? undefined : '55vh' }}
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
@@ -95,6 +96,7 @@ export default function PlayerStrategyCard({ selectedSlot, rotation, placements,
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="text-gray-400 hover:text-white text-xl px-2 py-1"
           >
             ✕
@@ -102,7 +104,7 @@ export default function PlayerStrategyCard({ selectedSlot, rotation, placements,
         </div>
 
         {/* Strategy fields */}
-        <div className="overflow-y-auto px-4 py-2 space-y-2" style={{ maxHeight: '42vh' }}>
+        <div className="overflow-y-auto px-4 py-3 space-y-2.5" style={{ maxHeight: inline ? undefined : '42vh' }}>
           {fields.map(field => {
             const value = strategy[field];
             if (!value) return null;

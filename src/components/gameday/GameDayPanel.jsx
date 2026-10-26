@@ -3,30 +3,13 @@ import NightPlanBuilder from './NightPlanBuilder';
 import LiveSetTracker from './LiveSetTracker';
 
 // ------------------------------------------------------------------
-// Views
-// ------------------------------------------------------------------
-const VIEW_LIST = 'list';
-const VIEW_BUILDER = 'builder';
-const VIEW_LIVE = 'live';
-
-function findLiveSet(plan) {
-  for (const match of plan?.matches || []) {
-    for (const set of match.sets || []) {
-      if (set.live?.active) {
-        return { matchIndex: match.matchIndex, setIndex: set.setIndex };
-      }
-    }
-  }
-  return null;
-}
-
-// ------------------------------------------------------------------
-// GameDayPanel
+// GameDayPanel: plan list → plan builder (a plan is active) → live set
+// "New plan" lives in the page header and just dispatches CREATE_NIGHT_PLAN,
+// which makes the new plan active and so opens the builder.
 // ------------------------------------------------------------------
 export default function GameDayPanel({ state, dispatch }) {
   const { nightPlans = [], activeNightPlanId, players, lineups } = state;
 
-  const [view, setView] = useState(VIEW_LIST);
   const [liveMatch, setLiveMatch] = useState(null); // { matchIndex, setIndex }
 
   // Derive active plan from state
@@ -35,44 +18,28 @@ export default function GameDayPanel({ state, dispatch }) {
     [nightPlans, activeNightPlanId],
   );
 
-  // Check if any set is currently live, auto-detect on mount
-  const activeLiveSet = findLiveSet(activePlan);
-
   // ---- handlers ----------------------------------------------------
-
-  const handleNewPlan = useCallback(() => {
-    dispatch({
-      type: 'CREATE_NIGHT_PLAN',
-      name: `Game Night ${nightPlans.length + 1}`,
-      date: new Date().toISOString().slice(0, 10),
-    });
-    setView(VIEW_BUILDER);
-  }, [dispatch, nightPlans.length]);
 
   const handleSelectPlan = useCallback(
     (id) => {
       dispatch({ type: 'SET_ACTIVE_NIGHT_PLAN', planId: id });
-      setView(VIEW_BUILDER);
     },
     [dispatch],
   );
 
   const handleBackToList = useCallback(() => {
     dispatch({ type: 'SET_ACTIVE_NIGHT_PLAN', planId: null });
-    setView(VIEW_LIST);
   }, [dispatch]);
 
   const handleGoLive = useCallback(
     (matchIndex, setIndex) => {
       setLiveMatch({ matchIndex, setIndex });
-      setView(VIEW_LIVE);
     },
     [],
   );
 
   const handleEndLive = useCallback(() => {
     setLiveMatch(null);
-    setView(VIEW_BUILDER);
   }, []);
 
   const handleDeletePlan = useCallback(
@@ -80,7 +47,6 @@ export default function GameDayPanel({ state, dispatch }) {
       dispatch({ type: 'DELETE_NIGHT_PLAN', planId: id });
       if (id === activeNightPlanId) {
         dispatch({ type: 'SET_ACTIVE_NIGHT_PLAN', planId: null });
-        setView(VIEW_LIST);
       }
     },
     [dispatch, activeNightPlanId],
@@ -112,7 +78,7 @@ export default function GameDayPanel({ state, dispatch }) {
   // ---- views -------------------------------------------------------
 
   // Live view
-  if (view === VIEW_LIVE && activePlan && liveMatch) {
+  if (activePlan && liveMatch) {
     return (
       <LiveSetTracker
         plan={activePlan}
@@ -125,13 +91,8 @@ export default function GameDayPanel({ state, dispatch }) {
     );
   }
 
-  // Auto-detect live set when entering builder
-  if (view === VIEW_BUILDER && activePlan && activeLiveSet && !liveMatch) {
-    // There is an active live set - offer to resume
-  }
-
   // Builder view
-  if (view === VIEW_BUILDER && activePlan) {
+  if (activePlan) {
     return (
       <NightPlanBuilder
         plan={activePlan}
@@ -147,24 +108,11 @@ export default function GameDayPanel({ state, dispatch }) {
   // ---- default: plan list ------------------------------------------
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <h2 className="text-lg font-semibold text-gray-100">Game Day</h2>
-        <button
-          onClick={handleNewPlan}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-                     bg-(--color-accent) text-white active:opacity-80 transition-opacity"
-        >
-          <span className="text-base leading-none">+</span>
-          New Plan
-        </button>
-      </div>
-
+    <div>
       {/* Plan list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
         {nightPlans.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 text-sm gap-3">
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-500 text-sm gap-3 rounded-2xl border border-dashed border-[var(--color-line)]">
             <svg
               width="48"
               height="48"
@@ -196,7 +144,7 @@ export default function GameDayPanel({ state, dispatch }) {
             </svg>
             <span>No game plans yet.</span>
             <span className="text-gray-600">
-              Tap "New Plan" to start planning your night.
+              Use "New plan" to plan your night.
             </span>
           </div>
         )}

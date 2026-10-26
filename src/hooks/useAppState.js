@@ -6,7 +6,7 @@ import { getFormation, findDynamicSetterPos } from '../data/formations';
 import { computeFullProfile } from '../utils/playerProfileEngine';
 import { ATTRIBUTES } from '../data/archetypes';
 import { createNightPlanShell, computeFlowSub } from '../data/systems';
-import { buildDemoSeason } from '../data/demoSeason';
+import { buildDemoSeason, buildDemoNightPlan } from '../data/demoSeason';
 
 const DEFAULT_LINEUPS = [DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW];
 
@@ -21,7 +21,6 @@ const initialState = {
   currentRotation: load('currentRotation', 1),
   activeFormationId: load('activeFormationId', 'sr-5-1'),
   activeResponsibilityId: load('activeResponsibilityId', null),
-  activeTab: 'court',
   editingPlayer: null,
   editingLineup: null,
   selectedSlot: null,
@@ -39,18 +38,13 @@ const initialState = {
   activeSetNumber: load('activeSetNumber', 1),
 
   // Game Day
-  nightPlans: load('nightPlans', []),
+  nightPlans: load('nightPlans', demo ? [buildDemoNightPlan(DEFAULT_LINEUPS)] : []),
   activeNightPlanId: load('activeNightPlanId', null),
 
-  // Practice Planner
-  practicePlans: load('practicePlans', []),
-  activePracticePlanId: load('activePracticePlanId', null),
 };
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'SET_TAB':
-      return { ...state, activeTab: action.tab };
 
     case 'SET_FORMATION':
       return { ...state, activeFormationId: action.id };
@@ -298,7 +292,6 @@ function reducer(state, action) {
         rallies: action.data.rallies || [],
         experimentNotes: action.data.experimentNotes || [],
         nightPlans: action.data.nightPlans || state.nightPlans,
-        practicePlans: action.data.practicePlans || state.practicePlans,
         activeLineupId: action.data.activeLineupId || state.activeLineupId,
         activeFormationId: action.data.activeFormationId || state.activeFormationId,
         activeMatchId: null,
@@ -617,146 +610,6 @@ function reducer(state, action) {
       };
     }
 
-    // ── Practice Planner ──
-    case 'CREATE_PRACTICE_PLAN': {
-      const plan = {
-        id: 'practice-' + Date.now(),
-        name: action.name || 'Practice',
-        date: action.date || new Date().toISOString().slice(0, 10),
-        createdAt: new Date().toISOString(),
-        blocks: [],
-      };
-      return { ...state, practicePlans: [...state.practicePlans, plan], activePracticePlanId: plan.id };
-    }
-    case 'UPDATE_PRACTICE_PLAN':
-      return {
-        ...state,
-        practicePlans: state.practicePlans.map(p =>
-          p.id === action.planId ? { ...p, ...action.updates } : p
-        ),
-      };
-    case 'DELETE_PRACTICE_PLAN':
-      return {
-        ...state,
-        practicePlans: state.practicePlans.filter(p => p.id !== action.planId),
-        activePracticePlanId: state.activePracticePlanId === action.planId ? null : state.activePracticePlanId,
-      };
-    case 'SET_ACTIVE_PRACTICE_PLAN':
-      return { ...state, activePracticePlanId: action.planId };
-    case 'ADD_DRILL_TO_PLAN': {
-      return {
-        ...state,
-        practicePlans: state.practicePlans.map(p => {
-          if (p.id !== state.activePracticePlanId) return p;
-          const block = {
-            id: 'block-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
-            drillId: action.drillId,
-            duration: action.duration || 10,
-            coachNotes: '',
-            targetPlayerIds: [],
-            playerNotes: {},
-          };
-          return { ...p, blocks: [...p.blocks, block] };
-        }),
-      };
-    }
-    case 'REMOVE_DRILL_FROM_PLAN':
-      return {
-        ...state,
-        practicePlans: state.practicePlans.map(p => {
-          if (p.id !== state.activePracticePlanId) return p;
-          return { ...p, blocks: p.blocks.filter(b => b.id !== action.blockId) };
-        }),
-      };
-    case 'REORDER_DRILL_BLOCKS': {
-      return {
-        ...state,
-        practicePlans: state.practicePlans.map(p => {
-          if (p.id !== state.activePracticePlanId) return p;
-          const blocks = [...p.blocks];
-          const [moved] = blocks.splice(action.fromIndex, 1);
-          blocks.splice(action.toIndex, 0, moved);
-          return { ...p, blocks };
-        }),
-      };
-    }
-    case 'UPDATE_DRILL_BLOCK':
-      return {
-        ...state,
-        practicePlans: state.practicePlans.map(p => {
-          if (p.id !== state.activePracticePlanId) return p;
-          return {
-            ...p,
-            blocks: p.blocks.map(b =>
-              b.id === action.blockId ? { ...b, ...action.updates } : b
-            ),
-          };
-        }),
-      };
-
-    // ── Film Review (extends existing rallies) ──
-    case 'CREATE_FILM_RALLY': {
-      const rallyId = 'rally-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-      // Build actions[] for the stat pipeline from touches
-      const actions = (action.touches || []).map((t, i) => ({
-        playerId: t.playerId,
-        stat: t.action,
-        order: i + 1,
-      }));
-      const rally = {
-        id: rallyId,
-        matchId: action.matchId || null,
-        setNumber: action.setNumber || null,
-        rallyNumber: action.rallyNumber || null,
-        rotation: action.rotation,
-        ourScore: action.ourScore || 0,
-        theirScore: action.theirScore || 0,
-        servingTeam: action.servingTeam || 'us',
-        outcome: action.outcome || 'won',
-        actions,
-        filmReview: {
-          version: 1,
-          touches: action.touches || [],
-          tags: action.tags || [],
-          notes: action.notes || '',
-          playerPositions: action.playerPositions || {},
-        },
-      };
-      // Flatten to stat entries
-      const newStatEntries = actions.filter(a => a.playerId).map(a => ({
-        id: 'stat-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-        matchId: rally.matchId,
-        setNumber: rally.setNumber,
-        playerId: a.playerId,
-        rotation: rally.rotation,
-        stat: a.stat,
-        rallyId: rally.id,
-        timestamp: Date.now(),
-      }));
-      return {
-        ...state,
-        rallies: [...state.rallies, rally],
-        statEntries: [...state.statEntries, ...newStatEntries],
-      };
-    }
-    case 'UPDATE_RALLY_FILM_REVIEW':
-      return {
-        ...state,
-        rallies: state.rallies.map(r =>
-          r.id === action.rallyId ? { ...r, filmReview: { ...r.filmReview, ...action.filmReview } } : r
-        ),
-      };
-    case 'DELETE_RALLY_FILM_REVIEW':
-      return {
-        ...state,
-        rallies: state.rallies.map(r => {
-          if (r.id !== action.rallyId) return r;
-          const { filmReview: _removed, ...rest } = r;
-          return rest;
-        }),
-      };
-
-    // ── Enhanced Stats ──
     case 'SYNC_SET_SCORE_FROM_RALLIES': {
       const matchRallies = state.rallies.filter(r => r.matchId === action.matchId && r.setNumber === action.setNumber);
       let ourScore = 0, theirScore = 0;
@@ -801,8 +654,6 @@ export function useAppState() {
   useEffect(() => { save('activeSetNumber', state.activeSetNumber); }, [state.activeSetNumber]);
   useEffect(() => { save('nightPlans', state.nightPlans); }, [state.nightPlans]);
   useEffect(() => { save('activeNightPlanId', state.activeNightPlanId); }, [state.activeNightPlanId]);
-  useEffect(() => { save('practicePlans', state.practicePlans); }, [state.practicePlans]);
-  useEffect(() => { save('activePracticePlanId', state.activePracticePlanId); }, [state.activePracticePlanId]);
 
   // Derived: active lineup
   const activeLineup = state.lineups.find(l => l.id === state.activeLineupId) || null;

@@ -1,318 +1,154 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useAppState } from './hooks/useAppState';
-import Court from './components/court/Court';
-import PlayerStrategyCard from './components/court/PlayerStrategyCard';
-import RotationControls from './components/controls/RotationControls';
-import BottomNav from './components/controls/BottomNav';
-import StatsPanel from './components/stats/StatsPanel';
-import TeamPanel from './components/team/TeamPanel';
-import SettingsPanel from './components/settings/SettingsPanel';
+import { useRoute, navigate } from './router';
+import { resolveRoute, pathOf } from './nav';
+import { Sidebar, BottomBar } from './components/shell/Navigation';
+import Page, { Tabs } from './components/shell/Page';
+import HomePage from './components/home/HomePage';
+import CourtPage from './components/playbook/CourtPage';
+import ToolFrame from './components/playbook/ToolFrame';
+import { TOOLS } from './components/playbook/tools';
 import GameDayPanel from './components/gameday/GameDayPanel';
-import PracticePanel from './components/practice/PracticePanel';
-import FilmReviewPanel from './components/film/FilmReviewPanel';
-import { analyzeRotation } from './utils/rotationAnalysis';
-import { OFFENSE_5_1, DEFENSE_5_1 } from './data/responsibilities';
-import { POSITIONS } from './data/positions';
-import { getServeReceiveZones, getDefenseZones, ATTACK_INDICATORS, DEFENSE_SCENARIOS } from './data/coverageZones';
+import RecordPage from './components/game/RecordPage';
+import SeasonPage from './components/analytics/SeasonPage';
+import PlayerStats from './components/stats/PlayerStats';
+import RotationAnalytics from './components/analytics/RotationAnalytics';
+import CompositionPanel from './components/lineup/CompositionPanel';
+import LineupOptimizer from './components/analytics/LineupOptimizer';
+import SynergyView from './components/analytics/SynergyView';
+import DecisionSupport from './components/analytics/DecisionSupport';
+import RosterPanel from './components/roster/RosterPanel';
+import LineupPanel from './components/lineup/LineupPanel';
+import DataSettings from './components/team/DataSettings';
+import { SectionTitle } from './components/shell/ui';
+import { buttonClass } from './components/shell/styles';
 
 export default function App() {
-  const { state, dispatch, activeLineup, activeMatch, currentSlots, placements, playerProfiles } = useAppState();
-  const [courtView, setCourtView] = useState('offense'); // 'offense' | 'receive' | 'defense'
-  const [defenseScenario, setDefenseScenario] = useState('left'); // 'left' | 'right' | 'middle'
+  const app = useAppState();
+  const { state, dispatch, activeLineup, playerProfiles } = app;
 
-  const onSwipeLeft = useCallback(() => dispatch({ type: 'NEXT_ROTATION' }), [dispatch]);
-  const onSwipeRight = useCallback(() => dispatch({ type: 'PREV_ROTATION' }), [dispatch]);
-  const handleCloseCard = useCallback(() => dispatch({ type: 'DESELECT_PLAYER' }), [dispatch]);
+  const route = useRoute();
+  const { section, page, canonical } = resolveRoute(route);
+  const [, , param] = route;
 
-  // Sync court phase from the view toggle
-  const courtPhaseForView = courtView === 'offense' ? 'attack' : courtView === 'receive' ? 'receive' : 'defense';
+  // Unknown or partial routes (#/analytics) settle on a real page
+  const routePath = '/' + route.slice(0, 2).join('/');
   useEffect(() => {
-    if (courtPhaseForView !== state.courtPhase) {
-      dispatch({ type: 'SET_COURT_PHASE', phase: courtPhaseForView });
-    }
-  }, [courtPhaseForView, state.courtPhase, dispatch]);
+    if (routePath !== canonical) navigate(canonical + (param && routePath === canonical ? `/${param}` : ''), { replace: true });
+  }, [routePath, canonical, param]);
 
-  // Generate coverage zones dynamically from current rotation + placements
-  // Compute SCENARIO-AWARE defense placements — players move to correct spots
-  const scenarioPlacements = useMemo(() => {
-    if (courtView !== 'defense' || placements.length === 0) return placements;
-
-    // Defense positions based on attack direction
-    // These are volleyball-correct base positions for perimeter (2-0-4) defense
-    const DEFENSE_POS = {
-      left: {
-        // Attack from opponent zone 4 → our right side
-        // RF+CF block right pin, LF tips, RB line, LB cross, CB deep
-        2: { x: 78, y: 4 },   // RF — blocking at right pin
-        3: { x: 62, y: 4 },   // CF — closing to right pin
-        4: { x: 22, y: 22 },  // LF — off net, tip/roll cover
-        1: { x: 82, y: 55 },  // RB — right sideline, line dig
-        5: { x: 12, y: 48 },  // LB — left side, cross dig
-        6: { x: 45, y: 76 },  // CB — deep center, power angle
-      },
-      right: {
-        // Attack from opponent zone 2 → our left side
-        4: { x: 12, y: 4 },   // LF — blocking at left pin
-        3: { x: 28, y: 4 },   // CF — closing to left pin
-        2: { x: 68, y: 22 },  // RF — off net, tip/roll cover
-        5: { x: 8, y: 55 },   // LB — left sideline, line dig
-        1: { x: 78, y: 48 },  // RB — right side, cross dig
-        6: { x: 45, y: 76 },  // CB — deep center, power angle
-      },
-      middle: {
-        // Attack from zone 3 → center
-        3: { x: 45, y: 4 },   // CF — blocking middle
-        4: { x: 18, y: 4 },   // LF — closing / wing
-        2: { x: 72, y: 4 },   // RF — closing / wing
-        5: { x: 10, y: 58 },  // LB — left back
-        1: { x: 80, y: 58 },  // RB — right back
-        6: { x: 45, y: 78 },  // CB — deep center
-      },
-    };
-
-    const positions = DEFENSE_POS[defenseScenario];
-    if (!positions) return placements;
-
-    // Override positions but keep player/role data
-    return placements.map(p => {
-      const pos = positions[p.rotationalPosition];
-      if (!pos) return p;
-
-      // Setter in back row positions closer to target for transition
-      if (p.player?.position === 'setter' && (p.rotationalPosition === 1 || p.rotationalPosition === 5 || p.rotationalPosition === 6)) {
-        return { ...p, x: 62, y: 42 }; // near right-center, ready to sprint to target
-      }
-      return { ...p, x: pos.x, y: pos.y };
-    });
-  }, [courtView, defenseScenario, placements]);
-
-  // Use scenario placements for zones + court rendering
-  const displayPlacements = courtView === 'defense' ? scenarioPlacements : placements;
-
-  const activeCoverageZones = useMemo(() => {
-    if (displayPlacements.length === 0) return null;
-    if (courtView === 'receive') return getServeReceiveZones(displayPlacements);
-    if (courtView === 'defense') return getDefenseZones(displayPlacements, defenseScenario);
-    return null;
-  }, [courtView, defenseScenario, displayPlacements]);
-
-  // Attack direction indicator for defense scenarios
-  const attackIndicator = useMemo(() => {
-    if (courtView !== 'defense') return null;
-    return ATTACK_INDICATORS[defenseScenario] || null;
-  }, [courtView, defenseScenario]);
-
-  // Rotation analysis for the summary panel — uses display placements
-  const rotationInfo = useMemo(
-    () => displayPlacements.length > 0 ? analyzeRotation(state.currentRotation, displayPlacements) : null,
-    [state.currentRotation, displayPlacements]
-  );
-
-  // Get responsibilities for current rotation
-  const responsibilities = useMemo(() => {
-    const data = courtView === 'offense' ? OFFENSE_5_1 : DEFENSE_5_1;
-    return data[state.currentRotation] || {};
-  }, [courtView, state.currentRotation]);
-
-  // Libero sub info
-  const liberoSub = useMemo(() => {
-    if (!activeLineup?.liberoId) return null;
-    const libero = state.players.find(p => p.id === activeLineup.liberoId);
-    const subFor = placements.find(p => p.isLiberoIn);
-    if (!subFor || !libero) return null;
-    // The player the libero replaced is whoever the rotation puts in that position
-    const replacedId = currentSlots?.[subFor.rotationalPosition];
-    return {
-      libero,
-      replacesPlayer: state.players.find(p => p.id === replacedId) || null,
-      slot: subFor.rotationalPosition,
-    };
-  }, [activeLineup, placements, currentSlots, state.players]);
+  const pageProps = { section, page, state, dispatch };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Desktop only: links back to the landing page and the other tools */}
-      <nav className="hidden md:flex items-center gap-5 px-4 py-2 text-xs font-semibold text-gray-400 bg-[#12121f] border-b border-white/5 shrink-0" aria-label="Volleyball Tactics">
-        <a href={import.meta.env.BASE_URL} className="text-white hover:text-[var(--color-accent)]">← Volleyball Tactics</a>
-        <span className="text-white/20">|</span>
-        <span className="text-gray-300">Coaching App</span>
-        <a href={`${import.meta.env.BASE_URL}setter-signals/`} className="ml-auto hover:text-white">Setter Signals</a>
-        <a href={`${import.meta.env.BASE_URL}serve-receive/`} className="hover:text-white">Serve Receive</a>
-      </nav>
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-
-        {/* ── Court Tab ── */}
-        {state.activeTab === 'court' && (
-          <>
-            {/* View toggle: Offense / Serve Receive / Defense */}
-            <div className="flex flex-col bg-[var(--color-surface-2)] border-b border-white/5 shrink-0">
-              <div className="flex items-center justify-between px-2 py-1.5">
-                <div className="flex bg-[var(--color-surface)] rounded-lg p-0.5">
-                  {[
-                    { id: 'offense', label: 'Offense', color: 'bg-green-600' },
-                    { id: 'receive', label: 'Receive', color: 'bg-amber-600' },
-                    { id: 'defense', label: 'Defense', color: 'bg-blue-600' },
-                  ].map(v => (
-                    <button key={v.id}
-                      onClick={() => setCourtView(v.id)}
-                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                        courtView === v.id ? `${v.color} text-white` : 'text-gray-400'
-                      }`}
-                    >{v.label}</button>
-                  ))}
-                </div>
-                {rotationInfo && (
-                  <span className="text-[11px] text-gray-400 ml-2 truncate">{rotationInfo.headline}</span>
-                )}
-              </div>
-
-              {/* Defense sub-scenario picker */}
-              {courtView === 'defense' && (
-                <div className="flex items-center gap-1 px-3 pb-1.5">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mr-1">Attack from:</span>
-                  {DEFENSE_SCENARIOS.map(s => (
-                    <button key={s.id}
-                      onClick={() => setDefenseScenario(s.id)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
-                        defenseScenario === s.id
-                          ? 'bg-red-600/30 text-red-300 border border-red-500/40'
-                          : 'bg-[var(--color-surface)] text-gray-500'
-                      }`}
-                    >{s.icon} {s.label}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Court */}
-            <div className="flex-1 flex items-center justify-center p-1 min-h-0 bg-[var(--color-surface)]">
-              {activeLineup ? (
-                <Court
-                  placements={displayPlacements} dispatch={dispatch}
-                  onSwipeLeft={onSwipeLeft} onSwipeRight={onSwipeRight}
-                  selectedSlot={state.selectedSlot}
-                  showRoutes={courtView === 'offense'}
-                  rotation={state.currentRotation}
-                  playerProfiles={playerProfiles}
-                  showCoverage={courtView !== 'offense'}
-                  coverageZones={activeCoverageZones}
-                  attackIndicator={attackIndicator}
-                  courtPhase={state.courtPhase}
-                />
-              ) : (
-                <div className="text-gray-500 text-center px-6">
-                  <p className="text-lg mb-2 text-white font-bold">Set Up Your Team</p>
-                  <p className="text-sm mb-4">Create a lineup to see the playbook.</p>
-                  <button onClick={() => dispatch({ type: 'SET_TAB', tab: 'more' })}
-                    className="px-5 py-2.5 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95">
-                    Go to Team
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Strategy summary below court */}
-            {activeLineup && rotationInfo && (
-              <div className="px-3 py-2 bg-[var(--color-surface-2)] border-t border-white/5 shrink-0 overflow-y-auto" style={{ maxHeight: '28vh' }}>
-                {/* Libero sub callout */}
-                {liberoSub && (
-                  <div className="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: POSITIONS.libero.color }}>L</span>
-                    <span className="text-xs text-orange-300">
-                      <span className="font-bold">{liberoSub.libero.name}</span> subs in for <span className="font-bold">{liberoSub.replacesPlayer?.name || 'MB'}</span> (pos {liberoSub.slot}, back row)
-                    </span>
-                  </div>
-                )}
-
-                {/* Front & back row with responsibilities */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Front Row</div>
-                    {rotationInfo.frontRow.map(p => {
-                      const resp = responsibilities[p.slot];
-                      return (
-                        <div key={p.slot} className="mb-1.5">
-                          <div className="text-xs text-white font-semibold">{p.playerName}</div>
-                          <div className="text-[11px] text-gray-400">{resp || p.roleLabel}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Back Row</div>
-                    {rotationInfo.backRow.map(p => {
-                      // A libero can't attack above the net, so it never inherits an attack duty
-                      const resp = p.roleLabel === 'Libero' && courtView === 'offense'
-                        ? 'Dig / cover hitters'
-                        : responsibilities[p.slot];
-                      return (
-                        <div key={p.slot} className="mb-1.5">
-                          <div className="text-xs text-white font-semibold">{p.playerName}</div>
-                          <div className="text-[11px] text-gray-400">{resp || p.roleLabel}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Context-specific info */}
-                {courtView === 'offense' && rotationInfo.attackOptions.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-white/5">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mr-1 self-center">Attacks</span>
-                    {rotationInfo.attackOptions.map((opt, i) => (
-                      <span key={i} className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-300 text-[11px] border border-green-500/20">{opt}</span>
-                    ))}
-                  </div>
-                )}
-                {courtView === 'receive' && (
-                  <div className="mt-2 pt-2 border-t border-white/5">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Serve Receive</span>
-                    <div className="text-[11px] text-gray-400 mt-0.5">{rotationInfo.serveReceive}</div>
-                    <div className="text-[11px] text-amber-400/70 mt-0.5">Zones show which passer takes which area. Strongest passers get biggest zones.</div>
-                  </div>
-                )}
-                {courtView === 'defense' && (
-                  <div className="mt-2 pt-2 border-t border-white/5">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                      {DEFENSE_SCENARIOS.find(s => s.id === defenseScenario)?.desc}
-                    </span>
-                    <div className="text-[11px] text-blue-400/70 mt-0.5">Zones show coverage responsibilities. Blockers seal, diggers read angle.</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <RotationControls currentRotation={state.currentRotation} dispatch={dispatch} />
-
-            {state.selectedSlot != null && (
-              <PlayerStrategyCard selectedSlot={state.selectedSlot} rotation={state.currentRotation}
-                placements={placements} onClose={handleCloseCard} />
-            )}
-          </>
-        )}
-
-        {state.activeTab === 'gameday' && (
-          <GameDayPanel state={state} dispatch={dispatch} />
-        )}
-        {state.activeTab === 'stats' && (
-          <StatsPanel state={state} dispatch={dispatch} activeMatch={activeMatch}
-            activeLineup={activeLineup} playerProfiles={playerProfiles} placements={placements} />
-        )}
-        {state.activeTab === 'practice' && (
-          <PracticePanel state={state} dispatch={dispatch} />
-        )}
-        {state.activeTab === 'film' && (
-          <FilmReviewPanel state={state} dispatch={dispatch} />
-        )}
-        {state.activeTab === 'team' && (
-          <TeamPanel state={state} dispatch={dispatch} activeLineup={activeLineup} />
-        )}
-        {state.activeTab === 'more' && (
-          <SettingsPanel state={state} dispatch={dispatch} />
-        )}
+    <div className="flex-1 flex min-w-0">
+      <Sidebar section={section} page={page} />
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 flex flex-col min-h-0">
+          <Route key={canonical} {...pageProps} app={app} param={param} activeLineup={activeLineup} playerProfiles={playerProfiles} />
+        </main>
+        <BottomBar section={section} />
       </div>
-
-      <BottomNav activeTab={state.activeTab} dispatch={dispatch} />
     </div>
   );
+}
+
+function Route({ section, page, state, dispatch, app, param, activeLineup, playerProfiles }) {
+  const pageProps = { section, page, state, dispatch };
+  const toolTab = tab => navigate(`${pathOf(section.id, page.id)}/${tab}`);
+
+  switch (section.id) {
+    case 'playbook': {
+      if (page.id === 'court') {
+        return <CourtPage {...pageProps} activeLineup={activeLineup} currentSlots={app.currentSlots} placements={app.placements} playerProfiles={playerProfiles} />;
+      }
+      const tool = TOOLS[page.id];
+      const tab = tool.tabs.some(t => t.id === param) ? param : tool.tabs[0].id;
+      return (
+        <Page {...pageProps} scroll={false} controls={<Tabs items={tool.tabs} value={tab} onChange={toolTab} label={tool.title} />}>
+          <ToolFrame tool={page.id} tab={tab} onTabChange={toolTab} />
+        </Page>
+      );
+    }
+
+    case 'game':
+      if (page.id === 'record') return <RecordPage {...pageProps} activeMatch={app.activeMatch} />;
+      return (
+        <Page
+          {...pageProps}
+          actions={!state.activeNightPlanId && (
+            <button
+              className={buttonClass.primary}
+              onClick={() => dispatch({ type: 'CREATE_NIGHT_PLAN', name: `Game Night ${state.nightPlans.length + 1}`, date: new Date().toISOString().slice(0, 10) })}
+            >
+              + New plan
+            </button>
+          )}
+        >
+          <GameDayPanel state={state} dispatch={dispatch} />
+        </Page>
+      );
+
+    case 'analytics':
+      switch (page.id) {
+        case 'season':
+          return <SeasonPage {...pageProps} matchId={param} />;
+        case 'players': {
+          const selectedId = state.players.some(p => p.id === param) ? param : state.players[0]?.id;
+          return (
+            <Page {...pageProps}>
+              <PlayerStats
+                players={state.players}
+                statEntries={state.statEntries}
+                matches={state.matches}
+                playerProfiles={playerProfiles}
+                selectedId={selectedId}
+                onSelect={id => navigate(`/analytics/players/${id}`, { replace: true })}
+              />
+            </Page>
+          );
+        }
+        case 'rotations':
+          return <Page {...pageProps}><RotationAnalytics statEntries={state.statEntries} /></Page>;
+        case 'lineups':
+          return (
+            <Page {...pageProps} desc={`${page.desc} Current lineup: ${activeLineup?.name ?? 'none'}.`}>
+              <div className="grid gap-8 xl:grid-cols-2 items-start">
+                <div>
+                  <SectionTitle>Composition</SectionTitle>
+                  <CompositionPanel players={state.players} activeLineup={activeLineup} statEntries={state.statEntries} />
+                </div>
+                <div>
+                  <SectionTitle>Optimizer</SectionTitle>
+                  <LineupOptimizer players={state.players} playerProfiles={playerProfiles} activeLineup={activeLineup} />
+                </div>
+              </div>
+            </Page>
+          );
+        case 'pairings':
+          return <Page {...pageProps}><div className="max-w-3xl"><SynergyView statEntries={state.statEntries} players={state.players} activeLineup={activeLineup} /></div></Page>;
+        default:
+          return (
+            <Page {...pageProps}>
+              <div className="max-w-3xl">
+                <DecisionSupport
+                  players={state.players}
+                  playerProfiles={playerProfiles}
+                  activeLineup={activeLineup}
+                  statEntries={state.statEntries}
+                  experimentNotes={state.experimentNotes}
+                  dispatch={dispatch}
+                />
+              </div>
+            </Page>
+          );
+      }
+
+    case 'team':
+      if (page.id === 'roster') return <Page {...pageProps}><RosterPanel players={state.players} dispatch={dispatch} activeLineup={activeLineup} statEntries={state.statEntries} /></Page>;
+      if (page.id === 'lineups') return <Page {...pageProps}><LineupPanel lineups={state.lineups} activeLineupId={state.activeLineupId} players={state.players} dispatch={dispatch} /></Page>;
+      return <Page {...pageProps}><DataSettings state={state} dispatch={dispatch} /></Page>;
+
+    default:
+      return <HomePage state={state} />;
+  }
 }

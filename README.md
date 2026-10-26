@@ -6,37 +6,38 @@ A coaching tool for a 6v6 volleyball team: an interactive rotation playbook, ral
 capture, and an analytics layer that turns the event log into player ratings, rotation reports and
 lineup recommendations.
 
-**Live site:** https://rodelberonilla.github.io/volleyball-tactics/
+**Live site:** https://rodelberonilla.github.io/volleyball-tactics/ (opens on a demo season, so
+every screen has data)
 
-| Page | URL |
+| Home | Season |
 | --- | --- |
-| Landing page | [`/volleyball-tactics/`](https://rodelberonilla.github.io/volleyball-tactics/) |
-| Coaching app (opens on a demo season so every screen has data) | [`/volleyball-tactics/app/`](https://rodelberonilla.github.io/volleyball-tactics/app/) |
-| Setter Signals & Set Map | [`/volleyball-tactics/setter-signals/`](https://rodelberonilla.github.io/volleyball-tactics/setter-signals/) |
-| Serve Receive Rotations | [`/volleyball-tactics/serve-receive/`](https://rodelberonilla.github.io/volleyball-tactics/serve-receive/) |
-
-| Rotation playbook | Match log | Player profile | Rotation analytics |
-| --- | --- | --- | --- |
-| ![Serve-receive view of rotation 1](docs/screenshots/court.png) | ![Season match list](docs/screenshots/matches.png) | ![Player profile with stat-adjusted ratings](docs/screenshots/player-profile.png) | ![Side-out and break-point rates by rotation](docs/screenshots/rotation-analytics.png) |
+| ![Home: season at a glance and the three playbook tools](docs/screenshots/home.webp) | ![Season results with side-out, break-point and hitting %](docs/screenshots/season.webp) |
+| **Box score** | **Player profile** |
+| ![Box score for one match](docs/screenshots/box-score.webp) | ![Player profile with data-adjusted ratings](docs/screenshots/player-profile.webp) |
+| **Rotation playbook** | **Setter signals** |
+| ![Court view with a player's job for the rotation](docs/screenshots/court.webp) | ![Setter signals and set map, embedded in the app](docs/screenshots/setter-signals.webp) |
 
 > The roster is fictional and the match history is simulated. See [Demo data](#demo-data).
 
-## What it does
+## How it's organised
 
-- **Court**: SVG court for all six rotations in offense, serve-receive and defense views. It shows
-  movement arrows, passing zones and libero substitutions, and checks the overlap rule.
-- **Stats**: live courtside entry (one tap per touch), play-by-play rally entry, or entry from video.
-  Box scores per match and set.
-- **Analysis**: data-adjusted player ratings, archetype detection, side-out / break-point rates by
-  rotation, setter–hitter and front-row pairing synergy, a lineup optimizer, and plain-language
-  recommendations.
-- **Game Day**: plan a night of matches (lineup, serving order and substitution system per set),
-  then track the score live.
-- **Practice / Film**: a drill library and practice planner, plus a rally builder that replays
-  tagged touches on the court.
-- **Reference pages**: two standalone pages, [Setter Signals](public/setter-signals/README.md)
-  and [Serve Receive](public/serve-receive/README.md), served from the same site and linked from
-  the landing page.
+One app, five sections. On desktop they're a sidebar; on a phone, a bottom bar with each section's
+pages as tabs. Every page has its own URL (`#/analytics/players/p6`), so links and the back button
+work.
+
+| Section | Pages | What's there |
+| --- | --- | --- |
+| **Home** | | Season at a glance and a way into everything else. |
+| **Playbook** | Court · Serve Receive · Setter Signals | The lineup on court in all six rotations (offense, serve receive, defense, tap a player for their job); serve-receive spots checked against the overlap rule; the setter's signal and set map with a 3D set flight view. |
+| **Game** | Game Plan · Record Stats | Plan a night of matches (lineup, serving order, substitution system per set, a fairness check that nobody sits two sets in a row), then capture stats live, rally by rally, or from video. |
+| **Analytics** | Season · Players · Rotations · Lineups · Pairings · Recommendations | Results and box scores, data-adjusted player profiles, side-out and break-point rates by rotation, lineup composition and optimizer, setter–hitter and row combinations, and suggested changes. |
+| **Team** | Roster · Lineups · Data | Players and lineups, plus export, import, compaction and reset of the stored data. |
+
+Serve Receive and Setter Signals are self-contained pages
+([`public/tools/`](public/tools)) with their own physics models and self-checks. The app runs them
+in a same-origin iframe with their own navigation hidden; the app's tabs drive them, and they report
+tab changes back so the URL stays in sync. Opened as a local file, they still work on their own,
+offline.
 
 ## Data flow
 
@@ -98,6 +99,8 @@ them check invariants that any rally-by-rally feed should satisfy:
 - Each rally has exactly one team outcome row, and it agrees with the rally.
 - Only the player in position 1 serves, and every kill has an assist.
 - Compaction preserves per-player totals, per-rotation totals and player ratings.
+- Season numbers reconcile: wins + losses = matches played, per-match kills add up to the season.
+- The demo game night obeys the league's fairness rule (nobody sits two sets in a row).
 - Rotation math, the overlap rule, and stat-line formulas are correct.
 
 Imports are checked for structure before they replace local data, and CI runs lint, tests and a production build
@@ -108,9 +111,9 @@ on every push and pull request.
 [`src/data/demoSeason.js`](src/data/demoSeason.js) simulates a 7-match season (about 900 rallies and
 4,000 events) for the fictional roster. Each player has hidden skill levels, and rallies are played
 out touch by touch: serve, pass, set, attack, block and dig. The app then has to recover those skill
-levels from the event log, the same way it would for a real team. The simulator is seeded, so the
-demo is identical on every load. **More → Reset to Demo Data** restores it, and **Clear All Data**
-starts from an empty team.
+levels from the event log, the same way it would for a real team. A planned game night comes with
+it. The simulator is seeded, so the demo is identical on every load. **Team → Data → Reset to demo
+data** restores it, and **Clear all data** starts from an empty team.
 
 ## Tech
 
@@ -120,24 +123,27 @@ and the whole dataset exports to and imports from JSON.
 
 ```
 src/
-  App.jsx              tab layout
+  App.jsx              app shell and route → page mapping
+  nav.js, router.js    site map (sidebar, bottom bar, home all read it) and hash router
   hooks/useAppState.js reducer, persistence, derived state (rotations, placements, profiles)
-  components/          court/, stats/, analysis/, gameday/, practice/, film/, roster/, lineup/
-  data/                domain data: formations, responsibilities, stat categories, drills, demo season
-  utils/               aggregation, ratings, profile engine, optimizer, overlap rules, storage
+  components/
+    shell/             sidebar, bottom bar, page frame, shared UI
+    home/ playbook/ game/ analytics/ team/   one folder per section
+    court/ stats/ gameday/ lineup/ roster/   building blocks used by the pages
+  data/                domain data: formations, responsibilities, stat categories, demo season
+  utils/               aggregation, season summary, ratings, profile engine, optimizer, overlap rules
   __tests__/           Vitest suites
-index.html             landing page (Tailwind, no JS)
-app/index.html         entry for the React coaching app
 public/
-  setter-signals/      standalone set-map reference page
-  serve-receive/       standalone serve-receive reference page
+  tools/setter-signals/  standalone set-map page (embedded at #/playbook/setter-signals)
+  tools/serve-receive/   standalone serve-receive page (embedded at #/playbook/serve-receive)
+  setter-signals/, serve-receive/, app/   redirects from the old URLs
 ```
 
 ## Running locally
 
 ```bash
 npm ci
-npm run dev       # http://localhost:5173/volleyball-tactics/ (app at /app/)
+npm run dev       # http://localhost:5173/volleyball-tactics/
 npm test          # unit + data-quality tests
 npm run lint
 npm run build     # production build in dist/
@@ -145,6 +151,8 @@ npm run build     # production build in dist/
 
 ## Next steps
 
+- Port Setter Signals and Serve Receive into React components so they share the app's lineup
+  instead of their own role codes.
 - Move storage from the browser to a shared database (e.g. Postgres or DuckDB) so a whole staff
   works from the same data, with the event log as the fact table.
 - Export the event log as Parquet/CSV for notebooks and BI tools.

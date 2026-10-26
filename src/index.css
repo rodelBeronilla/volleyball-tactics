@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* One palette for the whole app, shared with the embedded Setter Signals and Serve Receive tools */
 @theme {
   --color-court: #2d6b30;
   --color-court-dark: #1e4d22;
@@ -10,10 +11,15 @@
   --color-opposite: #22c55e;
   --color-libero: #f97316;
   --color-ds: #8b5cf6;
-  --color-surface: #1a1a2e;
-  --color-surface-2: #16213e;
-  --color-surface-3: #0f3460;
-  --color-accent: #e94560;
+  --color-surface: #0f1117;
+  --color-surface-2: #161a25;
+  --color-surface-3: #1e2332;
+  --color-surface-4: #262c3d;
+  --color-line: #2b3144;
+  --color-ink: #f5f6fa;
+  --color-muted: #9aa3b8;
+  --color-accent: #4da3ff;
+  --color-accent-ink: #06101f;
 }
 
 * {
@@ -21,47 +27,31 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
 body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
   overflow: hidden;
   background: var(--color-surface);
-  color: #e0e0e0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: var(--color-ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.4;
   touch-action: manipulation;
   font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
 }
 
 #root {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
-}
-
-@media (min-width: 768px) {
-  #root {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 48rem;
-    border-left: 1px solid rgba(255,255,255,0.05);
-    border-right: 1px solid rgba(255,255,255,0.05);
-  }
 }
 
 @keyframes slide-up {

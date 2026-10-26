@@ -2,7 +2,7 @@
  * Synthetic demo season.
  *
  * Simulates rally-by-rally play for the default roster so the stats,
- * analysis and film views have realistic data on first launch. The output
+ * and analysis views have realistic data on first launch. The output
  * uses exactly the same record shapes the live entry screens produce
  * (matches → rallies → flat statEntries), so everything downstream runs
  * through the normal aggregation pipeline.
@@ -11,6 +11,7 @@
  */
 
 import { deriveRotation } from '../utils/rotations';
+import { createNightPlanShell } from './systems';
 
 // Latent skill per player (1–10). Only the simulator sees these; the app has
 // to recover them from the event log like it would for a real team.
@@ -257,4 +258,37 @@ export function buildDemoSeason(players, lineups, seed = 2026) {
   });
 
   return { matches, rallies, statEntries };
+}
+
+/**
+ * Next week's game night, already planned: four matches, the best lineup for
+ * set 1 and the rolling-sub Flow system for set 2, so nobody sits two sets in a row.
+ */
+export function buildDemoNightPlan(lineups) {
+  const plan = createNightPlanShell('Game night', '2026-10-27');
+  const byId = Object.fromEntries(lineups.map(l => [l.id, l]));
+  const opponents = ['Net Gains', 'Dig Deep', 'Kill Shots', 'Free Ballers'];
+  const setPlan = [['LOCKED_IN', 'lineup-1'], ['FLOW', 'lineup-3']];
+  // Flow: two of each role on court, the third waits to sub in after a sideout
+  const trios = {
+    setters: { onCourt: ['p1', 'p7'], bench: 'p8' },
+    hitters: { onCourt: ['p6', 'p3'], bench: 'p2' },
+    middles: { onCourt: ['p4', 'p9'], bench: 'p5' },
+  };
+  return {
+    ...plan,
+    id: 'demo-night-1',
+    matches: plan.matches.map((m, mi) => ({
+      ...m,
+      opponent: opponents[mi],
+      sets: m.sets.map((s, si) => {
+        const [system, lineupId] = setPlan[si];
+        const lineup = byId[lineupId];
+        if (!lineup) return s;
+        // Serving order follows the lineup's slots, as when a coach picks the lineup
+        const servingOrder = [1, 2, 3, 4, 5, 6].map(n => lineup.slots[n]).filter(Boolean);
+        return { ...s, system, lineupId, servingOrder, ...(system === 'FLOW' ? { trios } : {}) };
+      }),
+    })),
+  };
 }
