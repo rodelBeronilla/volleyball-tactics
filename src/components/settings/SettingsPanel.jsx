@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { getStorageUsage, exportAllData, parseImportData, compactOldEntries } from '../../utils/storageManager';
+import { clearAll } from '../../utils/storage';
 import TeamPanel from '../team/TeamPanel';
 
 export default function SettingsPanel({ state, dispatch }) {
@@ -43,10 +44,18 @@ export default function SettingsPanel({ state, dispatch }) {
     dispatch({ type: 'SET_STAT_ENTRIES', entries: compacted });
   };
 
+  const handleResetDemo = () => {
+    if (!window.confirm('Replace everything with the demo roster and simulated season? Your current data will be lost.')) return;
+    clearAll();
+    window.location.reload();
+  };
+
   const handleClearAll = () => {
     if (!window.confirm('Delete ALL data (players, lineups, matches, stats)? This cannot be undone.')) return;
-    localStorage.clear();
-    window.location.reload();
+    dispatch({
+      type: 'IMPORT_DATA',
+      data: { players: [], lineups: [], matches: [], statEntries: [], rallies: [], nightPlans: [], practicePlans: [] },
+    });
   };
 
   if (subView === 'team') {
@@ -68,6 +77,31 @@ export default function SettingsPanel({ state, dispatch }) {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* About */}
+        <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5 text-xs text-gray-400 space-y-1.5">
+          <div className="text-sm font-bold text-white">Volleyball Tactics</div>
+          <p>
+            Rotation playbook, stat tracking and lineup analytics for a 6v6 team.
+            The roster is fictional and the match history is a simulated demo season.
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+            <a href={`${import.meta.env.BASE_URL}setter-signals/`} className="text-[var(--color-accent)] font-semibold">
+              Setter Signals →
+            </a>
+            <a href={`${import.meta.env.BASE_URL}serve-receive/`} className="text-[var(--color-accent)] font-semibold">
+              Serve Receive →
+            </a>
+          </div>
+          <a
+            href="https://github.com/rodelBeronilla/volleyball-tactics"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block text-[var(--color-accent)] font-semibold"
+          >
+            Source on GitHub →
+          </a>
+        </div>
+
         {/* Team management */}
         <button
           onClick={() => setSubView('team')}
@@ -123,6 +157,14 @@ export default function SettingsPanel({ state, dispatch }) {
             Compact Old Data
           </button>
         )}
+
+        {/* Reset to demo */}
+        <button
+          onClick={handleResetDemo}
+          className="w-full py-3 rounded-lg bg-[var(--color-surface-3)] text-gray-300 text-sm font-medium active:scale-[0.98] transition-transform"
+        >
+          Reset to Demo Data
+        </button>
 
         {/* Clear */}
         <button

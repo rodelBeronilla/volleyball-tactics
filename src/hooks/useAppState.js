@@ -1,15 +1,22 @@
 import { useReducer, useEffect, useCallback, useMemo } from 'react';
 import { load, save } from '../utils/storage';
 import { DEFAULT_PLAYERS, DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW } from '../data/defaults';
-import { deriveRotation, isBackRow } from '../utils/rotations';
+import { deriveRotation } from '../utils/rotations';
 import { getFormation, findDynamicSetterPos } from '../data/formations';
 import { computeFullProfile } from '../utils/playerProfileEngine';
 import { ATTRIBUTES } from '../data/archetypes';
 import { createNightPlanShell, computeFlowSub } from '../data/systems';
+import { buildDemoSeason } from '../data/demoSeason';
+
+const DEFAULT_LINEUPS = [DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW];
+
+// First launch (nothing saved yet): start with the fictional roster and a
+// simulated season so every view has data to show.
+const demo = load('players', null) === null ? buildDemoSeason(DEFAULT_PLAYERS, DEFAULT_LINEUPS) : null;
 
 const initialState = {
   players: load('players', DEFAULT_PLAYERS),
-  lineups: load('lineups', [DEFAULT_LINEUP, DEFAULT_LINEUP_GROW, DEFAULT_LINEUP_FLOW]),
+  lineups: load('lineups', DEFAULT_LINEUPS),
   activeLineupId: load('activeLineupId', 'lineup-1'),
   currentRotation: load('currentRotation', 1),
   activeFormationId: load('activeFormationId', 'sr-5-1'),
@@ -25,9 +32,9 @@ const initialState = {
 
   // Stat tracking
   experimentNotes: load('experimentNotes', []),
-  matches: load('matches', []),
-  statEntries: load('statEntries', []),
-  rallies: load('rallies', []),
+  matches: load('matches', demo?.matches ?? []),
+  statEntries: load('statEntries', demo?.statEntries ?? []),
+  rallies: load('rallies', demo?.rallies ?? []),
   activeMatchId: load('activeMatchId', null),
   activeSetNumber: load('activeSetNumber', 1),
 
