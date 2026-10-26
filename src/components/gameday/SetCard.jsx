@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { SYSTEMS, checkFriction } from '../../data/systems';
+import { SYSTEMS } from '../../data/systems';
 import { POSITIONS } from '../../data/positions';
-import FrictionWarning from './FrictionWarning';
 
 const SYSTEM_IDS = ['LOCKED_IN', 'FLOW', 'GROW'];
 
@@ -56,10 +55,6 @@ export default function SetCard({
   const system = set.system;
   const lineupId = set.lineupId;
 
-  const selectedLineup = useMemo(
-    () => (lineups || []).find((l) => l.id === lineupId) || null,
-    [lineups, lineupId],
-  );
 
   // Build serving order from lineup slots if not explicitly set
   const servingOrder = set.servingOrder || [];
@@ -148,9 +143,6 @@ export default function SetCard({
     statusLabel = SYSTEMS[system]?.name || system;
     statusColor = 'text-gray-400';
   }
-
-  // Get all players assigned to serve order for friction check
-  const courtPlayerIds = servingOrder.filter(Boolean);
 
   // Available players for trio selection (those not already assigned)
   const assignedInTrios = useMemo(() => {
@@ -381,14 +373,6 @@ export default function SetCard({
                 })}
               </div>
             </div>
-          )}
-
-          {/* Friction warnings */}
-          {courtPlayerIds.length > 0 && (
-            <FrictionWarning
-              courtPlayerIds={courtPlayerIds}
-              players={players}
-            />
           )}
 
           {/* Go Live button */}
