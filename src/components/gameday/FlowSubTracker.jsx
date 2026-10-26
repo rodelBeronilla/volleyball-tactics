@@ -37,7 +37,6 @@ function PlayerChip({ player, dimmed, highlight }) {
 
 export default function FlowSubTracker({
   trioState,
-  servingOrder,
   currentServer,
   players,
 }) {
@@ -62,9 +61,6 @@ export default function FlowSubTracker({
 
         const onCourt = trio.onCourt || [];
         const benchId = trio.benchPlayerId;
-
-        // Count how many subs this trio has done (based on bench swaps)
-        const subCount = onCourt.length + (benchId ? 1 : 0) - (onCourt.length || 0);
 
         return (
           <div

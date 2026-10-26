@@ -7,8 +7,7 @@
  */
 
 import { ARCHETYPES, ATTRIBUTES } from '../data/archetypes';
-import { STATS } from '../data/statCategories';
-import { aggregateByRotation, computeStatLine, countSetsPlayed } from './statAggregation';
+import { aggregateByPlayer, aggregateByRotation, computeStatLine, countSetsPlayed } from './statAggregation';
 
 // ── Rating derivation (extracted from statRatings.js pattern) ──
 
@@ -297,13 +296,8 @@ export function computeFullProfile(player, statEntries, matches) {
     };
   }
 
-  // Aggregate stats
-  const counts = {};
-  const STAT_KEYS = Object.keys(STATS);
-  STAT_KEYS.forEach(k => { counts[k] = 0; });
-  for (const e of playerEntries) {
-    if (e.stat in counts) counts[e.stat]++;
-  }
+  // Aggregate stats (raw events and compacted summary rows alike)
+  const counts = aggregateByPlayer(playerEntries)[player.id];
   const setsPlayed = countSetsPlayed(statEntries, player.id);
   const statLine = computeStatLine(counts, setsPlayed);
 
@@ -361,11 +355,7 @@ export function computeFullProfile(player, statEntries, matches) {
     .filter(m => statEntries.some(e => e.matchId === m.id && e.playerId === player.id))
     .sort((a, b) => (a.date || a.createdAt || '').localeCompare(b.date || b.createdAt || ''))
     .map(m => {
-      const matchCounts = {};
-      STAT_KEYS.forEach(k => { matchCounts[k] = 0; });
-      statEntries.filter(e => e.matchId === m.id && e.playerId === player.id).forEach(e => {
-        if (e.stat in matchCounts) matchCounts[e.stat]++;
-      });
+      const matchCounts = aggregateByPlayer(playerEntries, { matchId: m.id })[player.id];
       const matchSets = countSetsPlayed(statEntries.filter(e => e.matchId === m.id), player.id);
       return { matchId: m.id, opponent: m.opponent, date: m.date, statLine: computeStatLine(matchCounts, matchSets) };
     });

@@ -9,7 +9,7 @@ import TouchTimeline from './TouchTimeline';
  * Step through a completed rally on a court visualization.
  * Animated ball between touches with player circles at positions.
  */
-export default function RallyPlayback({ rally, players = [], onClose, dispatch }) {
+export default function RallyPlayback({ rally, players = [], onClose }) {
   const touches = rally?.filmReview?.touches || [];
   const playerPositions = rally?.filmReview?.playerPositions || {};
   const notes = rally?.filmReview?.notes || '';

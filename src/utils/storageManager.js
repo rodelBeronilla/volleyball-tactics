@@ -24,7 +24,7 @@ export function getStorageUsage() {
 
 /**
  * Compact old stat entries into summary entries.
- * Preserves all data needed for analysis while reducing storage ~10x.
+ * Preserves all data needed for analysis with far fewer rows.
  * @param {Array} statEntries - all stat entries
  * @param {Array} matches - all matches
  * @param {number} keepRecentN - number of recent matches to keep in full detail
@@ -50,9 +50,10 @@ export function compactOldEntries(statEntries, matches, keepRecentN = 10) {
     if (e.type === 'summary') { kept.push(e); continue; } // already compacted
     const key = `${e.matchId}|${e.playerId}|${e.rotation}`;
     if (!groups[key]) {
-      groups[key] = { matchId: e.matchId, playerId: e.playerId, rotation: e.rotation, counts: {} };
+      groups[key] = { matchId: e.matchId, playerId: e.playerId, rotation: e.rotation, counts: {}, sets: new Set() };
       STAT_KEYS.forEach(k => { groups[key].counts[k] = 0; });
     }
+    groups[key].sets.add(e.setNumber);
     if (e.stat in groups[key].counts) {
       groups[key].counts[e.stat]++;
     }
@@ -67,6 +68,7 @@ export function compactOldEntries(statEntries, matches, keepRecentN = 10) {
       matchId: g.matchId,
       playerId: g.playerId,
       rotation: g.rotation,
+      setNumbers: [...g.sets].sort((a, b) => a - b), // keeps per-set rates correct
       counts: g.counts,
     }));
 

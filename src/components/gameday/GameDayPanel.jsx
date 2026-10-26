@@ -9,10 +9,21 @@ const VIEW_LIST = 'list';
 const VIEW_BUILDER = 'builder';
 const VIEW_LIVE = 'live';
 
+function findLiveSet(plan) {
+  for (const match of plan?.matches || []) {
+    for (const set of match.sets || []) {
+      if (set.live?.active) {
+        return { matchIndex: match.matchIndex, setIndex: set.setIndex };
+      }
+    }
+  }
+  return null;
+}
+
 // ------------------------------------------------------------------
 // GameDayPanel
 // ------------------------------------------------------------------
-export default function GameDayPanel({ state, dispatch, placements, playerProfiles }) {
+export default function GameDayPanel({ state, dispatch }) {
   const { nightPlans = [], activeNightPlanId, players, lineups } = state;
 
   const [view, setView] = useState(VIEW_LIST);
@@ -25,17 +36,7 @@ export default function GameDayPanel({ state, dispatch, placements, playerProfil
   );
 
   // Check if any set is currently live, auto-detect on mount
-  const activeLiveSet = useMemo(() => {
-    if (!activePlan?.matches) return null;
-    for (const match of activePlan.matches) {
-      for (const set of match.sets || []) {
-        if (set.live?.active) {
-          return { matchIndex: match.matchIndex, setIndex: set.setIndex };
-        }
-      }
-    }
-    return null;
-  }, [activePlan]);
+  const activeLiveSet = findLiveSet(activePlan);
 
   // ---- handlers ----------------------------------------------------
 
@@ -118,7 +119,6 @@ export default function GameDayPanel({ state, dispatch, placements, playerProfil
         matchIndex={liveMatch.matchIndex}
         setIndex={liveMatch.setIndex}
         players={players}
-        lineups={lineups}
         dispatch={dispatch}
         onEnd={handleEndLive}
       />

@@ -36,13 +36,6 @@ export default function useRallyPlayback(totalTouches) {
     return clearTimer;
   }, [isPlaying, speed, totalTouches, clearTimer]);
 
-  // Stop playing if we reach the end
-  useEffect(() => {
-    if (currentTouchIndex >= totalTouches - 1 && isPlaying) {
-      setIsPlaying(false);
-    }
-  }, [currentTouchIndex, totalTouches, isPlaying]);
-
   const goNext = useCallback(() => {
     setCurrentTouchIndex(prev => Math.min(prev + 1, totalTouches - 1));
   }, [totalTouches]);

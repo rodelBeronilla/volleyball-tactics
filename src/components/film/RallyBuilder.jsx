@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { STATS, PLAYER_STAT_GROUPS } from '../../data/statCategories';
 import { POSITIONS, ZONE_CENTERS } from '../../data/positions';
 import TagSelector from './TagSelector';
@@ -18,6 +18,11 @@ const QUICK_ACTIONS = [
  * Build a rally touch-by-touch.
  * User flow: select player -> tap court for ball position -> pick action -> touch added.
  */
+function createTouch(fields) {
+  const now = Date.now();
+  return { id: 'touch-' + now + '-' + Math.random().toString(36).slice(2, 6), timestamp: now, ...fields };
+}
+
 export default function RallyBuilder({
   rally = null,
   players = [],
@@ -42,7 +47,7 @@ export default function RallyBuilder({
   const [touches, setTouches] = useState(rally?.filmReview?.touches || []);
   const [tags, setTags] = useState(rally?.filmReview?.tags || []);
   const [notes, setNotes] = useState(rally?.filmReview?.notes || '');
-  const [playerPositions, setPlayerPositions] = useState(
+  const [playerPositions] = useState(
     rally?.filmReview?.playerPositions || buildDefaultPositions(),
   );
 
@@ -73,7 +78,7 @@ export default function RallyBuilder({
   };
 
   // Handle court tap to set ball position
-  const handleCourtClick = useCallback((e) => {
+  const handleCourtClick = (e) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 94 - 2;
@@ -93,22 +98,20 @@ export default function RallyBuilder({
       setPendingBallTo({ x: cx, y: cy });
       setShowActionPicker(true);
     }
-  }, [selectedPlayerId, pendingBallFrom]);
+  };
 
   // Select an action to finalize the touch
-  const handleActionSelect = useCallback((action) => {
+  const handleActionSelect = (action) => {
     if (!selectedPlayerId) return;
 
-    const newTouch = {
-      id: 'touch-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    const newTouch = createTouch({
       order: touches.length + 1,
       playerId: selectedPlayerId,
       action,
       ballFrom: pendingBallFrom || { x: 45, y: 45 },
       ballTo: pendingBallTo || pendingBallFrom || { x: 45, y: 45 },
       note: '',
-      timestamp: Date.now(),
-    };
+    });
 
     setTouches(prev => [...prev, newTouch]);
     setActiveTouchIndex(touches.length);
@@ -116,23 +119,23 @@ export default function RallyBuilder({
     setPendingBallFrom(null);
     setPendingBallTo(null);
     setShowActionPicker(false);
-  }, [selectedPlayerId, pendingBallFrom, pendingBallTo, touches.length]);
+  };
 
-  const handleDeleteTouch = useCallback((index) => {
+  const handleDeleteTouch = (index) => {
     setTouches(prev => {
       const next = prev.filter((_, i) => i !== index).map((t, i) => ({ ...t, order: i + 1 }));
       return next;
     });
     setActiveTouchIndex(prev => Math.max(0, Math.min(prev, touches.length - 2)));
-  }, [touches.length]);
+  };
 
-  const handleToggleTag = useCallback((tagId) => {
+  const handleToggleTag = (tagId) => {
     setTags(prev =>
       prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]
     );
-  }, []);
+  };
 
-  const handleSave = useCallback(() => {
+  const handleSave = () => {
     if (isEditing && rally?.id) {
       // Update existing rally's film review
       dispatch({
@@ -165,17 +168,14 @@ export default function RallyBuilder({
       });
     }
     onSave?.();
-  }, [
-    isEditing, rally, dispatch, matchId, setNumber, rotation,
-    ourScore, theirScore, servingTeam, outcome, touches, tags, notes, playerPositions, onSave,
-  ]);
+  };
 
-  const cancelSelection = useCallback(() => {
+  const cancelSelection = () => {
     setSelectedPlayerId(null);
     setPendingBallFrom(null);
     setPendingBallTo(null);
     setShowActionPicker(false);
-  }, []);
+  };
 
   // Build current ball position for visualization
   const currentBall = useMemo(() => {

@@ -67,8 +67,6 @@ export default function LiveEntry({ match, players, lineups, statEntries, dispat
     });
   };
 
-  const currentSet = match.sets.find(s => s.number === activeSetNumber);
-
   return (
     <div className="flex flex-col h-full">
       {/* Opponent + controls header */}

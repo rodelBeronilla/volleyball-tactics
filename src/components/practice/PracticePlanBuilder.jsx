@@ -4,7 +4,7 @@ import DrillBlockCard from './DrillBlockCard';
 import DrillLibrary from './DrillLibrary';
 import PlanSummary from './PlanSummary';
 
-export default function PracticePlanBuilder({ plan, players, dispatch, onBack, playerProfiles }) {
+export default function PracticePlanBuilder({ plan, players, dispatch, onBack }) {
   const [showLibrary, setShowLibrary] = useState(false);
 
   const drillMap = useMemo(() => {

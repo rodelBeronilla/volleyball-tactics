@@ -12,7 +12,7 @@ function formatDate(dateStr) {
   }
 }
 
-export default function PracticePanel({ state, dispatch, playerProfiles }) {
+export default function PracticePanel({ state, dispatch }) {
   const drillMap = useMemo(() => {
     const map = {};
     DRILLS.forEach((d) => { map[d.id] = d; });
@@ -72,7 +72,6 @@ export default function PracticePanel({ state, dispatch, playerProfiles }) {
         players={players}
         dispatch={dispatch}
         onBack={handleBack}
-        playerProfiles={playerProfiles}
       />
     );
   }

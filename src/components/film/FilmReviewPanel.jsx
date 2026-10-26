@@ -8,7 +8,7 @@ import RallyPlayback from './RallyPlayback';
  * Two primary views: RallyLibrary (browse) and RallyBuilder (create/edit).
  * When a rally is selected from the library, opens RallyPlayback.
  */
-export default function FilmReviewPanel({ state, dispatch, placements, playerProfiles }) {
+export default function FilmReviewPanel({ state, dispatch }) {
   // 'library' | 'builder' | 'playback'
   const [view, setView] = useState('library');
   const [selectedRally, setSelectedRally] = useState(null);

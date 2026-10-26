@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppState } from './hooks/useAppState';
 import Court from './components/court/Court';
 import PlayerStrategyCard from './components/court/PlayerStrategyCard';
@@ -16,7 +16,7 @@ import { POSITIONS } from './data/positions';
 import { getServeReceiveZones, getDefenseZones, ATTACK_INDICATORS, DEFENSE_SCENARIOS } from './data/coverageZones';
 
 export default function App() {
-  const { state, dispatch, activeLineup, activeMatch, placements, playerProfiles } = useAppState();
+  const { state, dispatch, activeLineup, activeMatch, currentSlots, placements, playerProfiles } = useAppState();
   const [courtView, setCourtView] = useState('offense'); // 'offense' | 'receive' | 'defense'
   const [defenseScenario, setDefenseScenario] = useState('left'); // 'left' | 'right' | 'middle'
 
@@ -26,11 +26,11 @@ export default function App() {
 
   // Sync court phase from the view toggle
   const courtPhaseForView = courtView === 'offense' ? 'attack' : courtView === 'receive' ? 'receive' : 'defense';
-  useMemo(() => {
+  useEffect(() => {
     if (courtPhaseForView !== state.courtPhase) {
       dispatch({ type: 'SET_COURT_PHASE', phase: courtPhaseForView });
     }
-  }, [courtPhaseForView]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [courtPhaseForView, state.courtPhase, dispatch]);
 
   // Generate coverage zones dynamically from current rotation + placements
   // Compute SCENARIO-AWARE defense placements — players move to correct spots
@@ -120,20 +120,14 @@ export default function App() {
     const libero = state.players.find(p => p.id === activeLineup.liberoId);
     const subFor = placements.find(p => p.isLiberoIn);
     if (!subFor || !libero) return null;
-    // Find who the libero replaced (the original middle in that slot)
-    const originalId = activeLineup.slots
-      ? Object.entries(activeLineup.slots).find(([, pid]) => {
-          const player = state.players.find(pl => pl.id === pid);
-          return player?.position === 'middle';
-        })
-      : null;
-    const originalPlayer = originalId ? state.players.find(p => p.id === originalId[1]) : null;
+    // The player the libero replaced is whoever the rotation puts in that position
+    const replacedId = currentSlots?.[subFor.rotationalPosition];
     return {
       libero,
-      replacesPlayer: originalPlayer,
+      replacesPlayer: state.players.find(p => p.id === replacedId) || null,
       slot: subFor.rotationalPosition,
     };
-  }, [activeLineup, placements, state.players]);
+  }, [activeLineup, placements, currentSlots, state.players]);
 
   return (
     <div className="flex flex-col h-full">
@@ -239,7 +233,10 @@ export default function App() {
                   <div>
                     <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">Back Row</div>
                     {rotationInfo.backRow.map(p => {
-                      const resp = responsibilities[p.slot];
+                      // A libero can't attack above the net, so it never inherits an attack duty
+                      const resp = p.roleLabel === 'Libero' && courtView === 'offense'
+                        ? 'Dig / cover hitters'
+                        : responsibilities[p.slot];
                       return (
                         <div key={p.slot} className="mb-1.5">
                           <div className="text-xs text-white font-semibold">{p.playerName}</div>
@@ -287,17 +284,17 @@ export default function App() {
         )}
 
         {state.activeTab === 'gameday' && (
-          <GameDayPanel state={state} dispatch={dispatch} placements={placements} playerProfiles={playerProfiles} />
+          <GameDayPanel state={state} dispatch={dispatch} />
         )}
         {state.activeTab === 'stats' && (
           <StatsPanel state={state} dispatch={dispatch} activeMatch={activeMatch}
             activeLineup={activeLineup} playerProfiles={playerProfiles} placements={placements} />
         )}
         {state.activeTab === 'practice' && (
-          <PracticePanel state={state} dispatch={dispatch} playerProfiles={playerProfiles} />
+          <PracticePanel state={state} dispatch={dispatch} />
         )}
         {state.activeTab === 'film' && (
-          <FilmReviewPanel state={state} dispatch={dispatch} placements={placements} playerProfiles={playerProfiles} />
+          <FilmReviewPanel state={state} dispatch={dispatch} />
         )}
         {state.activeTab === 'team' && (
           <TeamPanel state={state} dispatch={dispatch} activeLineup={activeLineup} />
