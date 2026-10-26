@@ -33,6 +33,9 @@ export default function Court({
   const [dragPos, setDragPos] = useState(null);
   // Tap detection buffer
   const pointerStart = useRef(null);
+  // Pointer capture retargets the click that follows a token tap to the svg;
+  // this flag stops that click from being read as "tap on empty court".
+  const tokenClick = useRef(false);
 
   useSwipeGesture(svgRef, onSwipeLeft, onSwipeRight, draggingRef);
 
@@ -119,6 +122,7 @@ export default function Court({
       }
     }
 
+    tokenClick.current = true;
     pointerStart.current = null;
     draggingRef.current = false;
     setDragging(null);
@@ -127,6 +131,10 @@ export default function Court({
 
   // Tap on empty court = deselect
   const handleCourtTap = useCallback((e) => {
+    if (tokenClick.current) {
+      tokenClick.current = false;
+      return;
+    }
     if (e.target === svgRef.current && selectedSlot != null) {
       dispatch({ type: 'DESELECT_PLAYER' });
     }
@@ -144,9 +152,9 @@ export default function Court({
       ref={svgRef}
       viewBox="-2 -5 94 100"
       className="w-full max-h-full"
-      style={{ touchAction: 'none' }}
       preserveAspectRatio="xMidYMid meet"
       style={{ touchAction: 'none' }}
+      onPointerDown={() => { tokenClick.current = false; }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
