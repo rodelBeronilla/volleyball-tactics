@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAppState } from './hooks/useAppState';
+import { useServerSync } from './hooks/useServerSync';
 import { useRoute, navigate } from './router';
 import { resolveRoute, pathOf } from './nav';
 import { Sidebar, BottomBar } from './components/shell/Navigation';
@@ -26,6 +27,7 @@ import { buttonClass } from './components/shell/styles';
 export default function App() {
   const app = useAppState();
   const { state, dispatch, activeLineup, playerProfiles } = app;
+  const sync = useServerSync(state);
 
   const route = useRoute();
   const { section, page, canonical } = resolveRoute(route);
@@ -44,7 +46,7 @@ export default function App() {
       <Sidebar section={section} page={page} />
       <div className="flex-1 flex flex-col min-w-0">
         <main className="flex-1 flex flex-col min-h-0">
-          <Route key={canonical} {...pageProps} app={app} param={param} activeLineup={activeLineup} playerProfiles={playerProfiles} />
+          <Route key={canonical} {...pageProps} app={app} sync={sync} param={param} activeLineup={activeLineup} playerProfiles={playerProfiles} />
         </main>
         <BottomBar section={section} />
       </div>
@@ -52,7 +54,7 @@ export default function App() {
   );
 }
 
-function Route({ section, page, state, dispatch, app, param, activeLineup, playerProfiles }) {
+function Route({ section, page, state, dispatch, app, sync, param, activeLineup, playerProfiles }) {
   const pageProps = { section, page, state, dispatch };
   const toolTab = tab => navigate(`${pathOf(section.id, page.id)}/${tab}`);
 
@@ -146,7 +148,7 @@ function Route({ section, page, state, dispatch, app, param, activeLineup, playe
     case 'team':
       if (page.id === 'roster') return <Page {...pageProps}><RosterPanel players={state.players} dispatch={dispatch} activeLineup={activeLineup} statEntries={state.statEntries} /></Page>;
       if (page.id === 'lineups') return <Page {...pageProps}><LineupPanel lineups={state.lineups} activeLineupId={state.activeLineupId} players={state.players} dispatch={dispatch} /></Page>;
-      return <Page {...pageProps}><DataSettings state={state} dispatch={dispatch} /></Page>;
+      return <Page {...pageProps}><DataSettings state={state} dispatch={dispatch} sync={sync} /></Page>;
 
     default:
       return <HomePage state={state} />;

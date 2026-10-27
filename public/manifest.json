@@ -2,7 +2,7 @@
   "name": "Volleyball Tactics",
   "short_name": "VB Tactics",
   "description": "Volleyball rotation playbook, stat tracking and lineup analytics",
-  "start_url": "/volleyball-tactics/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#0f1117",
