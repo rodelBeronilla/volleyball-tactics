@@ -1,0 +1,102 @@
+# The on-premises half of the platform: run this on your own server.
+#
+#   cp .env.example .env            # then fill in POSTGRES_PASSWORD and SYNC_TOKEN
+#   docker compose up -d --build    # postgres + api + pipeline
+#   docker compose --profile edge up -d   # + Caddy with automatic HTTPS (set API_DOMAIN)
+#   docker compose --profile bi up -d     # + Metabase for self-hosted dashboards
+#
+# The pipeline runs with PIPELINE_TARGET=local (DuckDB in the `lake` volume) until you
+# point it at GCP: set PIPELINE_TARGET=gcp, GCP_PROJECT, GCS_BUCKET and drop the
+# service-account key at ./secrets/gcp-sa.json (see docs/platform/deploy-gcp.md).
+name: volleyball-tactics
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-vt}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vt} -d ${POSTGRES_DB:-vt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    image: vt-api:local
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vt}
+      SYNC_TOKEN: ${SYNC_TOKEN:?set SYNC_TOKEN in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      MAX_PAYLOAD_MB: ${MAX_PAYLOAD_MB:-25}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  pipeline:
+    build: ./pipeline
+    image: vt-pipeline:local
+    command: ["schedule", "--every", "${PIPELINE_INTERVAL_SECONDS:-900}"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vt}
+      PIPELINE_TARGET: ${PIPELINE_TARGET:-local}
+      LAKE_DIR: /lake
+      SCORESHEETS_DIR: /scoresheets
+      GCP_PROJECT: ${GCP_PROJECT:-}
+      GCS_BUCKET: ${GCS_BUCKET:-}
+      BQ_LOCATION: ${BQ_LOCATION:-northamerica-northeast2}
+      FRESHNESS_HOURS: ${FRESHNESS_HOURS:-48}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp-sa.json
+    volumes:
+      - lake:/lake
+      - ./scoresheets:/scoresheets:ro
+      - ./secrets:/secrets:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Optional: HTTPS in front of the API with automatic certificates.
+  caddy:
+    profiles: ["edge"]
+    image: caddy:2-alpine
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN (e.g. vt-api.example.com) in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./edge/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Optional: self-hosted dashboards. Connect it to Postgres (operational) and/or BigQuery (marts).
+  metabase:
+    profiles: ["bi"]
+    image: metabase/metabase:latest
+    ports:
+      - "${METABASE_PORT:-3000}:3000"
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    volumes:
+      - metabase_data:/metabase-data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  lake:
+  caddy_data:
+  caddy_config:
+  metabase_data:
