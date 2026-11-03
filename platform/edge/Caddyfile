@@ -1,9 +1,23 @@
-# HTTPS for the sync API. Caddy obtains and renews the certificate automatically.
-{$API_DOMAIN} {
+# This project's own Caddy (compose profile "edge"): the web app at the site root and the
+# sync API under /api, on one origin, with an automatic certificate for SITE_DOMAIN.
+{$SITE_DOMAIN} {
 	encode zstd gzip
-	reverse_proxy api:8080
+
+	handle_path /api/* {
+		request_body {
+			max_size 25MB
+		}
+		reverse_proxy api:8080
+	}
+
+	handle {
+		reverse_proxy web:8080
+	}
+
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 }

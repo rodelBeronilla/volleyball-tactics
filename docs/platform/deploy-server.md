@@ -1,7 +1,8 @@
 # Deploying on your server
 
-What you get: Postgres (system of record), the sync API, and the pipeline loop, all as
-containers. Optionally Caddy for HTTPS and Metabase for dashboards.
+What you get: Postgres (system of record), the sync API, the web app and the pipeline loop,
+all as containers, published on one HTTPS name: the app at `https://SITE_DOMAIN/` and the
+API at `https://SITE_DOMAIN/api`. Optionally Metabase for dashboards.
 
 Requirements: Docker with the Compose plugin, a DNS name pointing at the server if the
 app should reach it from outside your network (recommended; the app runs on phones).
@@ -21,29 +22,43 @@ Edit `.env`:
 | `POSTGRES_PASSWORD` | anything strong |
 | `SYNC_TOKEN` | the generated secret; coaches type it once into the app |
 | `CORS_ORIGINS` | every origin the app is served from, comma-separated: `https://rodelberonilla.github.io`, the Cloud Run URL, `http://localhost:5173` for development |
-| `API_DOMAIN` | e.g. `vt-api.example.com` (only with the `edge` profile) |
+| `SITE_DOMAIN` | the public name, e.g. `volleyballtactics.beronilla.rodeo`; baked into the web build as the API URL |
+| `COMPOSE_FILE`, `PROXY_NETWORK` | only when the server already runs a reverse proxy (see below) |
 | `PIPELINE_TARGET` | `local` to start; `gcp` after [deploy-gcp.md](deploy-gcp.md) |
 
 ## 2. Start
 
 ```bash
-docker compose up -d --build                 # postgres, api, pipeline
-docker compose --profile edge up -d          # + Caddy on :80/:443 with automatic certificates
+docker compose up -d --build                 # postgres, api, web, pipeline (ports on 127.0.0.1 only)
 docker compose logs -f api pipeline
 curl -s http://localhost:8080/healthz        # {"status":"ok","version":"0.1.0"}
+curl -s -o /dev/null -w "%{http_code}
+" http://localhost:8088/   # the web app
 ```
+
+Then publish it, in one of two ways:
+
+- **The server already has a reverse proxy on 80/443** (this server: the plex-stack Caddy on
+  `media-net`). Set `COMPOSE_FILE=compose.yaml;compose.shared-proxy.yaml` (`:` on Linux) and
+  `PROXY_NETWORK` in `.env`, so api and web join that network as `vt-api` and `vt-web`.
+  Create the DNS record, then append [`platform/edge/existing-caddy.caddy`](../../platform/edge/existing-caddy.caddy)
+  to the proxy's Caddyfile and `docker exec caddy caddy reload --config /etc/caddy/Caddyfile`.
+  DNS first: Caddy requests the certificate as soon as the block loads.
+- **Nothing else listens on 80/443**: `docker compose --profile edge up -d` starts this
+  project's own Caddy ([`platform/edge/Caddyfile`](../../platform/edge/Caddyfile)) with an
+  automatic certificate for `SITE_DOMAIN`.
 
 The API applies its SQL migrations on start (`vt-api migrate`), safely even with several
 replicas. The pipeline runs every `PIPELINE_INTERVAL_SECONDS` (15 minutes by default) and
 logs one JSON line per step.
 
 No public domain? Alternatives that need no open inbound port: a Cloudflare Tunnel or
-Tailscale Funnel in front of `api:8080`. The app only needs an HTTPS URL it can reach.
+Tailscale Funnel in front of `web:8080` and `api:8080`. The app only needs an HTTPS URL it can reach.
 
 ## 3. Connect the app
 
 In the app: **Team → Data → Shared database**. Enter the server URL
-(`https://vt-api.example.com`) and the token, tick *Sync automatically*, Save, then
+(`https://SITE_DOMAIN/api`, pre-filled in the server's own build) and the token, tick *Sync automatically*, Save, then
 *Sync now*. The status line shows what the server stored and anything it rejected.
 Every change is pushed a few seconds later from then on.
 
@@ -70,7 +85,7 @@ show every difference from what the app recorded.
 ## 6. Dashboards on the server (optional)
 
 ```bash
-docker compose --profile bi up -d       # Metabase on :3000
+docker compose --profile bi up -d       # Metabase on 127.0.0.1:3001
 ```
 
 Add Postgres as a database (host `postgres`, db/user/password from `.env`) for operational

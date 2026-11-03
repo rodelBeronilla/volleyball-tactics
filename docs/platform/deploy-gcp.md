@@ -31,7 +31,7 @@ Cloud Run job `vt-pipeline` + Cloud Scheduler, two log-based metrics with alert 
 Copy the `github_actions_variables` output into the repository's
 **Settings → Secrets and variables → Actions → Variables** (they are not secrets; auth is
 Workload Identity Federation). Add `VITE_API_URL` = the public URL of the API on your
-server (`https://vt-api.example.com`).
+server (`https://volleyballtactics.beronilla.rodeo/api`).
 
 Push to `main` (or run the *Deploy to Cloud Run* workflow): it builds the web and pipeline
 images, pushes them to Artifact Registry, deploys the service and updates the job. The

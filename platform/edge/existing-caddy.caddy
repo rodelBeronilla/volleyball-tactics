@@ -1,0 +1,47 @@
+# Site block for a Caddy that already runs on the server (here: the plex-stack Caddy,
+# C:\Users\central\plex-stack\config\caddy\Caddyfile). Append it to that Caddyfile, then
+#   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+# Requires compose.shared-proxy.yaml (vt-api / vt-web on the proxy's network) and a DNS
+# record for the name below. Add the DNS record FIRST: Caddy starts asking Let's Encrypt
+# for a certificate as soon as the block is loaded, and failed validations are rate-limited.
+#
+# The web app is at the root and the sync API under /api on the same origin, so the
+# browser needs no CORS. handle_path strips /api: /api/v1/sync reaches the API as /v1/sync.
+# `import token_scrub` is the plex-stack snippet that drops Authorization (the sync
+# token) and other credentials from logged requests.
+volleyballtactics.beronilla.rodeo {
+	encode zstd gzip
+	log {
+		output file /var/log/caddy/volleyballtactics.log {
+			roll_size 10mb
+			roll_keep 3
+		}
+		format filter {
+			wrap json
+			fields {
+				import token_scrub
+			}
+		}
+	}
+
+	handle_path /api/* {
+		request_body {
+			max_size 25MB
+		}
+		header Cache-Control "no-store"
+		reverse_proxy vt-api:8080
+	}
+
+	handle {
+		reverse_proxy vt-web:8080
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		# The app embeds its own tools in a same-origin iframe.
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	}
+}

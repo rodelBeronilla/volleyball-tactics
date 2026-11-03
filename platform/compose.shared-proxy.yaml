@@ -1,0 +1,23 @@
+# Join api + web to an existing reverse proxy's Docker network, under names that cannot
+# clash with that stack's own services. The proxy then reaches them as vt-api:8080 and
+# vt-web:8080 (see edge/existing-caddy.caddy).
+#
+#   docker compose -f compose.yaml -f compose.shared-proxy.yaml up -d --build
+#   # or put COMPOSE_FILE=compose.yaml:compose.shared-proxy.yaml in .env
+#     (use ; instead of : as the separator on Windows)
+services:
+  api:
+    networks:
+      default: {}
+      proxy:
+        aliases: [vt-api]
+  web:
+    networks:
+      default: {}
+      proxy:
+        aliases: [vt-web]
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-media-net}
