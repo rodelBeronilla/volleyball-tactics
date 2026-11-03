@@ -3,7 +3,7 @@ import Icon from '../shell/Icon';
 import { Card, SectionTitle } from '../shell/ui';
 import { buttonClass } from '../shell/styles';
 import { SeasonTiles } from '../analytics/SeasonPage';
-import { SECTIONS, pathOf, REPO_URL } from '../../nav';
+import { SECTIONS, pathOf } from '../../nav';
 import { href } from '../../router';
 import { seasonSummary } from '../../utils/seasonSummary';
 import courtPreview from '../../assets/previews/court.webp';
@@ -102,9 +102,6 @@ export default function HomePage({ state }) {
               </div>
             ))}
           </div>
-          <a href={REPO_URL} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-accent)]">
-            <Icon name="github" className="w-4 h-4" /> Read how it's built
-          </a>
         </Card>
 
         <p className="mt-8 text-xs text-[var(--color-muted)]">

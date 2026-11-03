@@ -57,8 +57,6 @@ export const SECTIONS = [
   },
 ];
 
-export const REPO_URL = 'https://github.com/rodelBeronilla/volleyball-tactics';
-
 export const pathOf = (sectionId, pageId) => (sectionId === 'home' ? '/' : `/${sectionId}/${pageId}`);
 
 /** Resolve route segments to a section and page; unknown routes fall back to a valid one. */

@@ -1,4 +1,4 @@
-import { SECTIONS, pathOf, REPO_URL } from '../../nav';
+import { SECTIONS, pathOf } from '../../nav';
 import { href } from '../../router';
 import Icon from './Icon';
 
@@ -50,9 +50,6 @@ export function Sidebar({ section, page }) {
         ))}
       </nav>
       <div className="px-5 py-4 border-t border-[var(--color-line)] text-xs text-[var(--color-muted)] space-y-2">
-        <a href={REPO_URL} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
-          <Icon name="github" className="w-4 h-4" /> Source on GitHub
-        </a>
         <p>Fictional roster, simulated season.</p>
       </div>
     </aside>
