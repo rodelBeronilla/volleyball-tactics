@@ -38,12 +38,14 @@ curl -s -o /dev/null -w "%{http_code}
 
 Then publish it, in one of two ways:
 
-- **The server already has a reverse proxy on 80/443** (this server: the plex-stack Caddy on
-  `media-net`). Set `COMPOSE_FILE=compose.yaml;compose.shared-proxy.yaml` (`:` on Linux) and
-  `PROXY_NETWORK` in `.env`, so api and web join that network as `vt-api` and `vt-web`.
-  Create the DNS record, then append [`platform/edge/existing-caddy.caddy`](../../platform/edge/existing-caddy.caddy)
-  to the proxy's Caddyfile and `docker exec caddy caddy reload --config /etc/caddy/Caddyfile`.
-  DNS first: Caddy requests the certificate as soon as the block loads.
+- **The server already has a reverse proxy on 80/443** (this server: the plex-stack Caddy).
+  Set `COMPOSE_FILE=compose.yaml;compose.shared-proxy.yaml` (`:` on Linux) and
+  `PROXY_NETWORK=shared-proxy` in `.env`, so api and web join the proxy's network for
+  outside projects as `vt-api` and `vt-web`. Never use the proxy stack's internal network
+  (`media-net`): from there the API could reach that stack's private services.
+  Create the DNS record, then copy [`platform/edge/existing-caddy.caddy`](../../platform/edge/existing-caddy.caddy)
+  to `plex-stack/config/caddy/sites.d/volleyballtactics.caddy`, validate and reload
+  (commands in that file). DNS first: Caddy requests the certificate as soon as the block loads.
 - **Nothing else listens on 80/443**: `docker compose --profile edge up -d` starts this
   project's own Caddy ([`platform/edge/Caddyfile`](../../platform/edge/Caddyfile)) with an
   automatic certificate for `SITE_DOMAIN`.

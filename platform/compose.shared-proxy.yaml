@@ -2,6 +2,10 @@
 # clash with that stack's own services. The proxy then reaches them as vt-api:8080 and
 # vt-web:8080 (see edge/existing-caddy.caddy).
 #
+# The network must be one the proxy keeps for outside projects (on this server:
+# `shared-proxy`, created by plex-stack, #418), never the proxy stack's internal network:
+# from there the API container could reach that stack's private services.
+#
 #   docker compose -f compose.yaml -f compose.shared-proxy.yaml up -d --build
 #   # or put COMPOSE_FILE=compose.yaml:compose.shared-proxy.yaml in .env
 #     (use ; instead of : as the separator on Windows)
@@ -20,4 +24,4 @@ services:
 networks:
   proxy:
     external: true
-    name: ${PROXY_NETWORK:-media-net}
+    name: ${PROXY_NETWORK:-shared-proxy}

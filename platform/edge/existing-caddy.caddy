@@ -1,9 +1,12 @@
-# Site block for a Caddy that already runs on the server (here: the plex-stack Caddy,
-# C:\Users\central\plex-stack\config\caddy\Caddyfile). Append it to that Caddyfile, then
-#   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
-# Requires compose.shared-proxy.yaml (vt-api / vt-web on the proxy's network) and a DNS
-# record for the name below. Add the DNS record FIRST: Caddy starts asking Let's Encrypt
-# for a certificate as soon as the block is loaded, and failed validations are rate-limited.
+# Site block for a Caddy that already runs on the server. On this server that is the
+# plex-stack Caddy, which loads one file per outside project from its sites.d folder:
+#   copy to   C:\Users\central\plex-stack\config\caddy\sites.d\volleyballtactics.caddy
+#   validate  docker exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+#   reload    docker exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+# Never edit plex-stack's own Caddyfile. Requires compose.shared-proxy.yaml (vt-api / vt-web
+# on the shared-proxy network) and a DNS record for the name below. Add the DNS record
+# FIRST: Caddy asks Let's Encrypt for a certificate as soon as the block loads, and failed
+# validations are rate-limited.
 #
 # The web app is at the root and the sync API under /api on the same origin, so the
 # browser needs no CORS. handle_path strips /api: /api/v1/sync reaches the API as /v1/sync.
