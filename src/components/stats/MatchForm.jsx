@@ -12,9 +12,11 @@ export default function MatchForm({ lineups, activeLineupId, onSave, onClose }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-[var(--color-surface-2)] rounded-t-2xl p-5 space-y-4"
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-lg bg-[var(--color-surface-2)] border border-[var(--color-line)] rounded-t-2xl sm:rounded-2xl p-5 space-y-4"
         onClick={e => e.stopPropagation()}
       >
         <h3 className="text-lg font-bold text-white">New Match</h3>
@@ -49,7 +51,7 @@ export default function MatchForm({ lineups, activeLineupId, onSave, onClose }) 
                   onClick={() => setLineupId(l.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                     l.id === lineupId
-                      ? 'bg-[var(--color-accent)] text-white'
+                      ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]'
                       : 'bg-[var(--color-surface-3)] text-gray-400'
                   }`}
                 >
@@ -62,7 +64,7 @@ export default function MatchForm({ lineups, activeLineupId, onSave, onClose }) 
             <button type="button" onClick={onClose} className="flex-1 py-3 rounded-lg bg-[var(--color-surface-3)] text-gray-300 font-medium">
               Cancel
             </button>
-            <button type="submit" className="flex-1 py-3 rounded-lg bg-[var(--color-accent)] text-white font-bold">
+            <button type="submit" className="flex-1 py-3 rounded-lg bg-[var(--color-accent)] text-[var(--color-accent-ink)] font-bold">
               Start Match
             </button>
           </div>

@@ -1,0 +1,13 @@
+.git
+node_modules
+dist
+docs
+platform/.venv
+platform/.lake
+platform/secrets
+platform/scoresheets
+platform/infra
+**/__pycache__
+**/.pytest_cache
+*.duckdb
+.env

@@ -50,7 +50,7 @@ export default function CompositionPanel({ players, activeLineup, statEntries = 
   }, [activeLineup, players, statEntries]);
 
   return (
-    <div className="p-3 space-y-3 overflow-y-auto">
+    <div className="space-y-3">
       {/* Score */}
       <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5">
         <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${

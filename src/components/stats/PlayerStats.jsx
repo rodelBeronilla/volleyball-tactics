@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { POSITIONS } from '../../data/positions';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, ARCHETYPES } from '../../data/archetypes';
 import { STATS, PLAYER_STAT_GROUPS } from '../../data/statCategories';
@@ -40,14 +40,15 @@ function TrendArrow({ direction }) {
   return <span className="text-gray-500 text-xs">&#9654;</span>;
 }
 
-export default function PlayerStats({ players, statEntries }) {
-  const [selectedId, setSelectedId] = useState(null);
+/** Player profile view. Selection comes from the route (#/analytics/players/<id>). */
+export default function PlayerStats({ players, statEntries, matches, playerProfiles, selectedId, onSelect }) {
   const selectedPlayer = players.find(p => p.id === selectedId);
 
+  // Profiles are computed once in useAppState (with match history for trends)
   const profile = useMemo(() => {
     if (!selectedPlayer) return null;
-    return computeFullProfile(selectedPlayer, statEntries, []);
-  }, [selectedPlayer, statEntries]);
+    return playerProfiles?.[selectedPlayer.id] ?? computeFullProfile(selectedPlayer, statEntries, matches);
+  }, [selectedPlayer, playerProfiles, statEntries, matches]);
 
   const narrative = useMemo(() => {
     if (!profile || !selectedPlayer) return '';
@@ -55,31 +56,32 @@ export default function PlayerStats({ players, statEntries }) {
   }, [profile, selectedPlayer]);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Player selector */}
-      <div className="flex gap-1.5 px-3 py-2 overflow-x-auto bg-[var(--color-surface-2)] border-b border-white/5">
+    <div className="flex flex-col lg:flex-row gap-3 lg:gap-8 lg:items-start">
+      {/* Player selector: chips on phones, a list beside the profile on desktop */}
+      <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible lg:w-52 shrink-0 lg:sticky lg:top-0 -mx-1 px-1 pb-1">
         {players.map(p => {
           const pos = POSITIONS[p.position] || POSITIONS.ds;
           const isActive = p.id === selectedId;
           return (
             <button
               key={p.id}
-              onClick={() => setSelectedId(isActive ? null : p.id)}
-              className={`flex items-center gap-1.5 shrink-0 px-2 py-1.5 rounded-lg transition-all ${
-                isActive ? 'ring-1 ring-white/30' : 'opacity-60'
+              onClick={() => onSelect(p.id)}
+              aria-current={isActive ? 'true' : undefined}
+              className={`flex items-center gap-2 shrink-0 px-2.5 py-1.5 rounded-lg transition-all text-left ${
+                isActive ? 'ring-1 ring-white/30' : 'opacity-70 hover:opacity-100'
               }`}
               style={{ background: isActive ? pos.color + '22' : 'transparent' }}
             >
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: pos.color }}>
                 {p.number}
               </div>
-              <span className="text-xs text-gray-300">{p.name}</span>
+              <span className="text-sm text-gray-200">{p.name}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 min-w-0 space-y-3 lg:max-w-3xl">
         {!selectedPlayer ? (
           <div className="text-center text-gray-500 py-8 text-sm">Select a player to view their profile</div>
         ) : !profile ? (
@@ -136,42 +138,39 @@ export default function PlayerStats({ players, statEntries }) {
               </div>
             </div>
 
-            {/* ── Performance Trends ── */}
-            {profile.matchHistory?.length >= 2 && (
-              <div>
-                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5 px-1">Trends</div>
-                <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5 space-y-3">
-                  {profile.statLine?.hitPct !== null && (
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-400">Hit %</span>
-                        {profile.trends?.attack && <TrendArrow direction={profile.trends.attack.direction} />}
+            {/* ── Performance Trends (only the series this player has data for) ── */}
+            {(() => {
+              const history = profile.matchHistory || [];
+              const series = [
+                { key: 'attack', label: 'Hit %', value: m => m.statLine?.hitPct, color: v => (v >= 0.25 ? '#22c55e' : v >= 0.15 ? '#eab308' : '#ef4444') },
+                { key: 'pass', label: 'Pass avg', value: m => m.statLine?.passAvg, color: v => (v >= 2.0 ? '#22c55e' : v >= 1.5 ? '#eab308' : '#ef4444') },
+                { key: 'set', label: 'Assists per set', value: m => (m.statLine?.assist ? m.statLine.assistsPerSet : null) },
+              ]
+                .map(sr => ({ ...sr, points: history.filter(m => sr.value(m) !== null && sr.value(m) !== undefined) }))
+                .filter(sr => sr.points.length >= 2);
+              if (series.length === 0) return null;
+              return (
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5 px-1">Trends by match</div>
+                  <div className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5 space-y-3">
+                    {series.map(sr => (
+                      <div key={sr.key}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-gray-400">{sr.label}</span>
+                          {profile.trends?.[sr.key] && <TrendArrow direction={profile.trends[sr.key].direction} />}
+                        </div>
+                        <SparkChart
+                          values={sr.points.map(sr.value)}
+                          height={32}
+                          labels={sr.points.map(m => m.opponent)}
+                          colorFn={sr.color}
+                        />
                       </div>
-                      <SparkChart
-                        values={profile.matchHistory.map(m => m.statLine?.hitPct).filter(v => v !== null)}
-                        height={32}
-                        labels={profile.matchHistory.map(m => m.opponent)}
-                        colorFn={v => v >= 0.25 ? '#22c55e' : v >= 0.15 ? '#eab308' : '#ef4444'}
-                      />
-                    </div>
-                  )}
-                  {profile.statLine?.passAvg !== null && (
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-400">Pass Avg</span>
-                        {profile.trends?.pass && <TrendArrow direction={profile.trends.pass.direction} />}
-                      </div>
-                      <SparkChart
-                        values={profile.matchHistory.map(m => m.statLine?.passAvg).filter(v => v !== null)}
-                        height={32}
-                        labels={profile.matchHistory.map(m => m.opponent)}
-                        colorFn={v => v >= 2.0 ? '#22c55e' : v >= 1.5 ? '#eab308' : '#ef4444'}
-                      />
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* ── Rotation Breakdown ── */}
             {Object.keys(profile.rotationProfile || {}).length >= 3 && (

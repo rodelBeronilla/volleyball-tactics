@@ -20,3 +20,10 @@ export function save(key, value) {
 export function remove(key) {
   localStorage.removeItem(PREFIX + key);
 }
+
+/** Remove every key this app owns, leaving other apps on the same origin alone. */
+export function clearAll() {
+  Object.keys(localStorage)
+    .filter(k => k.startsWith(PREFIX))
+    .forEach(k => localStorage.removeItem(k));
+}

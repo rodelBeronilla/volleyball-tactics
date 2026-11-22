@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+project_id        = "my-gcp-project"
+region            = "northamerica-northeast2"
+bq_location       = "northamerica-northeast2"
+github_repository = "rodelBeronilla/volleyball-tactics"
+alert_email       = "you@example.com"
+
+# Every 6 hours; the server uploads batches continuously, this job turns them into marts.
+pipeline_schedule = "15 */6 * * *"

@@ -164,7 +164,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
               onClick={() => dispatch({ type: 'SET_ACTIVE_SET', setNumber: s.number })}
               className={`px-2 py-1 rounded text-xs font-bold ${
                 s.number === activeSetNumber
-                  ? 'bg-[var(--color-accent)] text-white'
+                  ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]'
                   : 'bg-[var(--color-surface-3)] text-gray-400'
               }`}
             >
@@ -185,7 +185,7 @@ export default function VideoReviewEntry({ match, players, lineups, dispatch, cu
             onClick={() => dispatch({ type: 'SET_ROTATION', rotation: r })}
             className={`flex-1 py-1 rounded text-xs font-bold ${
               r === currentRotation
-                ? 'bg-[var(--color-accent)] text-white'
+                ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]'
                 : 'bg-[var(--color-surface-3)] text-gray-400'
             }`}
           >

@@ -96,9 +96,11 @@ export default function PlayerForm({ player, onSave, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-[var(--color-surface-2)] rounded-t-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-lg bg-[var(--color-surface-2)] border border-[var(--color-line)] rounded-t-2xl sm:rounded-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <h3 className="text-lg font-bold text-white">{player ? 'Edit Player' : 'Add Player'}</h3>
@@ -196,7 +198,7 @@ export default function PlayerForm({ player, onSave, onClose }) {
               Cancel
             </button>
             <button type="submit"
-              className="flex-1 py-3 rounded-lg bg-[var(--color-accent)] text-white font-bold">
+              className="flex-1 py-3 rounded-lg bg-[var(--color-accent)] text-[var(--color-accent-ink)] font-bold">
               {player ? 'Update' : 'Add'}
             </button>
           </div>

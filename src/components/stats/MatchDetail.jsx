@@ -1,101 +1,101 @@
 import { useMemo } from 'react';
 import { POSITIONS } from '../../data/positions';
-import { STATS, PLAYER_STAT_GROUPS } from '../../data/statCategories';
-import { aggregateByPlayer, computeStatLine, countSetsPlayed } from '../../utils/statAggregation';
+import { aggregateByPlayer, aggregateByRotation, computeStatLine, countSetsPlayed } from '../../utils/statAggregation';
+import { hitFmt } from '../../utils/seasonSummary';
+import { Card, SectionTitle } from '../shell/ui';
+import { th, thNum, td, tdNum } from '../shell/styles';
 
-export default function MatchDetail({ match, statEntries, players, onBack }) {
-  const matchEntries = useMemo(
-    () => statEntries.filter(e => e.matchId === match.id),
-    [statEntries, match.id]
-  );
+// Box-score columns: [header, title, value(statLine)]
+const COLUMNS = [
+  ['K', 'Kills (incl. tips and tooled)', l => l.totalKills],
+  ['E', 'Attack errors (incl. blocked)', l => (l.attackError || 0) + (l.attackBlocked || 0)],
+  ['TA', 'Total attempts', l => l.attackAttempts],
+  ['Hit', 'Hitting %: (K − E) / TA', l => hitFmt(l.hitPct)],
+  ['A', 'Assists', l => l.assist || 0],
+  ['SA', 'Service aces', l => l.ace || 0],
+  ['SE', 'Service errors', l => l.serviceError || 0],
+  ['R', 'Serve receptions', l => l.totalPasses],
+  ['Pass', 'Passing average (0–3)', l => (l.passAvg === null ? '—' : l.passAvg.toFixed(2))],
+  ['Dig', 'Digs', l => l.dig || 0],
+  ['BS', 'Block solos', l => l.blockSolo || 0],
+  ['BA', 'Block assists', l => l.blockAssist || 0],
+];
 
-  const playerStats = useMemo(() => {
+/** Box score for one match: set scores, a stat table per player and team rotation splits. */
+export default function MatchDetail({ match, statEntries, players }) {
+  const matchEntries = useMemo(() => statEntries.filter(e => e.matchId === match.id), [statEntries, match.id]);
+
+  const rows = useMemo(() => {
     const byPlayer = aggregateByPlayer(matchEntries);
-    return Object.entries(byPlayer).map(([playerId, counts]) => {
-      const player = players.find(p => p.id === playerId);
-      const setsPlayed = countSetsPlayed(matchEntries, playerId);
-      const statLine = computeStatLine(counts, setsPlayed);
-      return { player, statLine };
-    }).filter(p => p.player);
+    return players
+      .filter(p => byPlayer[p.id])
+      .map(p => ({ player: p, line: computeStatLine(byPlayer[p.id], countSetsPlayed(matchEntries, p.id)) }));
   }, [matchEntries, players]);
 
-  const setsWon = match.sets.filter(s => s.won === true).length;
-  const setsLost = match.sets.filter(s => s.won === false).length;
+  const rotations = useMemo(() => {
+    const byRot = aggregateByRotation(matchEntries.filter(e => e.playerId === '__team__'));
+    return [1, 2, 3, 4, 5, 6].map(r => {
+      const c = byRot[r]?.__team__ || {};
+      return { r, won: c.rallyWon || 0, lost: c.rallyLost || 0 };
+    });
+  }, [matchEntries]);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface-2)] border-b border-white/5">
-        <button onClick={onBack} className="text-gray-400 hover:text-white text-lg">‹</button>
-        <div className="flex-1 min-w-0">
-          <div className="text-white font-bold truncate">vs {match.opponent}</div>
-          <div className="text-xs text-gray-400">{match.date} · {setsWon}-{setsLost} sets</div>
-        </div>
-      </div>
-
-      {/* Set scores */}
-      <div className="flex gap-2 px-4 py-2 bg-[var(--color-surface)] border-b border-white/5">
+    <>
+      <div className="flex flex-wrap gap-2">
         {match.sets.map(s => (
-          <div key={s.number} className={`px-3 py-1.5 rounded-lg text-center text-xs font-bold ${
-            s.won === true ? 'bg-green-900/20 text-green-400 border border-green-800/30' :
-            s.won === false ? 'bg-red-900/20 text-red-400 border border-red-800/30' :
-            'bg-white/5 text-gray-400 border border-white/5'
+          <div key={s.number} className={`px-3 py-1.5 rounded-lg text-sm font-bold border ${
+            s.won === true ? 'bg-green-900/20 text-green-400 border-green-800/30'
+              : s.won === false ? 'bg-red-900/20 text-red-400 border-red-800/30'
+                : 'bg-white/5 text-gray-400 border-white/5'
           }`}>
-            Set {s.number}: {s.ourScore}-{s.theirScore}
+            Set {s.number}: {s.ourScore}–{s.theirScore}
           </div>
         ))}
       </div>
 
-      {/* Player stat lines */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {playerStats.length === 0 && (
-          <div className="text-center text-gray-500 py-8 text-sm">No stats recorded for this match</div>
-        )}
-        {playerStats.map(({ player, statLine }) => {
-          const pos = POSITIONS[player.position] || POSITIONS.ds;
-          return (
-            <div key={player.id} className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  style={{ background: pos.color }}
-                >
-                  {player.number}
-                </div>
-                <span className="text-white text-sm font-medium">{player.name}</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {PLAYER_STAT_GROUPS.map(group =>
-                  group.stats.map(statKey => {
-                    const val = statLine[statKey];
-                    if (!val) return null;
-                    const stat = STATS[statKey];
-                    return (
-                      <span key={statKey} className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        stat.positive
-                          ? 'bg-green-900/20 text-green-400'
-                          : 'bg-red-900/20 text-red-400'
-                      }`}>
-                        {stat.label}: {val}
+      <SectionTitle aside={`${matchEntries.length} events`}>Box score</SectionTitle>
+      {rows.length === 0 ? (
+        <p className="text-sm text-[var(--color-muted)]">No stats recorded for this match.</p>
+      ) : (
+        <Card className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-[var(--color-line)]">
+              <tr>
+                <th className={th}>Player</th>
+                {COLUMNS.map(([h, title]) => <th key={h} className={thNum} title={title}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ player, line }) => (
+                <tr key={player.id} className="border-b border-[var(--color-line)]/60 last:border-0">
+                  <td className={td}>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full inline-flex items-center justify-center text-[11px] font-bold text-white" style={{ background: (POSITIONS[player.position] || POSITIONS.ds).color }}>
+                        {player.number}
                       </span>
-                    );
-                  })
-                )}
-                {statLine.hitPct !== null && (
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-gray-300">
-                    Hit%: {(statLine.hitPct * 100).toFixed(0)}%
-                  </span>
-                )}
-                {statLine.passAvg !== null && (
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-gray-300">
-                    Pass: {statLine.passAvg.toFixed(1)}
-                  </span>
-                )}
-              </div>
+                      <span className="font-semibold">{player.name}</span>
+                    </span>
+                  </td>
+                  {COLUMNS.map(([h, , value]) => <td key={h} className={tdNum}>{value(line)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      <SectionTitle>Points by rotation</SectionTitle>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        {rotations.map(({ r, won, lost }) => (
+          <Card key={r} className="p-3 text-center">
+            <div className="text-xs text-[var(--color-muted)] font-semibold">R{r}</div>
+            <div className={`text-lg font-extrabold tabular-nums ${won > lost ? 'text-green-400' : won < lost ? 'text-red-400' : ''}`}>
+              {won}–{lost}
             </div>
-          );
-        })}
+          </Card>
+        ))}
       </div>
-    </div>
+    </>
   );
 }

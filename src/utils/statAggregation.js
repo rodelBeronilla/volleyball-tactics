@@ -99,8 +99,10 @@ export function computeStatLine(counts, setsPlayed = 1) {
   const totalKills = (c.kill || 0) + (c.attackTip || 0) + (c.attackTooled || 0);
   // Total attempts = kills + errors + blocked + zero-kill attempts kept in play
   const attackAttempts = totalKills + (c.attackError || 0) + (c.attackBlocked || 0) + (c.attackAttempt || 0);
+  // Hitting % = (kills - errors) / attempts; a blocked attack counts as an error
+  const attackErrors = (c.attackError || 0) + (c.attackBlocked || 0);
   const hitPct = attackAttempts > 0
-    ? (totalKills - (c.attackError || 0)) / attackAttempts
+    ? (totalKills - attackErrors) / attackAttempts
     : null;
 
   // Attack variety
@@ -158,7 +160,10 @@ export function countSetsPlayed(entries, playerId) {
   const setKeys = new Set();
   for (const e of entries) {
     if (e.type === 'summary') {
-      if (e.playerId === playerId) setKeys.add(`${e.matchId}-s`);
+      if (e.playerId === playerId) {
+        // Older summaries predate setNumbers; count them as one set
+        for (const n of e.setNumbers || ['s']) setKeys.add(`${e.matchId}-${n}`);
+      }
       continue;
     }
     if (e.playerId === playerId) {

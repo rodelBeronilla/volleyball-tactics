@@ -29,57 +29,17 @@ export const SYSTEMS = {
 
 export const SYSTEM_LIST = Object.values(SYSTEMS);
 
-export const FRICTION_PAIRS = [
-  { id: 'alistair-david', severity: 'high', description: 'David gets nervous, makes sloppy plays under Alistair intensity' },
-  { id: 'alistair-hari', severity: 'high', description: "Hari's body language drops, deflates under Alistair intensity" },
-  { id: 'rochelle-hari', severity: 'medium', description: "Rochelle gets frustrated with Hari's play" },
-  { id: 'alistair-rodel', severity: 'low', description: 'Short coverage positioning friction — define zones explicitly' },
-];
-
-export const BUFFER_PLAYERS = ['jill', 'bryan'];
-
-export const SYNERGY_PAIRS = [
-  { id: 'jill-alistair', label: 'Jill + Alistair', description: 'She feeds him + manages his intensity' },
-  { id: 'bryan-rodel', label: 'Bryan + Rodel', description: "Bryan's steadiness keeps Rodel loose and confident" },
-  { id: 'jill-bryan-alistair', label: 'Best Trio', description: 'Maximum skill with Bryan/Jill buffering Alistair' },
-  { id: 'jill-bryan-rodel', label: 'Strong Trio', description: 'No chemistry risk, Bryan keeps Rodel confident' },
-];
-
-/**
- * Check for friction among on-court players.
- * @param {string[]} courtPlayerIds - IDs of players currently on court
- * @param {Object} frictionMap - Maps friction pair IDs to { playerA, playerB } player IDs
- * @param {string[]} bufferPlayerIds - Player IDs who can buffer friction
- * @returns {{ id, severity, description, playerAId, playerBId, buffered }[]}
- */
-export function checkFriction(courtPlayerIds, frictionMap, bufferPlayerIds = []) {
-  const onCourt = new Set(courtPlayerIds);
-  const buffers = new Set(bufferPlayerIds);
-  const warnings = [];
-  for (const pair of FRICTION_PAIRS) {
-    const mapping = frictionMap[pair.id];
-    if (!mapping) continue;
-    if (onCourt.has(mapping.playerA) && onCourt.has(mapping.playerB)) {
-      const hasBuffer = [...buffers].some(b => onCourt.has(b));
-      warnings.push({
-        ...pair,
-        playerAId: mapping.playerA,
-        playerBId: mapping.playerB,
-        buffered: hasBuffer,
-      });
-    }
-  }
-  return warnings;
-}
-
 /**
  * Validate fairness: nobody sits back-to-back sets.
  * FLOW sets count as ON for everyone (trio rotation).
+ * The set's lineup libero plays the back row, so counts as on court even though
+ * a libero never appears in the serving order.
  * @param {Object} nightPlan
  * @param {Object[]} players
+ * @param {Object[]} [lineups]
  * @returns {{ valid: boolean, violations: { playerId, sets: [number, number] }[] }}
  */
-export function validateFairness(nightPlan, players) {
+export function validateFairness(nightPlan, players, lineups = []) {
   if (!nightPlan?.matches) return { valid: true, violations: [] };
   const allIds = players.map(p => p.id);
   const setSequence = [];
@@ -91,6 +51,8 @@ export function validateFairness(nightPlan, players) {
   const sittingPerSet = setSequence.map(set => {
     if (set.system === 'FLOW') return new Set();
     const onCourt = new Set(set.servingOrder || []);
+    const libero = lineups.find(l => l.id === set.lineupId)?.liberoId;
+    if (libero) onCourt.add(libero);
     const sitting = new Set();
     for (const pid of allIds) {
       if (!onCourt.has(pid)) sitting.add(pid);

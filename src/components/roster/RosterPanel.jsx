@@ -39,18 +39,8 @@ export default function RosterPanel({ players, dispatch, activeLineup, statEntri
   const assignedIds = activeLineup ? new Set([...Object.values(activeLineup.slots), activeLineup.liberoId].filter(Boolean)) : new Set();
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-surface)]">
-      <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-surface-2)] border-b border-white/5">
-        <h2 className="text-lg font-bold text-white">Roster</h2>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white text-sm font-bold active:scale-95 transition-transform"
-        >
-          + Add Player
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+    <div>
+      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
         {players.map(p => {
           const pos = POSITIONS[p.position] || POSITIONS.ds;
           const inLineup = assignedIds.has(p.id);
@@ -111,9 +101,12 @@ export default function RosterPanel({ players, dispatch, activeLineup, statEntri
             </div>
           );
         })}
-        {players.length === 0 && (
-          <div className="text-center text-gray-500 py-8">No players yet. Tap "+ Add Player" to get started.</div>
-        )}
+        <button
+          onClick={handleAdd}
+          className="flex items-center justify-center gap-2 p-3 min-h-16 rounded-xl border border-dashed border-[var(--color-line)] text-sm font-semibold text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:border-[var(--color-muted)]"
+        >
+          + Add player
+        </button>
       </div>
 
       {showForm && (

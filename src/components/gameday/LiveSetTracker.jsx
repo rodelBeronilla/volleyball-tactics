@@ -8,7 +8,6 @@ export default function LiveSetTracker({
   matchIndex,
   setIndex,
   players,
-  lineups,
   dispatch,
   onEnd,
 }) {
@@ -244,7 +243,6 @@ export default function LiveSetTracker({
         <div className="px-4 pb-4">
           <FlowSubTracker
             trioState={trioState}
-            servingOrder={servingOrder}
             currentServer={currentServer}
             players={players}
           />

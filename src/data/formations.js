@@ -87,8 +87,12 @@ const ROLE_LOAD_POS = {
 };
 
 function getRolePos(roleMap, pos, posMap, fallback) {
-  const role = roleMap[pos];
   const front = isFront(pos);
+  let role = roleMap[pos];
+  // With both outsides in the front row (opposite in the back row), the one
+  // at right front swings from the right pin instead of stacking on the left.
+  const oppFront = [2, 3, 4].some(p => roleMap[p] === 'OPP');
+  if (front && pos === 2 && (role === 'OH1' || role === 'OH2') && !oppFront) role = 'OPP';
   const zoneData = posMap[role];
   if (!zoneData) return fallback;
   const target = front ? zoneData.front : zoneData.back;
@@ -129,15 +133,23 @@ function buildOffense() {
         r[rot][pos] = { ...target };
       } else {
         // Back-row: coverage cup positions
-        const backZone = ROLE_ATTACK_ZONE[role]?.back;
+        let backZone = ROLE_ATTACK_ZONE[role]?.back;
+        // Two outsides in the back row: only the one in 6 takes the pipe,
+        // the other attacks from its own side (A / D ball)
+        const isOH = role === 'OH1' || role === 'OH2';
+        const backOHs = [1, 5, 6].filter(p => roleMap[p] === 'OH1' || roleMap[p] === 'OH2');
+        if (isOH && backOHs.length > 1 && pos !== 6) {
+          backZone = pos === 5 ? { x: 18, y: 30 } : { x: 75, y: 30 };
+        }
         if (backZone) {
           // Back-row attacker (OH pipe, OPP D-ball) — at their attack zone
           r[rot][pos] = { ...backZone };
         } else {
           // Non-attacking back-row (MB replaced by libero) — coverage
-          if (pos === 1) r[rot][pos] = { x: 68, y: 38 };
-          else if (pos === 5) r[rot][pos] = { x: 18, y: 38 };
-          else r[rot][pos] = { x: 42, y: 42 };
+          // (kept behind the back-row attack spots so tokens don't collide)
+          if (pos === 1) r[rot][pos] = { x: 72, y: 55 };
+          else if (pos === 5) r[rot][pos] = { x: 18, y: 55 };
+          else r[rot][pos] = { x: 45, y: 58 };
         }
       }
     }

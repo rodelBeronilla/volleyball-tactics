@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-screen bg-[#1a1a2e] text-white p-6">
+        <div className="flex flex-col items-center justify-center h-screen bg-[var(--color-surface)] text-[var(--color-ink)] p-6">
           <div className="text-2xl font-bold mb-2">Something went wrong</div>
           <p className="text-gray-400 text-sm text-center mb-6 max-w-sm">
             The app encountered an error. You can try reloading, or clear all data if the error persists.
@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component {
           <div className="flex gap-3">
             <button
               onClick={this.handleReset}
-              className="px-4 py-2 rounded-lg bg-[#e94560] text-white font-bold text-sm"
+              className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-[var(--color-accent-ink)] font-bold text-sm"
             >
               Reload App
             </button>

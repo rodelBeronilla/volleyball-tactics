@@ -20,7 +20,7 @@ export default function RotationDashboard({ statEntries, matchId, currentRotatio
             {['match', 'set'].map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  filter === f ? 'bg-[var(--color-accent)] text-white' : 'text-gray-500'
+                  filter === f ? 'bg-[var(--color-accent)] text-[var(--color-accent-ink)]' : 'text-gray-500'
                 }`}>{f === 'match' ? 'Full Match' : 'This Set'}</button>
             ))}
           </div>
