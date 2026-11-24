@@ -32,6 +32,8 @@ already in the bucket.
 
 ## Rotating the sync token
 
+Only on the owner's go: every coach's app holds the token, so a rotation breaks all of them until they re-enter it (`CLAUDE.md` "Do not").
+
 1. Change `SYNC_TOKEN` in `.env`; `docker compose up -d api`.
 2. Give coaches the new token; until they enter it, their syncs get a 401 and the app
    shows *The server rejected the sync token*.

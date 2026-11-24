@@ -1,0 +1,40 @@
+# .sdlc/factory.yml - manifest read by the factory collector (GateForge v6, "Per-product contract").
+# Unknown values are null with a "# TBD:" comment; never guess.
+product: volleyball-tactics
+owner: rodel                      # who approves Guarded and Destructive
+level_target: L2
+live:
+  urls: [https://volleyballtactics.beronilla.rodeo, https://volleyballtactics.beronilla.rodeo/api/healthz]
+  branch: main                    # live must equal this (today it cannot be shown: :local images, #4)
+  deploy: null                    # TBD: scripts/deploy.ps1 (tags images by git SHA) does not exist yet, #4; manual steps in docs/runbooks/deploy-rollback.md
+  rollback: null                  # TBD: scripts/deploy.ps1 -Sha <previous>, #4
+  window: null                    # TBD: allowed deploy window, if any
+checks:
+  # GitHub check-run names on main (workflows "CI / Deploy" and "Platform CI"). Not required yet: main is unprotected (#5).
+  # Platform CI is path-filtered, so its checks do not run on every PR.
+  required: ["check", "API + pipeline (lint, tests, end-to-end on DuckDB)", "Terraform (fmt, validate)", "Container images build"]
+  local:
+    - "npm run lint && npm test && npm run build"   # via the node:22-alpine Docker command in CLAUDE.md
+    - "cd platform && ruff check api pipeline && ruff format --check api pipeline"
+    - "cd platform/api && pytest -q"                # needs TEST_DATABASE_URL (throwaway Postgres on :5433)
+    - "cd platform/pipeline && pytest -q"
+backup:
+  what: [volleyball-tactics_pgdata, volleyball-tactics_lake]
+  max_age_hours: 26
+  last_backup: null               # none exists, #2
+  restore_tested: null            # date of last restore drill; never
+risk_paths:                       # owner merges changes here (Guarded)
+  - .sdlc/**
+  - CLAUDE.md
+  - .claude/**
+  - .github/workflows/**
+  - platform/compose*.yaml
+  - platform/edge/**
+  - platform/.env.example
+  - platform/infra/**             # Terraform: costs money when applied
+  - platform/api/vt_api/migrations/**   # schema; a destructive migration is Destructive
+  - platform/api/vt_api/main.py   # auth on the sync API
+destructive_paths: []             # no code path deletes volumes or backups; `docker compose down -v` and dropping tables are owner-only (CLAUDE.md)
+budgets:
+  discovery_findings_per_week: 5
+  default_model: null             # TBD: set by the factory (no model names in product repos)

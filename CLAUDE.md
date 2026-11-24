@@ -12,7 +12,7 @@ npm run lint       # ESLint (flat config, JS/JSX only)
 npm test           # Vitest (src/__tests__/)
 ```
 
-CI (`.github/workflows/deploy.yml`) runs lint, tests and build on every push and PR, and deploys `main` to GitHub Pages.
+CI (`.github/workflows/deploy.yml`) runs lint, tests and build on every push and PR, and deploys `main` to the GitHub Pages copy. Nothing in CI deploys the live server; that is a manual compose rebuild (`docs/runbooks/deploy-rollback.md`).
 `platform-ci.yml` lints and tests the data platform (Postgres service container, DuckDB end to end, Terraform validate, image builds);
 `deploy-cloud-run.yml` deploys to Cloud Run once the repository variables from Terraform are set.
 
@@ -28,8 +28,42 @@ ruff check api pipeline && ruff format --check api pipeline
 vt-pipeline run               # PIPELINE_TARGET=local|gcp, see docs/platform/pipelines.md
 ```
 
-Node is not on this machine's PATH; run the app's lint/tests/build through Docker:
+On the host, run the app's lint/tests/build through Docker. Node is on PATH now, but the checkout's `node_modules` was installed for Linux, so a host `vitest` run fails on rollup's native module (source: baseline volleyball-tactics.md §4.3, §4.5 #1, 2026-11-23):
 `docker run --rm -v "$PWD:/app" -v vt-node-modules:/app/node_modules -w /app node:22-alpine sh -c "npm ci && npm run lint && npm test && npm run build"`.
+
+## How work ships
+
+Read `.sdlc/pillars.md` (what wins), `.sdlc/state.md` (decisions in force, what is in flight, what waits on the owner) and `.sdlc/factory.yml` (live URLs, checks, risk paths) before starting. Deploy and rollback: `docs/runbooks/deploy-rollback.md`.
+
+- Do the work yourself; give the owner only the steps that need him (DNS, accounts, money). (source: handoff-volleyball-tactics.md:11, 2026-11-22)
+- One item per branch, from a fresh `origin/main`: `ai/feat/<issue#>-short-name`, `ai/fix/<issue#>-...`, `ai/refactor/<issue#>-...`. Commits are `type(scope): description`. (source: owner's global instructions; handoff-volleyball-tactics.md:5)
+- Every change starts from a GitHub issue with a priority label (`P0-critical` … `P3-low`). Every PR links it (`Closes #N`), carries a `release:*` label (`feature`, `fix`, `breaking`, `skip`) and an evidence section. (source: owner's global instructions)
+- Agents open PRs; they never merge them and never push to `main`. The owner merges. (source: owner's global instructions, which supersede handoff-volleyball-tactics.md:28 "ask before opening a PR")
+- Changes to the paths under `risk_paths` in `.sdlc/factory.yml` (this file, `.sdlc/`, workflows, compose files, `platform/edge/`, migrations) are Guarded: the owner merges them on his typed line.
+- Neighbouring problems become their own issue, not a wider change.
+
+## Do not, without the owner's typed approval
+
+(source: handoff-volleyball-tactics.md:25-32, 2026-11-22)
+
+- `terraform apply`, creating any GCP resource, or anything else that costs money.
+- `docker compose down -v`, deleting the `pgdata` or `lake` volumes, or dropping tables. The server Postgres is the system of record and has no backup yet.
+- Rotating `SYNC_TOKEN` or the Postgres password in `platform/.env`: every coach's app holds the token, and a rotation breaks all of them.
+- Disabling GitHub Pages or taking the public Pages copy down (pending decision, see `.sdlc/state.md`).
+- Changing DNS. The Cloudflare token in plex-stack's `.env` is scoped to the toli.mov zone only; never use it for another zone.
+- Editing anything in the plex-stack repo except this product's vhost file `config/caddy/sites.d/volleyballtactics.caddy`, or reloading Caddy with a config that has not validated (it also serves Plex and beronilla.rodeo).
+
+## Product rules
+
+- No links to the GitHub repository inside the app (removed in 7684aa4). Do not add them back. (source: handoff-volleyball-tactics.md:12, 2026-11-22)
+- Keep real people's names, rosters and notes out of the repo; the default roster is fictional.
+
+## Hosting and the shared edge
+
+The real product is `https://volleyballtactics.beronilla.rodeo` (app at `/`, API at `/api`), served from Docker Compose project `volleyball-tactics` on the home server behind the plex-stack Caddy. The GitHub Pages copy is secondary. (source: handoff-volleyball-tactics.md:6,13, 2026-11-22)
+
+- `api` and `web` join the `shared-proxy` network as `vt-api` / `vt-web` (`platform/compose.shared-proxy.yaml`), never plex-stack's internal `media-net`: from there the API could reach that stack's private services. (source: handoff-volleyball-tactics.md:14; plex-stack #418 / PR #419)
+- Never edit or append to plex-stack's own Caddyfile. The vhost source is `platform/edge/existing-caddy.caddy`; copy it to plex-stack `config/caddy/sites.d/volleyballtactics.caddy`, validate, then reload with `--adapter caddyfile` (commands in that file and in the runbook). DNS before the block loads: Let's Encrypt failures are rate-limited. (source: handoff-volleyball-tactics.md:14, 2026-11-22)
 
 ## Using the owner's browser
 
@@ -50,7 +84,7 @@ Single React 19 app (plain JavaScript, no TypeScript) for volleyball coaching, o
 - **Server sync:** `src/utils/sync.js` builds the export payload (plus a per-browser `clientId`) and POSTs it to `{url}/v1/sync`; `src/hooks/useServerSync.js` debounces pushes when sync is enabled and keeps status in `localStorage`. Settings UI lives in `components/team/DataSettings.jsx`. The API contract is `platform/api/vt_api/schemas.py` and `normalize.py`; the stat vocabulary must match `src/data/statCategories.js` (a Python test enforces it).
 - **Embedded tools:** Setter Signals and Serve Receive are standalone single-file pages in `public/tools/`. The app runs them in a same-origin iframe (`components/playbook/ToolFrame.jsx`, tab config in `tools.js`): inside an iframe they add `html.embedded` and hide their own nav; the app calls `window.SetterSignals.showTab()` / `window.ServeReceive.showTab()`, and they `postMessage` tab changes back. Opened top-level over http they redirect into the app; as a local file they still work standalone. `public/setter-signals/`, `public/serve-receive/` and `public/app/` are redirects from old URLs.
 
-**Stack:** Vite 8, React 19, Tailwind CSS v4 (via `@tailwindcss/vite` plugin), ESLint 9 flat config. Deployed to GitHub Pages at `/volleyball-tactics/` base path.
+**Stack:** Vite 8, React 19, Tailwind CSS v4 (via `@tailwindcss/vite` plugin), ESLint 9 flat config. Served at `/` on the home server (see "Hosting and the shared edge"); the GitHub Pages copy builds with the `/volleyball-tactics/` base path.
 
 ### State Management
 
